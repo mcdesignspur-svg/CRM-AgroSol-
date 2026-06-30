@@ -26,6 +26,24 @@ export const BRANCH_DEFINITIONS: readonly BranchDefinition[] = [
 
 export const BRANCH_IDS = BRANCH_DEFINITIONS.map((branch) => branch.id);
 
+/** Keywords used to match Loyverse store names to CRM branches during sync. */
+export const BRANCH_LOYVERSE_MATCH: Record<BranchId, readonly string[]> = {
+  gurabo: ["gurabo", "central"],
+  "san-lorenzo": ["san lorenzo", "lorenzo"],
+  navarro: ["navarro", "ferretería", "ferreteria"],
+};
+
 export function isBranchId(value: string): value is BranchId {
   return (BRANCH_IDS as readonly string[]).includes(value);
+}
+
+export function matchBranchIdFromStoreName(storeName: string): BranchId | null {
+  const normalized = storeName.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+  for (const branch of BRANCH_DEFINITIONS) {
+    const keywords = BRANCH_LOYVERSE_MATCH[branch.id];
+    if (keywords.some((keyword) => normalized.includes(keyword))) {
+      return branch.id;
+    }
+  }
+  return null;
 }

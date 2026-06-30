@@ -41,6 +41,7 @@ model Branch {
   id              String       @id
   name            String
   address         String
+  loyverseStoreId String?      @unique @map("loyverse_store_id")
   capacityPercent Int          @default(0) @map("capacity_percent")
   currentVolume   Int          @default(0) @map("current_volume")
   status          BranchStatus @default(online)
@@ -54,13 +55,33 @@ model Branch {
   @@map("branches")
 }
 
+model Customer {
+  id                 String   @id @default(cuid())
+  name               String
+  phone              String?
+  email              String?
+  address            String?
+  loyverseCustomerId String?  @unique @map("loyverse_customer_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  orders Order[]
+
+  @@index([phone])
+  @@map("customers")
+}
+
 model Product {
-  id        String   @id @default(cuid())
-  name      String
-  sku       String   @unique
-  unitPrice Decimal  @map("unit_price") @db.Decimal(10, 2)
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
+  id                String   @id @default(cuid())
+  name              String
+  sku               String   @unique
+  unitPrice         Decimal  @map("unit_price") @db.Decimal(10, 2)
+  active            Boolean  @default(true)
+  loyverseItemId    String?  @map("loyverse_item_id")
+  loyverseVariantId String?  @unique @map("loyverse_variant_id")
+  categoryName      String?  @map("category_name")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
   orderItems OrderLineItem[]
 
@@ -68,24 +89,29 @@ model Product {
 }
 
 model Order {
-  id              String      @id @default(cuid())
-  displayId       String      @unique @map("display_id")
-  customerName    String      @map("customer_name")
-  customerPhone   String?     @map("customer_phone")
-  deliveryAddress String?     @map("delivery_address")
-  type            OrderType
-  branchId        String      @map("branch_id")
-  status          OrderStatus @default(pendiente)
-  fulfillment     String      @default("pickup")
-  smsNotify       Boolean     @default(false) @map("sms_notify")
-  subtotal        Decimal     @db.Decimal(12, 2)
-  taxes           Decimal     @db.Decimal(12, 2)
-  deliveryFee     Decimal     @default(0) @map("delivery_fee") @db.Decimal(12, 2)
-  total           Decimal     @db.Decimal(12, 2)
-  createdAt       DateTime    @default(now()) @map("created_at")
-  updatedAt       DateTime    @updatedAt @map("updated_at")
+  id                    String      @id @default(cuid())
+  displayId             String      @unique @map("display_id")
+  customerId            String?     @map("customer_id")
+  customerName          String      @map("customer_name")
+  customerPhone         String?     @map("customer_phone")
+  deliveryAddress       String?     @map("delivery_address")
+  type                  OrderType
+  branchId              String      @map("branch_id")
+  status                OrderStatus @default(pendiente)
+  fulfillment           String      @default("pickup")
+  smsNotify             Boolean     @default(false) @map("sms_notify")
+  subtotal              Decimal     @db.Decimal(12, 2)
+  taxes                 Decimal     @db.Decimal(12, 2)
+  deliveryFee           Decimal     @default(0) @map("delivery_fee") @db.Decimal(12, 2)
+  total                 Decimal     @db.Decimal(12, 2)
+  loyverseReceiptNumber String?     @unique @map("loyverse_receipt_number")
+  loyverseSource        String?     @map("loyverse_source")
+  loyverseSyncedAt      DateTime?   @map("loyverse_synced_at")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
 
   branch    Branch          @relation(fields: [branchId], references: [id])
+  customer  Customer?       @relation(fields: [customerId], references: [id], onDelete: SetNull)
   lineItems OrderLineItem[]
 
   @@index([createdAt(sort: Desc)])

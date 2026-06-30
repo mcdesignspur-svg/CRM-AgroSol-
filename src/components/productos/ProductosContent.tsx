@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
+import { useToast } from "@/components/providers/ToastProvider";
 import { AddProductModal } from "@/components/productos/AddProductModal";
 import type { Product } from "@/lib/types";
 
@@ -14,11 +15,43 @@ interface ProductosContentProps {
 export function ProductosContent({ initialProducts }: ProductosContentProps) {
   const [products, setProducts] = useState(initialProducts);
   const [modalOpen, setModalOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const { showToast } = useToast();
 
   function handleCreated(product: Product) {
     setProducts((prev) =>
       [...prev, product].sort((a, b) => a.name.localeCompare(b.name)),
     );
+  }
+
+  async function handleSyncFromLoyverse() {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/integrations/loyverse/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope: "all" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? "Error al sincronizar");
+      }
+
+      const catalogRes = await fetch("/api/products");
+      const catalog = await catalogRes.json();
+      if (catalogRes.ok) {
+        setProducts(catalog);
+      }
+
+      showToast("Catálogo sincronizado desde Loyverse", "success");
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Error al sincronizar",
+        "error",
+      );
+    } finally {
+      setSyncing(false);
+    }
   }
 
   return (
@@ -34,6 +67,14 @@ export function ProductosContent({ initialProducts }: ProductosContentProps) {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={handleSyncFromLoyverse}
+              disabled={syncing}
+              className="btn-secondary px-4 sm:px-6 py-3 text-sm font-bold uppercase industrial-border min-h-[44px] disabled:opacity-60"
+            >
+              {syncing ? "Sincronizando..." : "Sync Loyverse"}
+            </button>
             <button
               type="button"
               onClick={() => setModalOpen(true)}

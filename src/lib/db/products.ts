@@ -26,3 +26,49 @@ export async function createProduct(input: CreateProductInput) {
   });
   return mapProduct(row);
 }
+
+export async function upsertProductFromLoyverse(input: {
+  name: string;
+  sku: string;
+  unitPrice: number;
+  loyverseItemId: string;
+  loyverseVariantId: string;
+  categoryName?: string;
+}) {
+  const sku = input.sku.trim().toUpperCase();
+
+  const existing = await prisma.product.findFirst({
+    where: {
+      OR: [{ loyverseVariantId: input.loyverseVariantId }, { sku }],
+    },
+  });
+
+  if (existing) {
+    const row = await prisma.product.update({
+      where: { id: existing.id },
+      data: {
+        name: input.name,
+        sku,
+        unitPrice: input.unitPrice,
+        active: true,
+        loyverseItemId: input.loyverseItemId,
+        loyverseVariantId: input.loyverseVariantId,
+        categoryName: input.categoryName,
+      },
+    });
+    return mapProduct(row);
+  }
+
+  const row = await prisma.product.create({
+    data: {
+      name: input.name,
+      sku,
+      unitPrice: input.unitPrice,
+      active: true,
+      loyverseItemId: input.loyverseItemId,
+      loyverseVariantId: input.loyverseVariantId,
+      categoryName: input.categoryName,
+    },
+  });
+  return mapProduct(row);
+}
