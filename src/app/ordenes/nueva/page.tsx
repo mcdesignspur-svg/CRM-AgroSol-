@@ -1,14 +1,5 @@
-import { getCatalogProducts } from "@/lib/db";
-import NuevaOrdenClient from "./NuevaOrdenClient";
+import { redirect } from "next/navigation";
 
-export const metadata = {
-  title: "Nueva Orden",
-};
-
-export const dynamic = "force-dynamic";
-
-export default async function NuevaOrdenPage() {
-  const catalogProducts = await getCatalogProducts();
-
-  return <NuevaOrdenClient catalogProducts={catalogProducts} />;
+export default function NuevaOrdenPage() {
+  redirect("/ordenes?tab=nueva");
 }

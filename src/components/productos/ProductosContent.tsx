@@ -42,7 +42,7 @@ export function ProductosContent({ initialProducts }: ProductosContentProps) {
               + Nuevo Producto
             </button>
             <Link
-              href="/ordenes/nueva"
+              href="/ordenes?tab=nueva"
               className="btn-secondary px-4 sm:px-6 py-3 text-sm font-bold uppercase inline-flex items-center justify-center min-h-[44px]"
             >
               Crear Orden
