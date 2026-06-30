@@ -5,7 +5,7 @@ import { SidebarNav } from "./SidebarNav";
 import { useSidebarModals } from "./SidebarModals";
 
 export function Sidebar() {
-  const { modals, openPing, openConfig, openSupport } = useSidebarModals();
+  const { modals, openConfig, openSupport } = useSidebarModals();
 
   return (
     <>
@@ -20,7 +20,6 @@ export function Sidebar() {
         </div>
 
         <SidebarNav
-          onPingClick={openPing}
           onConfigClick={openConfig}
           onSupportClick={openSupport}
         />

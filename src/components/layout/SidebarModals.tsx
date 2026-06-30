@@ -3,95 +3,14 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/providers/ToastProvider";
-import { BRANCH_LABELS } from "@/lib/constants";
-import type { BranchId } from "@/lib/types";
 
 export function useSidebarModals() {
   const { showToast } = useToast();
-  const [pingOpen, setPingOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
-  const [pingBranch, setPingBranch] = useState<BranchId>("gurabo");
-  const [pingMessage, setPingMessage] = useState("");
-  const [sendingPing, setSendingPing] = useState(false);
-
-  async function handleQuickPing() {
-    setSendingPing(true);
-    try {
-      const res = await fetch("/api/pings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          branchId: pingBranch,
-          message: pingMessage.trim() || undefined,
-          priority: "urgente",
-        }),
-      });
-      if (!res.ok) throw new Error();
-      setPingOpen(false);
-      setPingMessage("");
-      showToast(`Ping enviado a ${BRANCH_LABELS[pingBranch]}`, "success");
-    } catch {
-      showToast("Error al enviar ping", "error");
-    } finally {
-      setSendingPing(false);
-    }
-  }
 
   const modals = (
     <>
-      <Modal
-        open={pingOpen}
-        onClose={() => setPingOpen(false)}
-        title="Ping Rápido"
-        footer={
-          <>
-            <button
-              type="button"
-              onClick={() => setPingOpen(false)}
-              className="btn-secondary px-4 py-2 text-xs font-bold uppercase min-h-[44px]"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleQuickPing}
-              disabled={sendingPing}
-              className="btn-primary px-4 py-2 text-xs font-bold uppercase industrial-border disabled:opacity-60 min-h-[44px]"
-            >
-              {sendingPing ? "Enviando..." : "Enviar Ping"}
-            </button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <label className="font-bold uppercase text-[10px]">Sucursal</label>
-            <select
-              className="w-full industrial-border px-3 py-2 text-sm font-bold min-h-[44px]"
-              value={pingBranch}
-              onChange={(e) => setPingBranch(e.target.value as BranchId)}
-            >
-              {Object.entries(BRANCH_LABELS).map(([id, label]) => (
-                <option key={id} value={id}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className="font-bold uppercase text-[10px]">Mensaje</label>
-            <textarea
-              className="w-full industrial-border px-3 py-2 text-sm"
-              rows={3}
-              placeholder="Mensaje urgente para la sucursal..."
-              value={pingMessage}
-              onChange={(e) => setPingMessage(e.target.value)}
-            />
-          </div>
-        </div>
-      </Modal>
-
       <Modal
         open={configOpen}
         onClose={() => setConfigOpen(false)}
@@ -147,7 +66,6 @@ export function useSidebarModals() {
 
   return {
     modals,
-    openPing: () => setPingOpen(true),
     openConfig: () => setConfigOpen(true),
     openSupport: () => setSupportOpen(true),
   };
