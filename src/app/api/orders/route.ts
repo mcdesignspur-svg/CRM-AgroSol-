@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { getRecentOrders, getOrdersCount, createOrder } from "@/lib/db";
+import { Prisma } from "@prisma/client";
+import { getRecentOrders, getOrdersCount, createOrder, OrderValidationError } from "@/lib/db";
+import { isBranchId } from "@/lib/branch-definitions";
 import type { BranchId } from "@/lib/types";
 
 export async function GET(request: Request) {
@@ -26,12 +28,25 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const branchId = String(body.branchId ?? "");
+
+    if (!isBranchId(branchId)) {
+      return NextResponse.json(
+        { error: "Selecciona una sucursal válida" },
+        { status: 400 },
+      );
+    }
+
     const order = await createOrder({
-      customerName: body.customerName ?? "Cliente",
-      customerPhone: body.customerPhone,
-      deliveryAddress: body.deliveryAddress,
+      customerName: String(body.customerName ?? ""),
+      customerPhone: body.customerPhone
+        ? String(body.customerPhone)
+        : undefined,
+      deliveryAddress: body.deliveryAddress
+        ? String(body.deliveryAddress)
+        : undefined,
       type: body.type ?? "retiro",
-      branchId: body.branchId as BranchId,
+      branchId: branchId as BranchId,
       fulfillment: body.fulfillment ?? "pickup",
       smsNotify: Boolean(body.smsNotify),
       subtotal: Number(body.subtotal ?? 0),
@@ -42,6 +57,30 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
+    if (error instanceof OrderValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2003"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "No se pudo vincular la orden con la sucursal o un producto. Verifica que la base de datos esté inicializada.",
+        },
+        { status: 409 },
+      );
+    }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        { error: "Conflicto al generar el número de orden. Intenta de nuevo." },
+        { status: 409 },
+      );
+    }
     console.error("POST /api/orders", error);
     return NextResponse.json(
       { error: "Error al crear la orden" },

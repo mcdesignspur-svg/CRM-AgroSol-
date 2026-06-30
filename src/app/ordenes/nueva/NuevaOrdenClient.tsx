@@ -117,11 +117,15 @@ export default function NuevaOrdenClient({
           })),
         }),
       });
-      if (!res.ok) throw new Error("Error al crear orden");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Error al crear orden");
       setSubmitted(true);
       showToast("Orden confirmada y ping enviado a sucursal", "success");
-    } catch {
-      showToast("Error al guardar la orden", "error");
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Error al guardar la orden",
+        "error",
+      );
     } finally {
       setSubmitting(false);
     }

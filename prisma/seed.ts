@@ -1,29 +1,12 @@
 import { PrismaClient } from "@prisma/client";
+import { BRANCH_DEFINITIONS } from "../src/lib/branch-definitions";
 
 const prisma = new PrismaClient();
-
-const branches = [
-  {
-    id: "gurabo",
-    name: "Gurabo (Central)",
-    address: "Av. Agrícola 450",
-  },
-  {
-    id: "san-lorenzo",
-    name: "San Lorenzo",
-    address: "Km 12 Carretera Federal",
-  },
-  {
-    id: "navarro",
-    name: "Ferretería Navarro",
-    address: "Zona Industrial Lote 9",
-  },
-] as const;
 
 async function main() {
   console.log("Sembrando sucursales...");
 
-  for (const branch of branches) {
+  for (const branch of BRANCH_DEFINITIONS) {
     await prisma.branch.upsert({
       where: { id: branch.id },
       update: {
@@ -41,7 +24,7 @@ async function main() {
     });
   }
 
-  console.log(`✓ ${branches.length} sucursales listas`);
+  console.log(`✓ ${BRANCH_DEFINITIONS.length} sucursales listas`);
 }
 
 main()

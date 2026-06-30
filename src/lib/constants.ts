@@ -1,13 +1,12 @@
+import { BRANCH_DEFINITIONS } from "./branch-definitions";
 import type { BranchId } from "./types";
 
 export const APP_NAME = "Agrocentro Solá";
 export const APP_TAGLINE = "Logistics CRM";
 
-export const BRANCH_LABELS: Record<BranchId, string> = {
-  gurabo: "Gurabo (Central)",
-  "san-lorenzo": "San Lorenzo",
-  navarro: "Ferretería Navarro",
-};
+export const BRANCH_LABELS = Object.fromEntries(
+  BRANCH_DEFINITIONS.map((branch) => [branch.id, branch.name]),
+) as Record<BranchId, string>;
 
 export const NAV_ITEMS = [
   { href: "/", label: "Panel", icon: "dashboard" },
