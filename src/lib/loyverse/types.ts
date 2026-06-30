@@ -46,4 +46,7 @@ export interface LoyverseSyncResult {
   updated: number;
   skipped: number;
   total: number;
+  hasMore?: boolean;
+  nextCursor?: string | null;
+  pageItems?: number;
 }

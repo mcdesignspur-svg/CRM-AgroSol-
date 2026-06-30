@@ -12,11 +12,21 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   let branchId: string = "gurabo";
   let mode: "full" | "incremental" = "full";
+  let cursor: string | null | undefined;
+  let singlePage = false;
+  let pageSize = 100;
 
   try {
     const body = await request.json();
     if (typeof body.branchId === "string") branchId = body.branchId;
     if (body.mode === "incremental" || body.mode === "full") mode = body.mode;
+    if (body.cursor === null || typeof body.cursor === "string") {
+      cursor = body.cursor;
+    }
+    if (body.singlePage === true) singlePage = true;
+    if (typeof body.pageSize === "number" && body.pageSize > 0 && body.pageSize <= 250) {
+      pageSize = body.pageSize;
+    }
   } catch {
     // body opcional
   }
@@ -47,7 +57,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: connection.message }, { status: 401 });
   }
 
-  const result = await safeSyncLoyverseProducts({ branchId, mode });
+  const result = await safeSyncLoyverseProducts({
+    branchId,
+    mode,
+    cursor,
+    singlePage,
+    pageSize,
+  });
   if ("error" in result) {
     return NextResponse.json({ error: result.error }, { status: 502 });
   }

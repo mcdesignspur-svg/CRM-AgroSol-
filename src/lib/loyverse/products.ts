@@ -4,7 +4,12 @@ import {
   isLoyverseBranchEnabled,
   isLoyverseConfigured,
 } from "./config";
-import { LoyverseApiError, loyverseGetAllPages, loyverseRequest } from "./client";
+import {
+  LoyverseApiError,
+  loyverseGetAllPages,
+  loyverseGetPage,
+  loyverseRequest,
+} from "./client";
 import type { BranchId } from "@/lib/types";
 import type {
   LoyverseItem,
@@ -151,9 +156,14 @@ async function upsertProductBatch(
 export async function syncLoyverseProducts(input: {
   branchId: BranchId;
   mode?: "full" | "incremental";
+  cursor?: string | null;
+  singlePage?: boolean;
+  pageSize?: number;
 }): Promise<LoyverseSyncResult> {
   const branchId = input.branchId;
   const mode = input.mode ?? "full";
+  const singlePage = input.singlePage ?? false;
+  const pageSize = input.pageSize ?? 100;
 
   if (!isLoyverseBranchEnabled(branchId)) {
     throw new LoyverseApiError(
@@ -181,44 +191,72 @@ export async function syncLoyverseProducts(input: {
     query.updated_at_min = integration.lastIncrementalSyncAt.toISOString();
   }
 
-  const items = await loyverseGetAllPages<"items", LoyverseItem>(
-    "/items",
-    "items",
-    branchId,
-    { query },
-  );
+  let items: LoyverseItem[];
+  let nextCursor: string | null = null;
+
+  if (singlePage) {
+    const page = await loyverseGetPage<"items", LoyverseItem>(
+      "/items",
+      "items",
+      branchId,
+      {
+        limit: pageSize,
+        cursor: input.cursor,
+        query,
+      },
+    );
+    items = page.items;
+    nextCursor = page.nextCursor;
+  } else {
+    items = await loyverseGetAllPages<"items", LoyverseItem>(
+      "/items",
+      "items",
+      branchId,
+      { limit: pageSize, query },
+    );
+  }
 
   const rows = normalizeLoyverseItems(items, branchId);
   const syncedAt = new Date();
   const { created, updated } = await upsertProductBatch(rows, syncedAt);
+  const hasMore = singlePage && Boolean(nextCursor);
   const productCount = await prisma.product.count({
     where: { branchId, active: true },
   });
 
-  const merchant = await loyverseRequest<{
-    business_name?: string;
-    name?: string;
-  }>("/merchant", branchId).catch(() => null);
+  let merchantName =
+    integration?.merchantName?.trim() || getLoyverseBranchLabel(branchId);
 
-  const merchantName =
-    merchant?.business_name?.trim() ||
-    merchant?.name?.trim() ||
-    getLoyverseBranchLabel(branchId);
+  if (!hasMore) {
+    const merchant = await loyverseRequest<{
+      business_name?: string;
+      name?: string;
+    }>("/merchant", branchId).catch(() => null);
+
+    merchantName =
+      merchant?.business_name?.trim() ||
+      merchant?.name?.trim() ||
+      merchantName;
+  }
 
   await prisma.loyverseIntegration.upsert({
     where: { branchId },
     update: {
       merchantName,
       productCount,
-      lastIncrementalSyncAt: syncedAt,
-      ...(mode === "full" ? { lastFullSyncAt: syncedAt } : {}),
+      ...(hasMore
+        ? {}
+        : {
+            lastIncrementalSyncAt: syncedAt,
+            ...(mode === "full" ? { lastFullSyncAt: syncedAt } : {}),
+          }),
     },
     create: {
       branchId,
       merchantName,
       productCount,
-      lastFullSyncAt: mode === "full" ? syncedAt : null,
-      lastIncrementalSyncAt: syncedAt,
+      lastFullSyncAt: hasMore || mode !== "full" ? null : syncedAt,
+      lastIncrementalSyncAt: hasMore ? null : syncedAt,
     },
   });
 
@@ -229,12 +267,18 @@ export async function syncLoyverseProducts(input: {
     updated,
     skipped: Math.max(0, items.length - rows.length),
     total: created + updated,
+    hasMore,
+    nextCursor: hasMore ? nextCursor : null,
+    pageItems: items.length,
   };
 }
 
 export async function safeSyncLoyverseProducts(input: {
   branchId: BranchId;
   mode?: "full" | "incremental";
+  cursor?: string | null;
+  singlePage?: boolean;
+  pageSize?: number;
 }): Promise<LoyverseSyncResult | { error: string }> {
   try {
     return await syncLoyverseProducts(input);

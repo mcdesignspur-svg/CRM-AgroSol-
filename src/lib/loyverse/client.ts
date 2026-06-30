@@ -68,6 +68,34 @@ export async function loyverseRequest<T>(
   return res.json() as Promise<T>;
 }
 
+export async function loyverseGetPage<TKey extends string, TItem>(
+  path: string,
+  collectionKey: TKey,
+  branchId: BranchId,
+  options?: {
+    limit?: number;
+    cursor?: string | null;
+    query?: Record<string, string | undefined>;
+  },
+): Promise<{ items: TItem[]; nextCursor: string | null }> {
+  const limit = options?.limit ?? 250;
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (options?.cursor) params.set("cursor", options.cursor);
+
+  for (const [key, value] of Object.entries(options?.query ?? {})) {
+    if (value) params.set(key, value);
+  }
+
+  const page = await loyverseRequest<
+    Record<TKey, TItem[]> & { cursor?: string | null }
+  >(`${path}?${params.toString()}`, branchId);
+
+  return {
+    items: page[collectionKey] ?? [],
+    nextCursor: page.cursor ?? null,
+  };
+}
+
 export async function loyverseGetAllPages<TKey extends string, TItem>(
   path: string,
   collectionKey: TKey,
@@ -78,23 +106,16 @@ export async function loyverseGetAllPages<TKey extends string, TItem>(
   },
 ): Promise<TItem[]> {
   const items: TItem[] = [];
-  const limit = options?.limit ?? 250;
   let cursor: string | undefined;
 
   do {
-    const params = new URLSearchParams({ limit: String(limit) });
-    if (cursor) params.set("cursor", cursor);
+    const page = await loyverseGetPage(path, collectionKey, branchId, {
+      ...options,
+      cursor,
+    });
 
-    for (const [key, value] of Object.entries(options?.query ?? {})) {
-      if (value) params.set(key, value);
-    }
-
-    const page = await loyverseRequest<
-      Record<TKey, TItem[]> & { cursor?: string | null }
-    >(`${path}?${params.toString()}`, branchId);
-
-    items.push(...(page[collectionKey] ?? []));
-    cursor = page.cursor ?? undefined;
+    items.push(...page.items);
+    cursor = page.nextCursor ?? undefined;
   } while (cursor);
 
   return items;
