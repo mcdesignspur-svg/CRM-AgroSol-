@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { useToast } from "@/components/providers/ToastProvider";
+import { usePingsSheet } from "@/components/dashboard/PingsSheetProvider";
 import {
   BranchLabel,
   StatusBadge,
@@ -112,7 +113,8 @@ export function DashboardOrdersSection() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Vista tabla — desktop */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-black text-white">
               <tr>
@@ -178,6 +180,49 @@ export function DashboardOrdersSection() {
           </table>
         </div>
 
+        {/* Vista tarjetas — móvil */}
+        <div className="md:hidden divide-y divide-gray-200">
+          {filteredOrders.length === 0 ? (
+            <p className="p-8 text-center text-sm font-bold uppercase opacity-50">
+              Sin órdenes con este filtro
+            </p>
+          ) : (
+            filteredOrders.map((order) => (
+              <article
+                key={order.id}
+                className="p-4 space-y-3 hover:bg-surface-container-low transition-colors"
+              >
+                <div className="flex justify-between items-start gap-2">
+                  <p className="font-bold text-sm">{order.customerName}</p>
+                  <StatusBadge status={order.status} />
+                </div>
+                <div className="flex flex-wrap gap-2 items-center">
+                  <TypeBadge type={order.type} />
+                  <BranchLabel branchId={order.branchId} />
+                  <span
+                    className={`text-xs font-mono ${
+                      order.status === "atrasado" || order.status === "listo"
+                        ? "text-red-600 font-bold"
+                        : "opacity-70"
+                    }`}
+                  >
+                    {order.elapsedTime}
+                  </span>
+                </div>
+                <Link
+                  href={`/entregas?orden=${order.id}`}
+                  className="inline-flex items-center gap-1 text-primary font-bold text-xs uppercase min-h-[44px]"
+                >
+                  Gestionar
+                  <span className="material-symbols-outlined text-sm">
+                    arrow_forward
+                  </span>
+                </Link>
+              </article>
+            ))
+          )}
+        </div>
+
         <div className="p-4 bg-gray-50 flex justify-center">
           <button
             type="button"
@@ -194,12 +239,17 @@ export function DashboardOrdersSection() {
 
 export function CriticalAlertsLink() {
   const { showToast } = useToast();
+  const { openPings } = usePingsSheet();
 
   function handleClick() {
-    showToast("Mostrando 3 alertas críticas del sistema", "warning");
-    document
-      .querySelector("[data-pings-panel]")
-      ?.scrollIntoView({ behavior: "smooth" });
+    showToast("Mostrando alertas críticas del sistema", "warning");
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      document
+        .querySelector("[data-pings-panel]")
+        ?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      openPings();
+    }
   }
 
   return (

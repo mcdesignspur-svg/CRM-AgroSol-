@@ -1,3 +1,4 @@
+import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
 
 interface AppShellProps {
@@ -11,20 +12,20 @@ export function AppShell({
   children,
   rightPanel,
   topBar,
-  fullWidth,
 }: AppShellProps) {
   return (
     <div className="flex min-h-screen bg-white">
       <Sidebar />
-      <div className={`flex-1 flex flex-col min-w-0 ${fullWidth ? "" : ""}`}>
+      <div className="flex-1 flex flex-col min-w-0">
         {topBar}
         <div className="flex flex-1 min-h-0">
-          <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <main className="flex-1 flex flex-col min-w-0 overflow-hidden pb-16 md:pb-0">
             {children}
           </main>
           {rightPanel}
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }

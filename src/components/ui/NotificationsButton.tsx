@@ -32,7 +32,7 @@ export function NotificationsButton() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white industrial-border industrial-shadow z-50 animate-[slideIn_0.15s_ease-out]">
+        <div className="absolute right-0 top-full mt-2 w-[min(20rem,calc(100vw-2rem))] bg-white industrial-border industrial-shadow z-50 animate-[slideIn_0.15s_ease-out]">
           <div className="p-3 border-b-2 border-black flex justify-between items-center">
             <span className="font-bold uppercase text-xs">Notificaciones</span>
             <span className="text-[10px] font-mono bg-black text-white px-2 py-0.5">

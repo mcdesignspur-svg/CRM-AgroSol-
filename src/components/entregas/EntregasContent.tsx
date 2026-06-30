@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
+import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useToast } from "@/components/providers/ToastProvider";
 import { NotificationsButton } from "@/components/ui/NotificationsButton";
 import {
@@ -110,6 +111,8 @@ export function EntregasPageContent() {
   );
 }
 
+type MobileTab = "mapa" | "entregas" | "sucursales";
+
 function EntregasContent() {
   const searchParams = useSearchParams();
   const ordenId = searchParams.get("orden");
@@ -118,10 +121,16 @@ function EntregasContent() {
 
   const [branches, setBranches] = useState(initialBranches);
   const [logs, setLogs] = useState<NotificationLog[]>(initialLogs);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+  const [mobileTab, setMobileTab] = useState<MobileTab>(() => {
+    if (branchFilter) return "sucursales";
+    if (ordenId) return "entregas";
+    return "entregas";
+  });
   const [mapZoom, setMapZoom] = useState(1);
   const [sendingPing, setSendingPing] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
@@ -178,12 +187,15 @@ function EntregasContent() {
       fullWidth
       topBar={
         <>
-          <header className="h-16 flex justify-between items-center px-4 md:px-6 py-2 border-b-2 border-black bg-white z-40 shrink-0">
-            <div className="flex items-center gap-4 md:gap-8 min-w-0">
+          <header className="flex justify-between items-center px-3 sm:px-4 md:px-6 py-2 border-b-2 border-black bg-white z-40 shrink-0 gap-2">
+            <div className="md:hidden flex-1 min-w-0">
+              <MobileHeader title="Entregas y Sucursales" />
+            </div>
+            <div className="hidden md:flex items-center gap-4 md:gap-8 min-w-0 flex-1">
               <h2 className="font-display text-lg md:text-xl font-extrabold text-primary-container uppercase truncate">
                 Entregas y Sucursales
               </h2>
-              <div className="hidden md:flex gap-6">
+              <div className="flex gap-6">
                 <Link
                   href="/"
                   className="text-on-surface-variant font-mono hover:text-primary-container transition-all uppercase tracking-wider text-[11px]"
@@ -195,7 +207,15 @@ function EntregasContent() {
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => setSearchOpen((v) => !v)}
+                className="sm:hidden p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Buscar"
+              >
+                <span className="material-symbols-outlined">search</span>
+              </button>
               <form
                 onSubmit={handleSearch}
                 className="relative hidden sm:flex items-center bg-surface-container-low border-2 border-black px-4 py-1"
@@ -215,6 +235,50 @@ function EntregasContent() {
             </div>
           </header>
 
+          {searchOpen && (
+            <form
+              onSubmit={(e) => {
+                handleSearch(e);
+                setSearchOpen(false);
+              }}
+              className="sm:hidden px-4 py-2 bg-surface-container-low border-b-2 border-black"
+            >
+              <input
+                autoFocus
+                className="w-full industrial-border bg-white text-sm font-bold py-2.5 px-3"
+                placeholder="Buscar órdenes..."
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </form>
+          )}
+
+          {/* Tabs móvil */}
+          <div className="xl:hidden flex border-b-2 border-black bg-white shrink-0">
+            {(
+              [
+                { id: "mapa" as const, label: "Mapa", icon: "map" },
+                { id: "entregas" as const, label: "Entregas", icon: "local_shipping" },
+                { id: "sucursales" as const, label: "Sucursales", icon: "storefront" },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setMobileTab(tab.id)}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[48px] text-[10px] font-bold uppercase transition-colors ${
+                  mobileTab === tab.id
+                    ? "bg-secondary-container text-on-secondary-container border-b-2 border-primary -mb-[2px]"
+                    : "text-on-surface-variant"
+                }`}
+              >
+                <span className="material-symbols-outlined text-lg">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           {ordenId && (
             <div className="bg-secondary-container border-b-2 border-black px-6 py-2 flex items-center justify-between">
               <span className="text-xs font-bold uppercase">
@@ -233,8 +297,16 @@ function EntregasContent() {
       }
     >
       <div className="flex-1 overflow-hidden grid grid-cols-1 xl:grid-cols-12 gap-0 min-h-0">
-        <div className="xl:col-span-8 flex flex-col border-r-2 border-black relative min-h-[600px] xl:min-h-0">
-          <div className="h-64 xl:h-1/2 w-full bg-surface-container relative border-b-2 border-black overflow-hidden">
+        <div
+          className={`xl:col-span-8 flex flex-col border-r-2 border-black relative min-h-0 xl:min-h-0 ${
+            mobileTab !== "mapa" && mobileTab !== "entregas" ? "hidden xl:flex" : ""
+          } ${mobileTab === "mapa" ? "flex" : mobileTab === "entregas" ? "flex" : ""}`}
+        >
+          <div
+            className={`h-48 sm:h-64 xl:h-1/2 w-full bg-surface-container relative border-b-2 border-black overflow-hidden shrink-0 ${
+              mobileTab !== "mapa" ? "hidden xl:block" : ""
+            }`}
+          >
             <div className="absolute inset-0 z-0 overflow-hidden">
               <div
                 className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 grayscale contrast-125 opacity-60 light-grid-pattern transition-transform duration-300 origin-center"
@@ -266,58 +338,100 @@ function EntregasContent() {
                 </button>
               </div>
             </div>
-            <div className="absolute bottom-6 left-6 bg-white p-4 border-2 border-black industrial-shadow flex flex-wrap gap-6 z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 border border-black bg-primary-container animate-pulse" />
-                <span className="font-mono font-bold text-black uppercase text-xs">
+            <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 bg-white p-3 sm:p-4 border-2 border-black industrial-shadow flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 z-10 max-w-[calc(100%-1.5rem)]">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-3 h-3 border border-black bg-primary-container animate-pulse shrink-0" />
+                <span className="font-mono font-bold text-black uppercase text-[10px] sm:text-xs">
                   12 EN TRÁNSITO
                 </span>
               </div>
-              <div className="flex items-center gap-3 border-l-2 border-black pl-6">
-                <div className="w-3 h-3 border border-black bg-secondary-container" />
-                <span className="font-mono font-bold text-black uppercase text-xs">
+              <div className="flex items-center gap-2 sm:gap-3 sm:border-l-2 sm:border-black sm:pl-6">
+                <div className="w-3 h-3 border border-black bg-secondary-container shrink-0" />
+                <span className="font-mono font-bold text-black uppercase text-[10px] sm:text-xs">
                   4 ENTREGAS REALIZADAS
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col bg-white min-h-0">
-            <div className="p-6 border-b-2 border-black flex justify-between items-center bg-surface-container-lowest">
-              <h3 className="font-display text-xl text-black flex items-center gap-2 uppercase">
+          <div
+            className={`flex-1 flex flex-col bg-white min-h-0 ${
+              mobileTab !== "entregas" ? "hidden xl:flex" : ""
+            }`}
+          >
+            <div className="p-4 sm:p-6 border-b-2 border-black flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-surface-container-lowest">
+              <h3 className="font-display text-lg sm:text-xl text-black flex items-center gap-2 uppercase">
                 <span className="material-symbols-outlined text-primary-container">
                   local_shipping
                 </span>
                 Entregas Activas
               </h3>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setViewMode("list")}
-                  className={`px-4 py-1.5 font-mono text-[10px] font-bold uppercase transition-all ${
+                  className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 font-mono text-[10px] font-bold uppercase transition-all min-h-[44px] ${
                     viewMode === "list"
                       ? "bg-black text-white"
                       : "bg-white border-2 border-black text-black hover:bg-surface-container"
                   }`}
                 >
-                  Vista de Lista
+                  Lista
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewMode("grid")}
-                  className={`px-4 py-1.5 font-mono text-[10px] font-bold uppercase transition-all ${
+                  className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 font-mono text-[10px] font-bold uppercase transition-all min-h-[44px] ${
                     viewMode === "grid"
                       ? "bg-black text-white"
                       : "bg-white border-2 border-black text-black hover:bg-surface-container"
                   }`}
                 >
-                  Vista de Cuadrícula
+                  Cuadrícula
                 </button>
               </div>
             </div>
 
             {viewMode === "list" ? (
-              <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <>
+                {/* Lista móvil — tarjetas */}
+                <div className="md:hidden flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
+                  {activeDeliveries.map((delivery) => (
+                    <div
+                      key={delivery.id}
+                      className={`border-2 border-black p-4 industrial-shadow ${
+                        ordenId && delivery.id.includes(ordenId.slice(-4))
+                          ? "bg-secondary-container/30"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="font-mono font-bold text-primary-container text-sm">
+                          #{delivery.id}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 text-[9px] font-bold uppercase ${
+                            delivery.status === "recogida"
+                              ? "bg-primary-container text-white"
+                              : "bg-secondary-container text-black"
+                          }`}
+                        >
+                          {delivery.status === "recogida" ? "Recogida" : "Entrega"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-8 h-8 border border-black bg-surface-container flex items-center justify-center text-[10px] font-bold">
+                          {delivery.driverInitials}
+                        </div>
+                        <span className="font-semibold text-sm">{delivery.driverName}</span>
+                      </div>
+                      <p className="text-xs text-on-surface-variant">{delivery.destination}</p>
+                      <p className="text-xs font-mono mt-1 opacity-70">ETA: {delivery.eta}</p>
+                    </div>
+                  ))}
+                </div>
+                {/* Lista desktop — tabla */}
+                <div className="hidden md:block flex-1 overflow-y-auto custom-scrollbar">
                 <table className="w-full text-left border-collapse">
                   <thead className="sticky top-0 bg-black text-white z-10">
                     <tr>
@@ -384,7 +498,8 @@ function EntregasContent() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             ) : (
               <div className="flex-1 overflow-y-auto custom-scrollbar p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {activeDeliveries.map((delivery) => (
@@ -420,7 +535,11 @@ function EntregasContent() {
           </div>
         </div>
 
-        <div className="xl:col-span-4 flex flex-col bg-surface-container-lowest overflow-hidden">
+        <div
+          className={`xl:col-span-4 flex flex-col bg-surface-container-lowest overflow-hidden ${
+            mobileTab !== "sucursales" ? "hidden xl:flex" : ""
+          }`}
+        >
           <section className="p-6 border-b-2 border-black bg-white">
             <h3 className="font-mono text-black font-extrabold mb-6 uppercase tracking-widest text-xs flex justify-between items-center">
               Estado de Sucursales ({branches.length})

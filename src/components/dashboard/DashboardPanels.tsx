@@ -168,18 +168,18 @@ export function DashboardHeader() {
           Supervisión en tiempo real de la red Agrocentro Solá.
         </p>
       </div>
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
         <button
           type="button"
           onClick={handleExport}
           disabled={exporting}
-          className="btn-secondary px-6 py-3 text-sm font-bold uppercase disabled:opacity-60"
+          className="btn-secondary px-4 sm:px-6 py-3 text-sm font-bold uppercase disabled:opacity-60 w-full sm:w-auto min-h-[44px]"
         >
           {exporting ? "Exportando..." : "Exportar Datos"}
         </button>
         <Link
           href="/ordenes/nueva"
-          className="btn-primary px-6 py-3 text-sm font-bold uppercase industrial-border inline-flex items-center"
+          className="btn-primary px-4 sm:px-6 py-3 text-sm font-bold uppercase industrial-border inline-flex items-center justify-center w-full sm:w-auto min-h-[44px]"
         >
           Crear Nueva Orden
         </Link>

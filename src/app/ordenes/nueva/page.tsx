@@ -94,7 +94,7 @@ export default function NuevaOrdenPage() {
         </TopBar>
       }
     >
-      <div className="flex-1 overflow-y-auto pt-8 pb-16 px-6 md:px-8">
+      <div className="flex-1 overflow-y-auto pt-4 sm:pt-8 pb-36 lg:pb-16 px-4 sm:px-6 md:px-8">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-6">
@@ -235,7 +235,7 @@ export default function NuevaOrdenPage() {
                     + AGREGAR ARTÍCULO
                   </button>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto hidden sm:block">
                   <table className="w-full text-left border-collapse">
                     <thead className="bg-black text-white">
                       <tr>
@@ -292,6 +292,48 @@ export default function NuevaOrdenPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Productos — vista móvil */}
+                <div className="sm:hidden space-y-3">
+                  {lineItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="border-2 border-black p-4 bg-gray-50"
+                    >
+                      <div className="font-bold text-black uppercase text-sm">
+                        {item.name}
+                      </div>
+                      <div className="text-[10px] text-gray-500 font-mono mt-1">
+                        SKU: {item.sku}
+                      </div>
+                      <div className="flex justify-between items-center mt-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold uppercase">Cant.</span>
+                          <input
+                            className="w-16 bg-white border-2 border-black px-2 py-2 font-bold text-center min-h-[44px]"
+                            type="number"
+                            min={1}
+                            value={item.quantity}
+                            onChange={(e) =>
+                              updateQuantity(
+                                item.id,
+                                parseInt(e.target.value, 10) || 1,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs font-bold">
+                            ${item.unitPrice.toFixed(2)} c/u
+                          </div>
+                          <div className="font-extrabold text-primary">
+                            ${(item.unitPrice * item.quantity).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </section>
             </div>
 
@@ -341,7 +383,7 @@ export default function NuevaOrdenPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="p-4 bg-gray-50 border-t-2 border-black space-y-4">
+                  <div className="p-4 bg-gray-50 border-t-2 border-black space-y-4 hidden lg:block">
                     <div className="flex items-start gap-4">
                       <input
                         className="mt-1 w-4 h-4 border-2 border-black"
@@ -417,7 +459,43 @@ export default function NuevaOrdenPage() {
           </div>
         </div>
       </div>
-      <div className="fixed bottom-0 left-0 w-full h-2 bg-primary z-50 md:left-64" />
+
+      {/* Footer fijo móvil */}
+      <div className="lg:hidden fixed bottom-16 left-0 right-0 z-40 bg-white border-t-2 border-black px-4 py-3 flex items-center gap-3 safe-area-bottom">
+        <div className="shrink-0">
+          <p className="text-[9px] font-bold uppercase text-gray-500">Total</p>
+          <p className="text-lg font-extrabold text-primary leading-tight">
+            ${total.toFixed(2)}
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={submitting || submitted}
+          onClick={handleSubmit}
+          className={`flex-1 py-3 text-white font-extrabold text-sm industrial-border industrial-shadow active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-80 min-h-[44px] ${
+            submitted ? "bg-green-600" : "bg-primary"
+          }`}
+        >
+          {submitting ? (
+            <>
+              <span className="material-symbols-outlined animate-spin text-lg">sync</span>
+              Procesando...
+            </>
+          ) : submitted ? (
+            <>
+              <span className="material-symbols-outlined text-lg">check_circle</span>
+              Realizada
+            </>
+          ) : (
+            <>
+              <span className="material-symbols-outlined text-lg">send</span>
+              Confirmar Orden
+            </>
+          )}
+        </button>
+      </div>
+
+      <div className="hidden md:block fixed bottom-0 left-0 w-full h-2 bg-primary z-50 md:left-64" />
     </AppShell>
   );
 }

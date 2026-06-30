@@ -17,7 +17,7 @@ export function MetricCard({
 
   return (
     <div
-      className={`industrial-border p-6 flex flex-col justify-between ${
+      className={`industrial-border p-4 sm:p-6 flex flex-col justify-between ${
         isAlert ? "bg-primary text-white" : "bg-white"
       }`}
     >
@@ -39,7 +39,7 @@ export function MetricCard({
         </span>
       </div>
       <div className="mt-4">
-        <span className="text-4xl font-extrabold">{value}</span>
+        <span className="text-2xl sm:text-4xl font-extrabold">{value}</span>
         {subtitle && <div className="text-xs font-bold mt-1">{subtitle}</div>}
       </div>
     </div>
