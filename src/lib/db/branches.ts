@@ -1,5 +1,28 @@
+import { BRANCH_DEFINITIONS } from "@/lib/branch-definitions";
 import { prisma } from "@/lib/prisma";
 import { mapBranch } from "./mappers";
+
+export async function ensureBranches() {
+  await Promise.all(
+    BRANCH_DEFINITIONS.map((branch) =>
+      prisma.branch.upsert({
+        where: { id: branch.id },
+        update: {
+          name: branch.name,
+          address: branch.address,
+        },
+        create: {
+          id: branch.id,
+          name: branch.name,
+          address: branch.address,
+          capacityPercent: 0,
+          currentVolume: 0,
+          status: "online",
+        },
+      }),
+    ),
+  );
+}
 
 export async function getBranches() {
   const rows = await prisma.branch.findMany({ orderBy: { name: "asc" } });
@@ -12,6 +35,8 @@ export async function getBranchById(id: string) {
 }
 
 export async function sendBranchPing(branchId: string, message?: string) {
+  await ensureBranches();
+
   const branch = await prisma.branch.update({
     where: { id: branchId },
     data: { lastPingAt: new Date() },

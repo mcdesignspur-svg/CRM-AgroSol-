@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useBranch } from "@/components/providers/BranchProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { NotificationsButton } from "@/components/ui/NotificationsButton";
@@ -22,6 +23,7 @@ export function TopBar({
 }: TopBarProps) {
   const { branchId, setBranchId } = useBranch();
   const { showToast } = useToast();
+  const router = useRouter();
   const [branchOpen, setBranchOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,8 +48,9 @@ export function TopBar({
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      showToast(`Buscando: "${searchQuery}"`, "info");
+    const query = searchQuery.trim();
+    if (query) {
+      router.push(`/ordenes?q=${encodeURIComponent(query)}`);
       setSearchOpen(false);
     }
   }
