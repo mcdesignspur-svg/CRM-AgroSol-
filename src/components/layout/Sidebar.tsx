@@ -1,7 +1,6 @@
 "use client";
 
 import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
-import { MobileDrawer } from "./MobileDrawer";
 import { SidebarNav } from "./SidebarNav";
 import { useSidebarModals } from "./SidebarModals";
 
@@ -26,12 +25,6 @@ export function Sidebar() {
           onSupportClick={openSupport}
         />
       </aside>
-
-      <MobileDrawer
-        onPingClick={openPing}
-        onConfigClick={openConfig}
-        onSupportClick={openSupport}
-      />
 
       {modals}
     </>
