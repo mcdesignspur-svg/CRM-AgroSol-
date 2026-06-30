@@ -9,6 +9,7 @@ import {
   StatusBadge,
   TypeBadge,
 } from "@/components/ui/badges";
+import { ElapsedTime } from "@/components/ui/ElapsedTime";
 import type { Order, OrderStatus, OrderType } from "@/lib/types";
 
 type FilterMode = "all" | OrderType | OrderStatus;
@@ -191,7 +192,7 @@ export function DashboardOrdersSection({
                           : "opacity-80"
                       }`}
                     >
-                      {order.elapsedTime}
+                      <ElapsedTime createdAt={order.createdAt} />
                     </td>
                     <td className="p-4">
                       <Link
@@ -234,7 +235,7 @@ export function DashboardOrdersSection({
                         : "opacity-70"
                     }`}
                   >
-                    {order.elapsedTime}
+                    <ElapsedTime createdAt={order.createdAt} />
                   </span>
                 </div>
                 <Link

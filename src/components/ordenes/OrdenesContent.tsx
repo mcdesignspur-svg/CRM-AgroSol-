@@ -10,6 +10,7 @@ import {
   StatusBadge,
   TypeBadge,
 } from "@/components/ui/badges";
+import { ElapsedTime } from "@/components/ui/ElapsedTime";
 import { ORDER_STATUS_LABELS } from "@/lib/order-status";
 import type { Order, OrderStatus, OrderType } from "@/lib/types";
 
@@ -273,7 +274,7 @@ export function OrdenesContent({
                             : "opacity-80"
                         }`}
                       >
-                        {order.elapsedTime}
+                        <ElapsedTime createdAt={order.createdAt} />
                       </td>
                       <td className="p-4">
                         <Link
@@ -313,7 +314,10 @@ export function OrdenesContent({
                   <div className="flex flex-wrap gap-2 items-center text-xs">
                     <TypeBadge type={order.type} />
                     <BranchLabel branchId={order.branchId} />
-                    <span className="font-mono opacity-70">{order.elapsedTime}</span>
+                    <ElapsedTime
+                      createdAt={order.createdAt}
+                      className="font-mono opacity-70"
+                    />
                   </div>
                   <Link
                     href={`/ordenes/${encodeURIComponent(order.id)}`}

@@ -23,6 +23,7 @@ import {
   getAllowedStatusTransitions,
   resolveDisplayStatus,
 } from "@/lib/order-status";
+import { formatElapsedTime } from "@/lib/time";
 
 const ORDER_STATUS_MAP: Record<PrismaOrderStatus, OrderStatus> = {
   pendiente: "pendiente",
@@ -31,17 +32,6 @@ const ORDER_STATUS_MAP: Record<PrismaOrderStatus, OrderStatus> = {
   atrasado: "atrasado",
   completado: "completado",
 };
-
-export function formatElapsedTime(createdAt: Date): string {
-  const diffMs = Date.now() - createdAt.getTime();
-  const totalSeconds = Math.floor(diffMs / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return [hours, minutes, seconds]
-    .map((n) => String(n).padStart(2, "0"))
-    .join(":");
-}
 
 export function formatTimeAgo(createdAt: Date): string {
   const diffMs = Date.now() - createdAt.getTime();

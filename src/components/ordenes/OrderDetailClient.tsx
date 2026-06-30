@@ -11,6 +11,7 @@ import {
   StatusBadge,
   TypeBadge,
 } from "@/components/ui/badges";
+import { ElapsedTime } from "@/components/ui/ElapsedTime";
 import { BRANCH_LABELS } from "@/lib/constants";
 import {
   ORDER_STATUS_LABELS,
@@ -83,7 +84,12 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
               <TypeBadge type={order.type} />
             </div>
             <p className="text-sm text-on-surface-variant mt-2">
-              Creada hace {order.elapsedTime} · {BRANCH_LABELS[order.branchId]}
+              Creada hace{" "}
+              <ElapsedTime
+                createdAt={order.createdAt}
+                className="font-mono font-bold"
+              />{" "}
+              · {BRANCH_LABELS[order.branchId]}
             </p>
           </div>
 
