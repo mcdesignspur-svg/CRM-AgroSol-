@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import { useToast } from "@/components/providers/ToastProvider";
 import type { Ping } from "@/lib/types";
 
 const priorityStyles: Record<
@@ -19,7 +23,20 @@ const priorityStyles: Record<
   },
 };
 
-export function LivePingsPanel({ pings }: { pings: Ping[] }) {
+export function LivePingsPanel({ initialPings }: { initialPings: Ping[] }) {
+  const [pings, setPings] = useState(initialPings);
+  const { showToast } = useToast();
+
+  function dismissPing(id: string) {
+    setPings((prev) => prev.filter((p) => p.id !== id));
+    showToast("Ping descartado", "info");
+  }
+
+  function callDriver(ping: Ping) {
+    showToast(`Llamando al conductor — ${ping.title}`, "info");
+    window.open("tel:+17875550142", "_self");
+  }
+
   return (
     <aside className="hidden lg:flex flex-col w-80 border-l-2 border-on-background bg-surface-container-lowest h-full shrink-0">
       <div className="p-6 border-b-2 border-on-background flex items-center gap-3">
@@ -33,47 +50,55 @@ export function LivePingsPanel({ pings }: { pings: Ping[] }) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-        {pings.map((ping) => {
-          const styles = priorityStyles[ping.priority];
-          return (
-            <div key={ping.id} className={`p-4 ${styles.border}`}>
-              <div className="flex justify-between items-start mb-2">
-                <span
-                  className={`text-[10px] font-bold uppercase px-2 py-0.5 ${styles.badge}`}
-                >
-                  {ping.priority === "urgente"
-                    ? "Urgente"
-                    : ping.priority === "sistema"
-                      ? "Sistema"
-                      : "Advertencia"}
-                </span>
-                <span className="text-[10px] font-mono opacity-60">
-                  {ping.timeAgo}
-                </span>
-              </div>
-              <p className="text-sm font-bold">{ping.title}</p>
-              <p className="text-xs text-on-surface-variant mt-1">
-                {ping.description}
-              </p>
-              {ping.priority === "urgente" && (
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    className="text-[10px] font-bold uppercase border border-black px-2 py-1"
+        {pings.length === 0 ? (
+          <p className="text-xs font-bold uppercase text-center opacity-50 py-8">
+            Sin pings activos
+          </p>
+        ) : (
+          pings.map((ping) => {
+            const styles = priorityStyles[ping.priority];
+            return (
+              <div key={ping.id} className={`p-4 ${styles.border}`}>
+                <div className="flex justify-between items-start mb-2">
+                  <span
+                    className={`text-[10px] font-bold uppercase px-2 py-0.5 ${styles.badge}`}
                   >
-                    Descartar
-                  </button>
-                  <button
-                    type="button"
-                    className="text-[10px] font-bold uppercase bg-black text-white px-2 py-1"
-                  >
-                    Llamar
-                  </button>
+                    {ping.priority === "urgente"
+                      ? "Urgente"
+                      : ping.priority === "sistema"
+                        ? "Sistema"
+                        : "Advertencia"}
+                  </span>
+                  <span className="text-[10px] font-mono opacity-60">
+                    {ping.timeAgo}
+                  </span>
                 </div>
-              )}
-            </div>
-          );
-        })}
+                <p className="text-sm font-bold">{ping.title}</p>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  {ping.description}
+                </p>
+                {ping.priority === "urgente" && (
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => dismissPing(ping.id)}
+                      className="text-[10px] font-bold uppercase border border-black px-2 py-1 hover:bg-gray-100 transition-colors"
+                    >
+                      Descartar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => callDriver(ping)}
+                      className="text-[10px] font-bold uppercase bg-black text-white px-2 py-1 hover:bg-primary transition-colors"
+                    >
+                      Llamar
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
 
         <div className="pt-8 opacity-20 text-center">
           <span className="material-symbols-outlined text-6xl">history</span>
@@ -106,6 +131,33 @@ export function LivePingsPanel({ pings }: { pings: Ping[] }) {
 }
 
 export function DashboardHeader() {
+  const { showToast } = useToast();
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExport() {
+    setExporting(true);
+    await new Promise((r) => setTimeout(r, 600));
+
+    const csv = [
+      "ID,Cliente,Tipo,Sucursal,Estado,Tiempo",
+      "ORD-99021,Juan del Pueblo,entrega,gurabo,en-transito,02:14:00",
+      "ORD-99018,María Rodríguez,retiro,navarro,listo,08:45:12",
+      "ORD-99015,Carlos Ortiz,entrega,san-lorenzo,pendiente,00:15:30",
+      "ORD-99010,Agro Industrias PR,entrega,gurabo,atrasado,14:22:05",
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "agrosol-ordenes.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+
+    setExporting(false);
+    showToast("Datos exportados correctamente", "success");
+  }
+
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
       <div>
@@ -119,9 +171,11 @@ export function DashboardHeader() {
       <div className="flex gap-4">
         <button
           type="button"
-          className="btn-secondary px-6 py-3 text-sm font-bold uppercase"
+          onClick={handleExport}
+          disabled={exporting}
+          className="btn-secondary px-6 py-3 text-sm font-bold uppercase disabled:opacity-60"
         >
-          Exportar Datos
+          {exporting ? "Exportando..." : "Exportar Datos"}
         </button>
         <Link
           href="/ordenes/nueva"

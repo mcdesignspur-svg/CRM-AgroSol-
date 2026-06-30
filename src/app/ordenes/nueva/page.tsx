@@ -3,13 +3,15 @@
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
-import { catalogProducts } from "@/lib/data";
+import { catalogProducts, extraCatalogProducts } from "@/lib/data";
 import {
   BRANCH_LABELS,
   DEFAULT_BRANCH,
   DELIVERY_FEE,
   TAX_RATE,
 } from "@/lib/constants";
+import { useToast } from "@/components/providers/ToastProvider";
+
 import type { BranchId, OrderLineItem } from "@/lib/types";
 
 type FulfillmentMethod = "pickup" | "delivery";
@@ -22,7 +24,28 @@ export default function NuevaOrdenPage() {
   );
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const { showToast } = useToast();
   const [smsNotify, setSmsNotify] = useState(false);
+
+  function addLineItem() {
+    const available = extraCatalogProducts.find(
+      (p) => !lineItems.some((item) => item.id === p.id),
+    );
+    if (available) {
+      setLineItems((items) => [...items, { ...available, quantity: 1 }]);
+      showToast(`${available.name} agregado`, "success");
+    } else {
+      showToast("Todos los productos del catálogo ya están en la orden", "info");
+    }
+  }
+
+  async function handleSaveDraft() {
+    setDraftSaved(true);
+    await new Promise((r) => setTimeout(r, 500));
+    showToast("Borrador guardado localmente", "success");
+    setTimeout(() => setDraftSaved(false), 2000);
+  }
 
   const subtotal = useMemo(
     () =>
@@ -51,6 +74,7 @@ export default function NuevaOrdenPage() {
     await new Promise((resolve) => setTimeout(resolve, 1500));
     setSubmitting(false);
     setSubmitted(true);
+    showToast("Orden confirmada y ping enviado a sucursal", "success");
   }
 
   return (
@@ -205,6 +229,7 @@ export default function NuevaOrdenPage() {
                   </div>
                   <button
                     type="button"
+                    onClick={addLineItem}
                     className="text-xs font-bold uppercase px-4 py-2 border-2 border-black hover:bg-black hover:text-white transition-all"
                   >
                     + AGREGAR ARTÍCULO
@@ -368,9 +393,11 @@ export default function NuevaOrdenPage() {
                     </button>
                     <button
                       type="button"
-                      className="w-full py-2 border-2 border-black bg-white font-bold uppercase text-xs hover:bg-gray-100 transition-all"
+                      onClick={handleSaveDraft}
+                      disabled={draftSaved}
+                      className="w-full py-2 border-2 border-black bg-white font-bold uppercase text-xs hover:bg-gray-100 transition-all disabled:opacity-60"
                     >
-                      GUARDAR COMO BORRADOR
+                      {draftSaved ? "BORRADOR GUARDADO" : "GUARDAR COMO BORRADOR"}
                     </button>
                   </div>
                 </div>

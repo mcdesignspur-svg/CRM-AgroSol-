@@ -56,6 +56,27 @@ export const recentOrders: Order[] = [
   },
 ];
 
+export const extraOrders: Order[] = [
+  {
+    id: "ORD-99005",
+    customerName: "Finca El Roble",
+    type: "entrega",
+    branchId: "san-lorenzo",
+    status: "en-transito",
+    elapsedTime: "01:30:00",
+    createdAt: "2026-06-29T11:00:00",
+  },
+  {
+    id: "ORD-99002",
+    customerName: "Distribuidora Norte",
+    type: "retiro",
+    branchId: "gurabo",
+    status: "completado",
+    elapsedTime: "00:45:00",
+    createdAt: "2026-06-29T12:30:00",
+  },
+];
+
 export const livePings: Ping[] = [
   {
     id: "ping-1",
@@ -187,5 +208,20 @@ export const catalogProducts: Product[] = [
     name: "Fungicida Herbal (5L)",
     sku: "AG-2342-SOL",
     unitPrice: 120,
+  },
+];
+
+export const extraCatalogProducts: Product[] = [
+  {
+    id: "prod-3",
+    name: "Herbicida Selectivo (10L)",
+    sku: "AG-4410-HERB",
+    unitPrice: 85,
+  },
+  {
+    id: "prod-4",
+    name: "Semillas Híbridas Maíz (25kg)",
+    sku: "AG-7720-SEM",
+    unitPrice: 210,
   },
 ];
