@@ -68,6 +68,8 @@ export interface Delivery {
   destination: string;
   eta: string;
   status: "recogida" | "entrega";
+  branchId?: BranchId;
+  orderId?: string;
 }
 
 export interface Ping {

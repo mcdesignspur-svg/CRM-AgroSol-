@@ -87,25 +87,37 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
             </p>
           </div>
 
-          {order.allowedTransitions.length > 0 && (
-            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-              {order.allowedTransitions.map((status) => (
-                <button
-                  key={status}
-                  type="button"
-                  disabled={updating !== null}
-                  onClick={() => handleStatusChange(status)}
-                  className={`btn-primary px-4 py-3 text-xs font-bold uppercase industrial-border min-h-[44px] disabled:opacity-60 ${
-                    status === "completado" ? "bg-green-600 hover:bg-green-700" : ""
-                  }`}
-                >
-                  {updating === status
-                    ? "Actualizando..."
-                    : STATUS_ACTION_LABELS[status] ?? ORDER_STATUS_LABELS[status]}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex flex-col gap-2 w-full lg:w-auto">
+            {order.allowedTransitions.length > 0 && (
+              <div className="flex flex-col sm:flex-row gap-2">
+                {order.allowedTransitions.map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    disabled={updating !== null}
+                    onClick={() => handleStatusChange(status)}
+                    className={`btn-primary px-4 py-3 text-xs font-bold uppercase industrial-border min-h-[44px] disabled:opacity-60 ${
+                      status === "completado" ? "bg-green-600 hover:bg-green-700" : ""
+                    }`}
+                  >
+                    {updating === status
+                      ? "Actualizando..."
+                      : STATUS_ACTION_LABELS[status] ?? ORDER_STATUS_LABELS[status]}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {order.fulfillment === "delivery" && order.status === "en-transito" && (
+              <Link
+                href={`/entregas?orden=${encodeURIComponent(order.id)}`}
+                className="inline-flex items-center gap-2 btn-secondary px-4 py-3 text-xs font-bold uppercase min-h-[44px] justify-center"
+              >
+                <span className="material-symbols-outlined text-base">local_shipping</span>
+                Ver en Entregas
+              </Link>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

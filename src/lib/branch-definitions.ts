@@ -4,6 +4,8 @@ export interface BranchDefinition {
   id: BranchId;
   name: string;
   address: string;
+  lat: number;
+  lng: number;
 }
 
 export const BRANCH_DEFINITIONS: readonly BranchDefinition[] = [
@@ -11,16 +13,22 @@ export const BRANCH_DEFINITIONS: readonly BranchDefinition[] = [
     id: "gurabo",
     name: "Gurabo (Central)",
     address: "Av. Agrícola 450",
+    lat: 18.2545,
+    lng: -65.9729,
   },
   {
     id: "san-lorenzo",
     name: "San Lorenzo",
     address: "Km 12 Carretera Federal",
+    lat: 18.1894,
+    lng: -65.9614,
   },
   {
     id: "navarro",
     name: "Ferretería Navarro",
     address: "Zona Industrial Lote 9",
+    lat: 18.235,
+    lng: -66.008,
   },
 ] as const;
 

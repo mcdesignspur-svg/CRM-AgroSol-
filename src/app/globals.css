@@ -123,3 +123,18 @@ textarea:focus {
 .safe-area-top {
   padding-top: env(safe-area-inset-top, 0px);
 }
+
+.leaflet-container {
+  font-family: var(--font-body), Inter, sans-serif;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  border: 2px solid #000;
+  border-radius: 0;
+  box-shadow: 4px 4px 0 #000;
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px;
+}

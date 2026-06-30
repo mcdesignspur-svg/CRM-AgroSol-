@@ -82,8 +82,9 @@ Requiere `DATABASE_URL` apuntando a una instancia PostgreSQL accesible.
 1. Conecta el repositorio de GitHub en [vercel.com](https://vercel.com)
 2. Framework preset: **Next.js**
 3. Añade la variable de entorno `DATABASE_URL` (p. ej. Neon, Supabase o Railway)
-4. Ejecuta migraciones contra la base de producción antes del primer deploy
-5. Deploy automático en cada push a `main`
+4. Ejecuta migraciones contra la base de producción antes del primer deploy (`npm run db:deploy`)
+5. En Vercel, el build ejecuta `prisma migrate deploy` automáticamente si `DATABASE_URL` está configurada
+6. Deploy automático en cada push a `main`
 
 ## Estructura
 

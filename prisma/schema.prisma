@@ -87,6 +87,7 @@ model Order {
 
   branch    Branch          @relation(fields: [branchId], references: [id])
   lineItems OrderLineItem[]
+  delivery  Delivery?
 
   @@index([createdAt(sort: Desc)])
   @@index([status])
@@ -117,10 +118,14 @@ model Delivery {
   eta            String?
   status         DeliveryStatus
   branchId       String?        @map("branch_id")
+  orderId        String?        @unique @map("order_id")
   createdAt      DateTime       @default(now()) @map("created_at")
 
   branch Branch? @relation(fields: [branchId], references: [id])
+  order  Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
+  @@index([status])
+  @@index([branchId])
   @@map("deliveries")
 }
 

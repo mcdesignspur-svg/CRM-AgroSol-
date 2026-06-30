@@ -171,7 +171,10 @@ export function mapOrderDetail(
   };
 }
 
-export function mapDelivery(delivery: PrismaDelivery): Delivery {
+export function mapDelivery(
+  delivery: PrismaDelivery,
+  orderDisplayId?: string,
+): Delivery {
   return {
     id: delivery.displayId,
     driverName: delivery.driverName,
@@ -179,6 +182,8 @@ export function mapDelivery(delivery: PrismaDelivery): Delivery {
     destination: delivery.destination,
     eta: delivery.eta ?? "—",
     status: delivery.status,
+    branchId: (delivery.branchId as BranchId | null) ?? undefined,
+    orderId: orderDisplayId,
   };
 }
 
