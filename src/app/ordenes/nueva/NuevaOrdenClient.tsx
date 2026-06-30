@@ -1,9 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
 import { useToast } from "@/components/providers/ToastProvider";
+import { AddProductModal } from "@/components/productos/AddProductModal";
+import { ProductPickerModal } from "@/components/productos/ProductPickerModal";
 import {
   BRANCH_LABELS,
   DEFAULT_BRANCH,
@@ -19,8 +22,11 @@ interface NuevaOrdenClientProps {
 }
 
 export default function NuevaOrdenClient({
-  catalogProducts,
+  catalogProducts: initialCatalogProducts,
 }: NuevaOrdenClientProps) {
+  const [catalogProducts, setCatalogProducts] = useState(initialCatalogProducts);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [addProductOpen, setAddProductOpen] = useState(false);
   const [method, setMethod] = useState<FulfillmentMethod>("pickup");
   const [branchId, setBranchId] = useState<BranchId>(DEFAULT_BRANCH);
   const [customerName, setCustomerName] = useState("");
@@ -34,15 +40,20 @@ export default function NuevaOrdenClient({
   const [smsNotify, setSmsNotify] = useState(false);
 
   function addLineItem() {
-    const available = catalogProducts.find(
-      (p) => !lineItems.some((item) => item.id === p.id),
+    setPickerOpen(true);
+  }
+
+  function selectProduct(product: Product) {
+    setLineItems((items) => [...items, { ...product, quantity: 1 }]);
+    showToast(`${product.name} agregado`, "success");
+  }
+
+  function handleProductCreated(product: Product) {
+    setCatalogProducts((prev) =>
+      [...prev, product].sort((a, b) => a.name.localeCompare(b.name)),
     );
-    if (available) {
-      setLineItems((items) => [...items, { ...available, quantity: 1 }]);
-      showToast(`${available.name} agregado`, "success");
-    } else {
-      showToast("No hay productos en el catálogo", "info");
-    }
+    setLineItems((items) => [...items, { ...product, quantity: 1 }]);
+    showToast(`${product.name} creado y agregado a la orden`, "success");
   }
 
   async function handleSaveDraft() {
@@ -269,18 +280,33 @@ export default function NuevaOrdenClient({
                       Lista de Productos
                     </h2>
                   </div>
-                  <button
-                    type="button"
-                    onClick={addLineItem}
-                    className="text-xs font-bold uppercase px-4 py-2 border-2 border-black hover:bg-black hover:text-white transition-all"
-                  >
-                    + AGREGAR ARTÍCULO
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/productos"
+                      className="text-xs font-bold uppercase px-3 py-2 border-2 border-black hover:bg-surface-container transition-all hidden sm:inline-flex"
+                    >
+                      Catálogo
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={addLineItem}
+                      className="text-xs font-bold uppercase px-4 py-2 border-2 border-black hover:bg-black hover:text-white transition-all"
+                    >
+                      + AGREGAR ARTÍCULO
+                    </button>
+                  </div>
                 </div>
                 <div className="overflow-x-auto hidden sm:block">
                   {lineItems.length === 0 ? (
                     <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
-                      Sin productos — usa &quot;Agregar artículo&quot; o conecta el catálogo ERP
+                      Sin productos — usa &quot;Agregar artículo&quot; o{" "}
+                      <button
+                        type="button"
+                        onClick={() => setAddProductOpen(true)}
+                        className="underline hover:text-primary"
+                      >
+                        crea uno nuevo
+                      </button>
                     </p>
                   ) : (
                   <table className="w-full text-left border-collapse">
@@ -547,6 +573,24 @@ export default function NuevaOrdenClient({
       </div>
 
       <div className="hidden md:block fixed bottom-0 left-0 w-full h-2 bg-primary z-50 md:left-64" />
+
+      <ProductPickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        products={catalogProducts}
+        selectedIds={lineItems.map((item) => item.id)}
+        onSelect={selectProduct}
+        onCreateNew={() => {
+          setPickerOpen(false);
+          setAddProductOpen(true);
+        }}
+      />
+
+      <AddProductModal
+        open={addProductOpen}
+        onClose={() => setAddProductOpen(false)}
+        onCreated={handleProductCreated}
+      />
     </AppShell>
   );
 }
