@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
@@ -8,7 +9,22 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { NotificationsButton } from "@/components/ui/NotificationsButton";
 import { BRANCH_LABELS } from "@/lib/constants";
 import { isBranchId } from "@/lib/branch-definitions";
+import { isDeliveryHighlighted } from "@/lib/geo";
 import type { Branch, BranchId, Delivery, NotificationLog } from "@/lib/types";
+
+const EntregasMap = dynamic(
+  () => import("./EntregasMap").then((mod) => mod.EntregasMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-full bg-surface-container flex items-center justify-center">
+        <span className="material-symbols-outlined animate-spin text-4xl text-primary">
+          sync
+        </span>
+      </div>
+    ),
+  },
+);
 
 interface EntregasPageContentProps {
   initialBranches: Branch[];
@@ -138,12 +154,6 @@ function matchesDeliverySearch(delivery: Delivery, query: string) {
   ].some((value) => value?.toLowerCase().includes(normalized));
 }
 
-function isDeliveryHighlighted(delivery: Delivery, ordenId: string | null) {
-  if (!ordenId) return false;
-  if (delivery.orderId && delivery.orderId === ordenId) return true;
-  return delivery.id.toLowerCase().includes(ordenId.slice(-4).toLowerCase());
-}
-
 function EntregasContent({
   initialBranches,
   initialDeliveries,
@@ -165,7 +175,6 @@ function EntregasContent({
     if (ordenId) return "entregas";
     return "entregas";
   });
-  const [mapZoom, setMapZoom] = useState(1);
   const [sendingPing, setSendingPing] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -241,16 +250,6 @@ function EntregasContent({
       showToast("Registro de notificaciones limpiado", "info");
     } catch {
       showToast("Error al limpiar notificaciones", "error");
-    }
-  }
-
-  function handleMapControl(action: "zoom-in" | "zoom-out" | "locate") {
-    if (action === "zoom-in") {
-      setMapZoom((z) => Math.min(z + 0.2, 2));
-    } else if (action === "zoom-out") {
-      setMapZoom((z) => Math.max(z - 0.2, 0.6));
-    } else {
-      showToast("Centrando en tu ubicación...", "info");
     }
   }
 
@@ -463,42 +462,20 @@ function EntregasContent({
           } ${mobileTab === "mapa" ? "flex" : mobileTab === "entregas" ? "flex" : ""}`}
         >
           <div
-            className={`h-48 sm:h-64 xl:h-1/2 w-full bg-surface-container relative border-b-2 border-black overflow-hidden shrink-0 ${
+            className={`${
+              mobileTab === "mapa" ? "flex-1" : "h-48 sm:h-64 xl:h-1/2"
+            } w-full bg-surface-container relative border-b-2 border-black overflow-hidden shrink-0 ${
               mobileTab !== "mapa" ? "hidden xl:block" : ""
             }`}
           >
-            <div className="absolute inset-0 z-0 overflow-hidden">
-              <div
-                className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 grayscale contrast-125 opacity-60 light-grid-pattern transition-transform duration-300 origin-center"
-                style={{ transform: `scale(${mapZoom})` }}
-              />
-              <div className="absolute top-6 right-6 flex flex-col gap-2 z-10">
-                <button
-                  type="button"
-                  onClick={() => handleMapControl("zoom-in")}
-                  className="bg-white p-2 border-2 border-black hover:bg-surface-container active:scale-95 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                >
-                  <span className="material-symbols-outlined">add</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleMapControl("zoom-out")}
-                  className="bg-white p-2 border-2 border-black hover:bg-surface-container active:scale-95 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                >
-                  <span className="material-symbols-outlined">remove</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleMapControl("locate")}
-                  className="bg-white p-2 border-2 border-black hover:bg-surface-container active:scale-95 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                >
-                  <span className="material-symbols-outlined text-primary-container">
-                    my_location
-                  </span>
-                </button>
-              </div>
-            </div>
-            <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 bg-white p-3 sm:p-4 border-2 border-black industrial-shadow flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 z-10 max-w-[calc(100%-1.5rem)]">
+            <EntregasMap
+              branches={branches}
+              deliveries={filteredDeliveries}
+              activeBranchId={activeBranchId}
+              ordenId={ordenId}
+              onLocateError={(message) => showToast(message, "info")}
+            />
+            <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 bg-white p-3 sm:p-4 border-2 border-black industrial-shadow flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 z-[400] pointer-events-none max-w-[calc(100%-1.5rem)]">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-3 h-3 border border-black bg-primary-container animate-pulse shrink-0" />
                 <span className="font-mono font-bold text-black uppercase text-[10px] sm:text-xs">
