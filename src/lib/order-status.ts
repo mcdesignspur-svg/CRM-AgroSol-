@@ -4,7 +4,7 @@ import { DELIVERY_SLA_HOURS, PICKUP_SLA_HOURS } from "./constants";
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   pendiente: "Pendiente",
   "en-transito": "En Tránsito",
-  listo: "Listo para Retiro",
+  listo: "Listo para Pickup",
   atrasado: "Atrasado",
   completado: "Completado",
 };
@@ -74,6 +74,6 @@ export function getAllowedStatusTransitions(input: {
 }
 
 export const STATUS_ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
-  listo: "Marcar Lista para Retiro",
+  listo: "Marcar Lista para Pickup",
   completado: "Marcar Completada",
 };

@@ -228,7 +228,7 @@
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
 <div class="space-y-xs">
-<label class="font-bold uppercase text-[10px]">Sucursal de Retiro/Entrega</label>
+<label class="font-bold uppercase text-[10px]">Sucursal de Pickup/Entrega</label>
 <select class="w-full bg-white border-2 border-black text-on-surface px-md py-sm appearance-none cursor-pointer font-bold uppercase text-xs">
 <option>Gurabo (Central)</option>
 <option>San Lorenzo</option>
@@ -239,7 +239,7 @@
 <label class="font-bold uppercase text-[10px]">Método de Entrega</label>
 <div class="flex border-2 border-black p-xs h-[50px] gap-xs bg-gray-100">
 <button class="flex-1 font-bold uppercase text-xs flex items-center justify-center gap-xs transition-all bg-primary text-white" id="method-pickup" onclick="setMethod('pickup')" type="button">
-<span class="material-symbols-outlined text-sm">inventory_2</span> RETIRO
+<span class="material-symbols-outlined text-sm">inventory_2</span> PICKUP
                                     </button>
 <button class="flex-1 font-bold uppercase text-xs flex items-center justify-center gap-xs transition-all text-black hover:bg-white" id="method-delivery" onclick="setMethod('delivery')" type="button">
 <span class="material-symbols-outlined text-sm">local_shipping</span> ENTREGA
@@ -324,7 +324,7 @@
 </div>
 <div class="flex justify-between font-medium items-center">
 <span class="uppercase text-xs text-gray-600 font-bold">Cargo por Entrega</span>
-<span class="text-primary font-bold text-xs" id="fulfillment-cost">GRATIS (RETIRO)</span>
+<span class="text-primary font-bold text-xs" id="fulfillment-cost">GRATIS (PICKUP)</span>
 </div>
 <div class="pt-sm border-t-2 border-black flex justify-between items-end">
 <span class="font-extrabold uppercase text-lg">Total</span>
@@ -376,7 +376,7 @@
             deliveryBtn.classList.remove('bg-primary', 'text-white');
             deliveryBtn.classList.add('text-black', 'hover:bg-white');
             deliveryDetails.classList.add('hidden');
-            costLabel.textContent = 'GRATIS (RETIRO)';
+            costLabel.textContent = 'GRATIS (PICKUP)';
             costLabel.classList.remove('text-primary');
             costLabel.classList.add('text-black');
         } else {

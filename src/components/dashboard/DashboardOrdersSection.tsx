@@ -16,7 +16,7 @@ type FilterMode = "all" | OrderType | OrderStatus;
 const filterLabels: Record<FilterMode, string> = {
   all: "Todas",
   entrega: "Entregas",
-  retiro: "Retiros",
+  retiro: "Pickups",
   atrasado: "Atrasadas",
   "en-transito": "En Tránsito",
   listo: "Listas",

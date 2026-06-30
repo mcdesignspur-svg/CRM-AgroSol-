@@ -221,7 +221,7 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                   <span className="font-bold">
                     {order.deliveryFee > 0
                       ? `$${order.deliveryFee.toFixed(2)}`
-                      : "GRATIS (RETIRO)"}
+                      : "GRATIS (PICKUP)"}
                   </span>
                 </div>
                 <div className="pt-2 border-t-2 border-black flex justify-between items-end">
@@ -245,7 +245,7 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                   Método
                 </span>
                 <span className="font-bold uppercase text-xs">
-                  {order.fulfillment === "delivery" ? "Entrega" : "Retiro"}
+                  {order.fulfillment === "delivery" ? "Entrega" : "Pickup"}
                 </span>
               </div>
               <div className="flex justify-between gap-4">

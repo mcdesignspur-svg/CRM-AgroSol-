@@ -69,7 +69,7 @@ export default async function DashboardPage() {
               }
             />
             <MetricCard
-              label="Retiros Activos"
+              label="Pickups Activos"
               value={metrics.activePickups}
               icon="hail"
               subtitle={
@@ -78,7 +78,7 @@ export default async function DashboardPage() {
                     {metrics.activePickupsLocation}
                   </span>
                 ) : (
-                  <span className="text-gray-500 uppercase">Sin retiros</span>
+                  <span className="text-gray-500 uppercase">Sin pickups</span>
                 )
               }
             />

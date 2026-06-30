@@ -207,7 +207,7 @@ export default function NuevaOrdenClient({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <label className="font-bold uppercase text-[10px]">
-                      Sucursal de Retiro/Entrega
+                      Sucursal de Pickup/Entrega
                     </label>
                     <select
                       className="w-full bg-white border-2 border-black px-4 py-2 font-bold uppercase text-xs cursor-pointer"
@@ -240,7 +240,7 @@ export default function NuevaOrdenClient({
                         <span className="material-symbols-outlined text-sm">
                           inventory_2
                         </span>
-                        RETIRO
+                        PICKUP
                       </button>
                       <button
                         type="button"
@@ -457,7 +457,7 @@ export default function NuevaOrdenClient({
                         }`}
                       >
                         {method === "pickup"
-                          ? "GRATIS (RETIRO)"
+                          ? "GRATIS (PICKUP)"
                           : `$${DELIVERY_FEE.toFixed(2)} (FIJO)`}
                       </span>
                     </div>
