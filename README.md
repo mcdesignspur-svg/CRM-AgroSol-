@@ -81,12 +81,14 @@ Requiere `DATABASE_URL` apuntando a una instancia PostgreSQL accesible.
 
 1. Conecta el repositorio de GitHub en [vercel.com](https://vercel.com)
 2. Framework preset: **Next.js**
-3. Añade la variable de entorno `DATABASE_URL` (p. ej. Neon, Supabase o Railway)
+3. Añade las variables de entorno en Vercel:
+   - `DATABASE_URL` — URL **pooled** de Neon (con `-pooler` en el host) para runtime
+   - `DIRECT_DATABASE_URL` — URL **directa** de Neon (sin `-pooler`) — solo si necesitas migrar desde Vercel manualmente
 4. En **Settings → Environments → Production**, confirma:
    - **Production Branch**: `main`
    - **Auto-assign Custom Production Domains**: activado (cada push a `main` va directo a producción)
-5. Ejecuta migraciones contra la base de producción antes del primer deploy (`npm run db:deploy`)
-6. El build ejecuta migraciones automáticamente **si** `DATABASE_URL` está disponible en el entorno de build
+5. Ejecuta migraciones con `npm run db:deploy` usando `DIRECT_DATABASE_URL` (no la URL pooled)
+6. El build de Vercel **no** ejecuta migraciones (evita error Prisma P1002 con Neon pooled)
 
 ### Despliegue automático a producción
 
@@ -101,6 +103,7 @@ Para que el workflow de GitHub funcione, configura estos secrets en el repositor
 | `VERCEL_TOKEN` | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
 | `VERCEL_ORG_ID` | Vercel → Project Settings → General |
 | `VERCEL_PROJECT_ID` | Vercel → Project Settings → General |
+| `DIRECT_DATABASE_URL` | Neon → Connection Details → **Direct** connection (sin `-pooler`) |
 
 **Flujo recomendado:** mergea tu PR a `main` → el push dispara producción automáticamente. Las ramas `cursor/*` y PRs siguen generando **preview deployments** sin afectar producción.
 

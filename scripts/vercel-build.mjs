@@ -1,12 +1,6 @@
 import { execSync } from "node:child_process";
 
-if (process.env.DATABASE_URL) {
-  console.log("Running prisma migrate deploy...");
-  execSync("npx prisma migrate deploy", { stdio: "inherit" });
-} else {
-  console.warn(
-    "Skipping prisma migrate deploy: DATABASE_URL is not set in the build environment.",
-  );
-}
-
+// Las migraciones no se ejecutan durante el build de Vercel: Neon pooled
+// connections no soportan advisory locks (Prisma P1002). Se aplican en el
+// workflow de GitHub Actions con DIRECT_DATABASE_URL antes del deploy.
 execSync("npm run build", { stdio: "inherit" });
