@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import type { BranchId, OrderStatus, OrderType } from "@/lib/types";
 import {
+  mapDriverOrder,
   mapOrder,
   mapOrderDetail,
   toAppOrderStatus,
@@ -19,6 +20,8 @@ export interface OrderFilters {
   status?: OrderStatus | "all";
   type?: OrderType | "all";
   branchId?: BranchId | "all";
+  fulfillment?: "pickup" | "delivery" | "all";
+  activeDelivery?: boolean;
   q?: string;
 }
 
@@ -31,6 +34,17 @@ function buildOrderWhere(filters: OrderFilters = {}): Prisma.OrderWhereInput {
 
   if (filters.type && filters.type !== "all") {
     and.push({ type: filters.type });
+  }
+
+  if (filters.fulfillment && filters.fulfillment !== "all") {
+    and.push({ fulfillment: filters.fulfillment });
+  }
+
+  if (filters.activeDelivery) {
+    and.push({
+      fulfillment: "delivery",
+      status: { in: ["en_transito", "atrasado"] },
+    });
   }
 
   if (filters.q?.trim()) {
@@ -106,6 +120,16 @@ export async function getRecentOrders(
     skip: offset,
   });
   return rows.map(mapOrder);
+}
+
+export async function getActiveDeliveryOrders(limit = 50, offset = 0) {
+  const rows = await prisma.order.findMany({
+    where: buildOrderWhere({ activeDelivery: true }),
+    orderBy: { createdAt: "asc" },
+    take: limit,
+    skip: offset,
+  });
+  return rows.map(mapDriverOrder);
 }
 
 export async function getOrdersCount(filters: OrderFilters = {}) {

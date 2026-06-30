@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import {
+  getActiveDeliveryOrders,
   getRecentOrders,
   getOrdersCount,
   createOrder,
@@ -14,6 +15,8 @@ function parseFilters(searchParams: URLSearchParams): OrderFilters {
   const status = searchParams.get("status");
   const type = searchParams.get("type");
   const branchId = searchParams.get("branchId");
+  const fulfillment = searchParams.get("fulfillment");
+  const activeDelivery = searchParams.get("activeDelivery") === "true";
   const q = searchParams.get("q") ?? undefined;
 
   return {
@@ -21,6 +24,11 @@ function parseFilters(searchParams: URLSearchParams): OrderFilters {
     type: (type as OrderType | "all" | null) ?? "all",
     branchId:
       branchId && isBranchId(branchId) ? (branchId as BranchId) : "all",
+    fulfillment:
+      fulfillment === "pickup" || fulfillment === "delivery"
+        ? fulfillment
+        : "all",
+    activeDelivery,
     q,
   };
 }
@@ -31,6 +39,19 @@ export async function GET(request: Request) {
     const limit = Number(searchParams.get("limit") ?? "20");
     const offset = Number(searchParams.get("offset") ?? "0");
     const filters = parseFilters(searchParams);
+
+    if (filters.activeDelivery) {
+      const [orders, total] = await Promise.all([
+        getActiveDeliveryOrders(limit, offset),
+        getOrdersCount({ activeDelivery: true }),
+      ]);
+
+      return NextResponse.json({
+        orders,
+        total,
+        hasMore: offset + orders.length < total,
+      });
+    }
 
     const [orders, total] = await Promise.all([
       getRecentOrders(limit, offset, filters),

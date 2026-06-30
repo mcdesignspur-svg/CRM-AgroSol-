@@ -2,6 +2,7 @@ import type {
   Branch,
   BranchId,
   Delivery,
+  DriverOrder,
   NotificationLog,
   Order,
   OrderDetail,
@@ -103,6 +104,29 @@ export function mapOrder(order: PrismaOrder): Order {
     status,
     elapsedTime: formatElapsedTime(order.createdAt),
     createdAt: order.createdAt.toISOString(),
+  };
+}
+
+export function mapDriverOrder(order: PrismaOrder): DriverOrder {
+  const status = resolveOrderStatus(order);
+  const fulfillment = order.fulfillment as "pickup" | "delivery";
+
+  return {
+    id: order.displayId,
+    customerName: order.customerName,
+    customerPhone: order.customerPhone ?? undefined,
+    deliveryAddress: order.deliveryAddress ?? undefined,
+    type: order.type,
+    branchId: order.branchId as BranchId,
+    status,
+    elapsedTime: formatElapsedTime(order.createdAt),
+    createdAt: order.createdAt.toISOString(),
+    allowedTransitions: getAllowedStatusTransitions({
+      type: order.type,
+      status,
+      fulfillment,
+      createdAt: order.createdAt,
+    }),
   };
 }
 

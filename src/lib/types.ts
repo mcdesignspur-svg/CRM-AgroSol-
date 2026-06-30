@@ -31,6 +31,12 @@ export interface Order {
   createdAt: string;
 }
 
+export interface DriverOrder extends Order {
+  customerPhone?: string;
+  deliveryAddress?: string;
+  allowedTransitions: OrderStatus[];
+}
+
 export interface OrderLineItemSnapshot {
   id: string;
   productId?: string;
