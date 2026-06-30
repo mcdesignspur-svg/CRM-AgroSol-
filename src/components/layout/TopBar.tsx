@@ -49,10 +49,11 @@ export function TopBar({
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const query = searchQuery.trim();
-    if (query) {
-      router.push(`/ordenes?q=${encodeURIComponent(query)}`);
-      setSearchOpen(false);
-    }
+    if (!query) return;
+
+    router.push(`/ordenes?q=${encodeURIComponent(query)}`);
+    setSearchQuery("");
+    setSearchOpen(false);
   }
 
   const branchSelector = showBranchSelector && !title && (

@@ -9,7 +9,8 @@ interface OrdenesPageProps {
 
 export default async function OrdenesPage({ searchParams }: OrdenesPageProps) {
   const { q } = await searchParams;
-  const filters = q ? { q } : {};
+  const query = q?.trim() ?? "";
+  const filters = query ? { q: query } : {};
 
   const [orders, total] = await Promise.all([
     getRecentOrders(20, 0, filters),
@@ -18,9 +19,10 @@ export default async function OrdenesPage({ searchParams }: OrdenesPageProps) {
 
   return (
     <OrdenesContent
+      key={query}
       initialOrders={orders}
       initialTotal={total}
-      initialSearch={q ?? ""}
+      initialSearch={query}
     />
   );
 }

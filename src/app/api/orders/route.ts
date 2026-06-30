@@ -10,11 +10,13 @@ import {
 import { isBranchId } from "@/lib/branch-definitions";
 import type { BranchId, OrderStatus, OrderType } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 function parseFilters(searchParams: URLSearchParams): OrderFilters {
   const status = searchParams.get("status");
   const type = searchParams.get("type");
   const branchId = searchParams.get("branchId");
-  const q = searchParams.get("q") ?? undefined;
+  const q = searchParams.get("q")?.trim() || undefined;
 
   return {
     status: (status as OrderStatus | "all" | null) ?? "all",
