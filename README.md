@@ -82,9 +82,27 @@ Requiere `DATABASE_URL` apuntando a una instancia PostgreSQL accesible.
 1. Conecta el repositorio de GitHub en [vercel.com](https://vercel.com)
 2. Framework preset: **Next.js**
 3. Añade la variable de entorno `DATABASE_URL` (p. ej. Neon, Supabase o Railway)
-4. Ejecuta migraciones contra la base de producción antes del primer deploy (`npm run db:deploy`)
-5. En Vercel, el build ejecuta `prisma migrate deploy` automáticamente si `DATABASE_URL` está configurada
-6. Deploy automático en cada push a `main`
+4. En **Settings → Environments → Production**, confirma:
+   - **Production Branch**: `main`
+   - **Auto-assign Custom Production Domains**: activado (cada push a `main` va directo a producción)
+5. Ejecuta migraciones contra la base de producción antes del primer deploy (`npm run db:deploy`)
+6. El build ejecuta migraciones automáticamente **si** `DATABASE_URL` está disponible en el entorno de build
+
+### Despliegue automático a producción
+
+Cada **push a `main`** despliega automáticamente a producción mediante GitHub Actions (`.github/workflows/deploy-production.yml`).
+
+> Las ramas distintas de `main` siguen generando **preview deployments** en Vercel. El build de `main` en Vercel está desactivado en `vercel.json` para evitar deploys duplicados; producción la gestiona el workflow.
+
+Para que el workflow de GitHub funcione, configura estos secrets en el repositorio (**Settings → Secrets and variables → Actions**):
+
+| Secret | Dónde obtenerlo |
+|--------|-----------------|
+| `VERCEL_TOKEN` | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
+| `VERCEL_ORG_ID` | Vercel → Project Settings → General |
+| `VERCEL_PROJECT_ID` | Vercel → Project Settings → General |
+
+**Flujo recomendado:** mergea tu PR a `main` → el push dispara producción automáticamente. Las ramas `cursor/*` y PRs siguen generando **preview deployments** sin afectar producción.
 
 ## Estructura
 
