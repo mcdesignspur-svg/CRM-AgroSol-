@@ -4,6 +4,7 @@ import type {
   Delivery,
   NotificationLog,
   Order,
+  OrderDetail,
   OrderStatus,
   Ping,
   Product,
@@ -13,10 +14,15 @@ import type {
   Delivery as PrismaDelivery,
   NotificationLog as PrismaNotification,
   Order as PrismaOrder,
+  OrderLineItem as PrismaOrderLineItem,
   Ping as PrismaPing,
   Product as PrismaProduct,
   OrderStatus as PrismaOrderStatus,
 } from "@prisma/client";
+import {
+  getAllowedStatusTransitions,
+  resolveDisplayStatus,
+} from "@/lib/order-status";
 
 const ORDER_STATUS_MAP: Record<PrismaOrderStatus, OrderStatus> = {
   pendiente: "pendiente",
@@ -75,15 +81,69 @@ export function mapBranch(branch: PrismaBranch): Branch {
   };
 }
 
+export function toAppOrderStatus(status: PrismaOrderStatus): OrderStatus {
+  return ORDER_STATUS_MAP[status];
+}
+
+function resolveOrderStatus(order: PrismaOrder): OrderStatus {
+  return resolveDisplayStatus({
+    status: toAppOrderStatus(order.status),
+    fulfillment: order.fulfillment,
+    createdAt: order.createdAt,
+  });
+}
+
 export function mapOrder(order: PrismaOrder): Order {
+  const status = resolveOrderStatus(order);
   return {
     id: order.displayId,
     customerName: order.customerName,
     type: order.type,
     branchId: order.branchId as BranchId,
-    status: ORDER_STATUS_MAP[order.status],
+    status,
     elapsedTime: formatElapsedTime(order.createdAt),
     createdAt: order.createdAt.toISOString(),
+  };
+}
+
+export function mapOrderDetail(
+  order: PrismaOrder & { lineItems: PrismaOrderLineItem[] },
+): OrderDetail {
+  const status = resolveOrderStatus(order);
+  const fulfillment = order.fulfillment as "pickup" | "delivery";
+
+  return {
+    id: order.displayId,
+    customerName: order.customerName,
+    customerPhone: order.customerPhone ?? undefined,
+    deliveryAddress: order.deliveryAddress ?? undefined,
+    type: order.type,
+    branchId: order.branchId as BranchId,
+    status,
+    fulfillment,
+    smsNotify: order.smsNotify,
+    subtotal: Number(order.subtotal),
+    taxes: Number(order.taxes),
+    deliveryFee: Number(order.deliveryFee),
+    total: Number(order.total),
+    elapsedTime: formatElapsedTime(order.createdAt),
+    createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt.toISOString(),
+    lineItems: order.lineItems.map((item) => ({
+      id: item.id,
+      productId: item.productId ?? undefined,
+      name: item.name,
+      sku: item.sku,
+      unitPrice: Number(item.unitPrice),
+      quantity: item.quantity,
+      lineTotal: Number(item.unitPrice) * item.quantity,
+    })),
+    allowedTransitions: getAllowedStatusTransitions({
+      type: order.type,
+      status,
+      fulfillment,
+      createdAt: order.createdAt,
+    }),
   };
 }
 

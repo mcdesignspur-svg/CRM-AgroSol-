@@ -1,12 +1,106 @@
 import { ensureBranches } from "@/lib/db/branches";
 import { isBranchId } from "@/lib/branch-definitions";
+import { DELIVERY_SLA_HOURS, PICKUP_SLA_HOURS } from "@/lib/constants";
+import {
+  getAllowedStatusTransitions,
+  resolveDisplayStatus,
+} from "@/lib/order-status";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import type { BranchId, OrderStatus, OrderType } from "@/lib/types";
-import { mapOrder, toPrismaOrderStatus } from "./mappers";
+import {
+  mapOrder,
+  mapOrderDetail,
+  toAppOrderStatus,
+  toPrismaOrderStatus,
+} from "./mappers";
 
-export async function getRecentOrders(limit = 20, offset = 0) {
+export interface OrderFilters {
+  status?: OrderStatus | "all";
+  type?: OrderType | "all";
+  branchId?: BranchId | "all";
+  q?: string;
+}
+
+function buildOrderWhere(filters: OrderFilters = {}): Prisma.OrderWhereInput {
+  const and: Prisma.OrderWhereInput[] = [];
+
+  if (filters.branchId && filters.branchId !== "all") {
+    and.push({ branchId: filters.branchId });
+  }
+
+  if (filters.type && filters.type !== "all") {
+    and.push({ type: filters.type });
+  }
+
+  if (filters.q?.trim()) {
+    const query = filters.q.trim();
+    and.push({
+      OR: [
+        { displayId: { contains: query, mode: "insensitive" } },
+        { customerName: { contains: query, mode: "insensitive" } },
+        { customerPhone: { contains: query, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  if (filters.status && filters.status !== "all") {
+    if (filters.status === "atrasado") {
+      const pickupCutoff = new Date(
+        Date.now() - PICKUP_SLA_HOURS * 3_600_000,
+      );
+      const deliveryCutoff = new Date(
+        Date.now() - DELIVERY_SLA_HOURS * 3_600_000,
+      );
+
+      and.push({
+        OR: [
+          { status: "atrasado" },
+          {
+            status: "pendiente",
+            fulfillment: "pickup",
+            createdAt: { lt: pickupCutoff },
+          },
+          {
+            status: "en_transito",
+            fulfillment: "delivery",
+            createdAt: { lt: deliveryCutoff },
+          },
+        ],
+      });
+    } else if (filters.status === "pendiente") {
+      const pickupCutoff = new Date(
+        Date.now() - PICKUP_SLA_HOURS * 3_600_000,
+      );
+      and.push({
+        status: "pendiente",
+        fulfillment: "pickup",
+        createdAt: { gte: pickupCutoff },
+      });
+    } else if (filters.status === "en-transito") {
+      const deliveryCutoff = new Date(
+        Date.now() - DELIVERY_SLA_HOURS * 3_600_000,
+      );
+      and.push({
+        status: "en_transito",
+        fulfillment: "delivery",
+        createdAt: { gte: deliveryCutoff },
+      });
+    } else {
+      and.push({ status: toPrismaOrderStatus(filters.status) });
+    }
+  }
+
+  return and.length > 0 ? { AND: and } : {};
+}
+
+export async function getRecentOrders(
+  limit = 20,
+  offset = 0,
+  filters: OrderFilters = {},
+) {
   const rows = await prisma.order.findMany({
+    where: buildOrderWhere(filters),
     orderBy: { createdAt: "desc" },
     take: limit,
     skip: offset,
@@ -14,8 +108,16 @@ export async function getRecentOrders(limit = 20, offset = 0) {
   return rows.map(mapOrder);
 }
 
-export async function getOrdersCount() {
-  return prisma.order.count();
+export async function getOrdersCount(filters: OrderFilters = {}) {
+  return prisma.order.count({ where: buildOrderWhere(filters) });
+}
+
+export async function getOrderByDisplayId(displayId: string) {
+  const row = await prisma.order.findUnique({
+    where: { displayId },
+    include: { lineItems: { orderBy: { name: "asc" } } },
+  });
+  return row ? mapOrderDetail(row) : null;
 }
 
 async function getNextDisplayId(tx: Prisma.TransactionClient) {
@@ -108,6 +210,7 @@ export async function createOrder(input: CreateOrderInput) {
           })),
         },
       },
+      include: { lineItems: true },
     });
 
     await tx.notificationLog.create({
@@ -129,5 +232,82 @@ export async function createOrder(input: CreateOrderInput) {
     return created;
   });
 
-  return mapOrder(order);
+  return mapOrderDetail(order);
+}
+
+export async function updateOrderStatus(displayId: string, nextStatus: OrderStatus) {
+  const existing = await prisma.order.findUnique({
+    where: { displayId },
+    include: { lineItems: true },
+  });
+
+  if (!existing) {
+    throw new OrderValidationError("Orden no encontrada");
+  }
+
+  const currentStatus = resolveDisplayStatus({
+    status: toAppOrderStatus(existing.status),
+    fulfillment: existing.fulfillment,
+    createdAt: existing.createdAt,
+  });
+
+  const allowed = getAllowedStatusTransitions({
+    type: existing.type,
+    status: currentStatus,
+    fulfillment: existing.fulfillment,
+    createdAt: existing.createdAt,
+  });
+
+  if (!allowed.includes(nextStatus)) {
+    throw new OrderValidationError(
+      `No se puede cambiar de "${currentStatus}" a "${nextStatus}"`,
+    );
+  }
+
+  const updated = await prisma.$transaction(async (tx) => {
+    const order = await tx.order.update({
+      where: { displayId },
+      data: { status: toPrismaOrderStatus(nextStatus) },
+      include: { lineItems: { orderBy: { name: "asc" } } },
+    });
+
+    const statusLabel =
+      nextStatus === "listo"
+        ? "lista para retiro"
+        : nextStatus === "completado"
+          ? "completada"
+          : nextStatus;
+
+    await tx.notificationLog.create({
+      data: {
+        source: "SISTEMA",
+        message: `Orden ${displayId} marcada como ${statusLabel}.`,
+        accent: nextStatus === "completado" ? "primary" : "default",
+      },
+    });
+
+    if (nextStatus === "listo") {
+      await tx.ping.create({
+        data: {
+          priority: "sistema",
+          title: `Orden Lista: ${displayId}`,
+          description: `${existing.customerName} puede retirar en sucursal ${existing.branchId}.`,
+        },
+      });
+    }
+
+    if (nextStatus === "completado") {
+      await tx.ping.create({
+        data: {
+          priority: "sistema",
+          title: `Orden Completada: ${displayId}`,
+          description: `La orden de ${existing.customerName} fue finalizada.`,
+        },
+      });
+    }
+
+    return order;
+  });
+
+  return mapOrderDetail(updated);
 }

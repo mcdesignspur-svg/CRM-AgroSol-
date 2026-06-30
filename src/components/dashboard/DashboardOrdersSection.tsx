@@ -26,10 +26,13 @@ const filterLabels: Record<FilterMode, string> = {
 
 const filterCycle: FilterMode[] = [
   "all",
+  "pendiente",
+  "en-transito",
+  "listo",
+  "atrasado",
+  "completado",
   "entrega",
   "retiro",
-  "atrasado",
-  "en-transito",
 ];
 
 export function DashboardOrdersSection({
@@ -192,7 +195,7 @@ export function DashboardOrdersSection({
                     </td>
                     <td className="p-4">
                       <Link
-                        href={`/entregas?orden=${order.id}`}
+                        href={`/ordenes/${encodeURIComponent(order.id)}`}
                         className="text-primary hover:underline font-bold text-sm"
                       >
                         GESTIONAR
@@ -235,7 +238,7 @@ export function DashboardOrdersSection({
                   </span>
                 </div>
                 <Link
-                  href={`/entregas?orden=${order.id}`}
+                  href={`/ordenes/${encodeURIComponent(order.id)}`}
                   className="inline-flex items-center gap-1 text-primary font-bold text-xs uppercase min-h-[44px]"
                 >
                   Gestionar
