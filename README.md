@@ -59,6 +59,25 @@ npm run dev
 
 Abre [http://localhost:3000](http://localhost:3000).
 
+### 4. Loyverse (opcional)
+
+Si ya tienes el **Personal Access Token** de Loyverse:
+
+1. En Loyverse Back Office → **Access Tokens** → copia el token
+2. Añádelo a `.env` (y a las variables de entorno en Vercel):
+
+```
+LOYVERSE_ACCESS_TOKEN="tu-token-aqui"
+```
+
+3. Reinicia el servidor (`npm run dev`)
+4. En **Productos** (Gurabo), usa **Importar catálogo completo** una vez (~12k productos, tarda 1–2 min)
+5. Al crear órdenes, busca productos por **nombre o SKU** — no se cargan los 12k en pantalla
+
+Por ahora solo **Gurabo (Central)** tiene Loyverse. Cada sucursal tendrá su propio token más adelante.
+
+La app verifica la conexión contra la API de Loyverse y guarda el catálogo en cache local por sucursal.
+
 ### Scripts de base de datos
 
 | Comando | Descripción |
@@ -127,7 +146,7 @@ design/               # Mockups originales de Stitch (referencia)
 - [x] Conectar base de datos PostgreSQL
 - [ ] Autenticación de operadores
 - [ ] WebSockets / actualizaciones en tiempo real
-- [ ] Integración ERP
+- [ ] Integración ERP (Loyverse Gurabo: cache + búsqueda; otras sucursales y órdenes pendiente)
 - [ ] Notificaciones SMS / push
 
 ## Licencia

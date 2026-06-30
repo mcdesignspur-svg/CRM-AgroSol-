@@ -1,4 +1,4 @@
-import { getCatalogProducts } from "@/lib/db";
+import { getLoyverseStatus } from "@/lib/loyverse";
 import { ProductosContent } from "@/components/productos/ProductosContent";
 
 export const metadata = {
@@ -8,7 +8,7 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function ProductosPage() {
-  const products = await getCatalogProducts();
+  const loyverseStatus = await getLoyverseStatus("gurabo");
 
-  return <ProductosContent initialProducts={products} />;
+  return <ProductosContent loyverseStatus={loyverseStatus} />;
 }

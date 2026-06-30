@@ -54,6 +54,7 @@ export function AddProductModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          branchId: "gurabo",
           name: name.trim(),
           sku: sku.trim(),
           unitPrice: price,

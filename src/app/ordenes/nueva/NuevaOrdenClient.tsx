@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
+import { ErpConnectionStatus } from "@/components/integrations/ErpConnectionStatus";
 import { useToast } from "@/components/providers/ToastProvider";
 import { AddProductModal } from "@/components/productos/AddProductModal";
 import { ProductPickerModal } from "@/components/productos/ProductPickerModal";
@@ -14,18 +15,19 @@ import {
   DELIVERY_FEE,
   TAX_RATE,
 } from "@/lib/constants";
+import { isLoyverseBranchEnabled } from "@/lib/loyverse";
+import type { LoyverseStatus } from "@/lib/loyverse/types";
 import type { BranchId, OrderLineItem, Product } from "@/lib/types";
 
 type FulfillmentMethod = "pickup" | "delivery";
 
 interface NuevaOrdenClientProps {
-  catalogProducts: Product[];
+  loyverseStatus: LoyverseStatus;
 }
 
 export default function NuevaOrdenClient({
-  catalogProducts: initialCatalogProducts,
+  loyverseStatus,
 }: NuevaOrdenClientProps) {
-  const [catalogProducts, setCatalogProducts] = useState(initialCatalogProducts);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [addProductOpen, setAddProductOpen] = useState(false);
   const [method, setMethod] = useState<FulfillmentMethod>("pickup");
@@ -41,6 +43,11 @@ export default function NuevaOrdenClient({
   const router = useRouter();
   const [smsNotify, setSmsNotify] = useState(false);
 
+  function handleProductCreated(product: Product) {
+    setLineItems((items) => [...items, { ...product, quantity: 1 }]);
+    showToast(`${product.name} creado y agregado a la orden`, "success");
+  }
+
   function addLineItem() {
     setPickerOpen(true);
   }
@@ -48,14 +55,6 @@ export default function NuevaOrdenClient({
   function selectProduct(product: Product) {
     setLineItems((items) => [...items, { ...product, quantity: 1 }]);
     showToast(`${product.name} agregado`, "success");
-  }
-
-  function handleProductCreated(product: Product) {
-    setCatalogProducts((prev) =>
-      [...prev, product].sort((a, b) => a.name.localeCompare(b.name)),
-    );
-    setLineItems((items) => [...items, { ...product, quantity: 1 }]);
-    showToast(`${product.name} creado y agregado a la orden`, "success");
   }
 
   async function handleSaveDraft() {
@@ -531,13 +530,13 @@ export default function NuevaOrdenClient({
                   </div>
                 </div>
 
-                <div className="bg-white border-2 border-black p-4 flex items-center gap-4">
-                  <div className="w-4 h-4 border-2 border-black bg-surface-container shrink-0" />
-                  <div className="text-[10px]">
-                    <div className="font-bold uppercase">Conexión ERP</div>
-                    <div className="font-mono opacity-60">No conectado</div>
-                  </div>
-                </div>
+                {isLoyverseBranchEnabled("gurabo") && (
+                  <ErpConnectionStatus
+                    branchId="gurabo"
+                    initialStatus={loyverseStatus}
+                    showSyncAction
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -584,7 +583,7 @@ export default function NuevaOrdenClient({
       <ProductPickerModal
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        products={catalogProducts}
+        branchId={branchId}
         selectedIds={lineItems.map((item) => item.id)}
         onSelect={selectProduct}
         onCreateNew={() => {
