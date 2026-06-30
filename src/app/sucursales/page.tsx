@@ -16,9 +16,9 @@ const statusColors = {
 export default function SucursalesPage() {
   return (
     <AppShell topBar={<TopBar title="Sucursales" showSearch={false} />}>
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 pb-10">
         <div>
-          <h2 className="font-display text-3xl font-extrabold uppercase tracking-tight">
+          <h2 className="font-display text-2xl sm:text-3xl font-extrabold uppercase tracking-tight">
             Red de Sucursales
           </h2>
           <p className="text-lg text-on-surface-variant mt-2">
