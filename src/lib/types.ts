@@ -31,6 +31,30 @@ export interface Order {
   createdAt: string;
 }
 
+export interface OrderLineItemSnapshot {
+  id: string;
+  productId?: string;
+  name: string;
+  sku: string;
+  unitPrice: number;
+  quantity: number;
+  lineTotal: number;
+}
+
+export interface OrderDetail extends Order {
+  customerPhone?: string;
+  deliveryAddress?: string;
+  fulfillment: "pickup" | "delivery";
+  smsNotify: boolean;
+  subtotal: number;
+  taxes: number;
+  deliveryFee: number;
+  total: number;
+  lineItems: OrderLineItemSnapshot[];
+  allowedTransitions: OrderStatus[];
+  updatedAt: string;
+}
+
 export interface Delivery {
   id: string;
   driverName: string;

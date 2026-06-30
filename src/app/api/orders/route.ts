@@ -1,21 +1,47 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { getRecentOrders, getOrdersCount, createOrder, OrderValidationError } from "@/lib/db";
+import {
+  getRecentOrders,
+  getOrdersCount,
+  createOrder,
+  OrderValidationError,
+  type OrderFilters,
+} from "@/lib/db";
 import { isBranchId } from "@/lib/branch-definitions";
-import type { BranchId } from "@/lib/types";
+import type { BranchId, OrderStatus, OrderType } from "@/lib/types";
+
+function parseFilters(searchParams: URLSearchParams): OrderFilters {
+  const status = searchParams.get("status");
+  const type = searchParams.get("type");
+  const branchId = searchParams.get("branchId");
+  const q = searchParams.get("q") ?? undefined;
+
+  return {
+    status: (status as OrderStatus | "all" | null) ?? "all",
+    type: (type as OrderType | "all" | null) ?? "all",
+    branchId:
+      branchId && isBranchId(branchId) ? (branchId as BranchId) : "all",
+    q,
+  };
+}
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = Number(searchParams.get("limit") ?? "20");
     const offset = Number(searchParams.get("offset") ?? "0");
+    const filters = parseFilters(searchParams);
 
     const [orders, total] = await Promise.all([
-      getRecentOrders(limit, offset),
-      getOrdersCount(),
+      getRecentOrders(limit, offset, filters),
+      getOrdersCount(filters),
     ]);
 
-    return NextResponse.json({ orders, total, hasMore: offset + orders.length < total });
+    return NextResponse.json({
+      orders,
+      total,
+      hasMore: offset + orders.length < total,
+    });
   } catch (error) {
     console.error("GET /api/orders", error);
     return NextResponse.json(

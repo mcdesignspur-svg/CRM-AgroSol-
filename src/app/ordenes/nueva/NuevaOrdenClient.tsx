@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -37,6 +38,7 @@ export default function NuevaOrdenClient({
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const { showToast } = useToast();
+  const router = useRouter();
   const [smsNotify, setSmsNotify] = useState(false);
 
   function addLineItem() {
@@ -121,6 +123,7 @@ export default function NuevaOrdenClient({
       if (!res.ok) throw new Error(data.error ?? "Error al crear orden");
       setSubmitted(true);
       showToast("Orden confirmada y ping enviado a sucursal", "success");
+      router.push(`/ordenes/${encodeURIComponent(data.id)}`);
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Error al guardar la orden",
