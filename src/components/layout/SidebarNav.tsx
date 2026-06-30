@@ -11,14 +11,12 @@ function isActive(pathname: string, href: string) {
 
 interface SidebarNavProps {
   onNavigate?: () => void;
-  onPingClick: () => void;
   onConfigClick: () => void;
   onSupportClick: () => void;
 }
 
 export function SidebarNav({
   onNavigate,
-  onPingClick,
   onConfigClick,
   onSupportClick,
 }: SidebarNavProps) {
@@ -48,17 +46,6 @@ export function SidebarNav({
       </nav>
 
       <div className="px-4 mt-auto space-y-2">
-        <button
-          type="button"
-          onClick={() => {
-            onPingClick();
-            onNavigate?.();
-          }}
-          className="w-full btn-primary font-bold py-3 industrial-border industrial-shadow mb-4 flex items-center justify-center gap-2 text-sm min-h-[44px]"
-        >
-          <span className="material-symbols-outlined">bolt</span>
-          PING RÁPIDO
-        </button>
         <button
           type="button"
           onClick={() => {
