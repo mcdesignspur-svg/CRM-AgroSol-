@@ -148,7 +148,8 @@ export function mapOrderDetail(
 }
 
 export function mapDelivery(
-  delivery: PrismaDelivery & { order?: { displayId: string } | null },
+  delivery: PrismaDelivery,
+  orderDisplayId?: string,
 ): Delivery {
   return {
     id: delivery.displayId,
@@ -158,7 +159,7 @@ export function mapDelivery(
     eta: delivery.eta ?? "—",
     status: delivery.status,
     branchId: (delivery.branchId as BranchId | null) ?? undefined,
-    orderId: delivery.order?.displayId,
+    orderId: orderDisplayId,
   };
 }
 
