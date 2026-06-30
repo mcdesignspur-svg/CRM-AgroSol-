@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import {
   activeDeliveries,
@@ -90,12 +91,12 @@ export default function EntregasPage() {
               Entregas y Sucursales
             </h2>
             <div className="hidden md:flex gap-6">
-              <a
+              <Link
                 href="/"
                 className="text-on-surface-variant font-mono hover:text-primary-container transition-all uppercase tracking-wider text-[11px]"
               >
                 Panel
-              </a>
+              </Link>
               <span className="text-black font-bold border-b-2 border-primary-container font-mono uppercase tracking-wider text-[11px]">
                 Órdenes
               </span>
