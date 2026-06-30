@@ -1,12 +1,32 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { notificationLogs } from "@/lib/data";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { NotificationLog } from "@/lib/types";
 
 export function NotificationsButton() {
   const [open, setOpen] = useState(false);
+  const [logs, setLogs] = useState<NotificationLog[]>([]);
+  const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const hasNotifications = notificationLogs.length > 0;
+  const hasNotifications = logs.length > 0;
+
+  const fetchLogs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/notifications");
+      if (res.ok) setLogs(await res.json());
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  async function handleToggle() {
+    const nextOpen = !open;
+    setOpen(nextOpen);
+    if (nextOpen) {
+      await fetchLogs();
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -23,7 +43,7 @@ export function NotificationsButton() {
     <div className="relative" ref={ref}>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleToggle}
         className="material-symbols-outlined p-2 text-on-surface hover:bg-surface-container-high transition-colors relative"
         aria-label="Notificaciones"
         aria-expanded={open}
@@ -40,13 +60,17 @@ export function NotificationsButton() {
             <span className="font-bold uppercase text-xs">Notificaciones</span>
             {hasNotifications && (
               <span className="text-[10px] font-mono bg-black text-white px-2 py-0.5">
-                {notificationLogs.length}
+                {logs.length}
               </span>
             )}
           </div>
           <div className="max-h-64 overflow-y-auto custom-scrollbar">
-            {hasNotifications ? (
-              notificationLogs.map((log) => (
+            {loading ? (
+              <p className="p-6 text-center text-xs font-bold uppercase opacity-50">
+                Cargando...
+              </p>
+            ) : hasNotifications ? (
+              logs.map((log) => (
                 <button
                   key={log.id}
                   type="button"

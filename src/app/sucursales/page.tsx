@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
-import { branches } from "@/lib/data";
+import { getBranches } from "@/lib/db";
 
 export const metadata = {
   title: "Sucursales",
 };
+
+export const dynamic = "force-dynamic";
 
 const statusColors = {
   online: "bg-green-500",
@@ -13,7 +15,9 @@ const statusColors = {
   warning: "bg-yellow-500",
 };
 
-export default function SucursalesPage() {
+export default async function SucursalesPage() {
+  const branches = await getBranches();
+
   return (
     <AppShell topBar={<TopBar title="Sucursales" showSearch={false} />}>
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 pb-10">
@@ -115,10 +119,12 @@ export default function SucursalesPage() {
             </div>
             <div className="text-center p-4 bg-surface-container-low">
               <p className="text-3xl font-extrabold">
-                {Math.round(
-                  branches.reduce((s, b) => s + b.capacityPercent, 0) /
-                    branches.length,
-                )}
+                {branches.length > 0
+                  ? Math.round(
+                      branches.reduce((s, b) => s + b.capacityPercent, 0) /
+                        branches.length,
+                    )
+                  : 0}
                 %
               </p>
               <p className="text-xs font-bold uppercase mt-1">

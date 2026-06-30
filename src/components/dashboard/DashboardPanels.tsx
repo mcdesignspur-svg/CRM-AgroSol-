@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { branches } from "@/lib/data";
 import { useToast } from "@/components/providers/ToastProvider";
-import type { Ping } from "@/lib/types";
+import type { Branch, Order, Ping } from "@/lib/types";
 
 const priorityStyles: Record<
   Ping["priority"],
@@ -24,13 +23,24 @@ const priorityStyles: Record<
   },
 };
 
-export function LivePingsPanel({ initialPings }: { initialPings: Ping[] }) {
+export function LivePingsPanel({
+  initialPings,
+  branches,
+}: {
+  initialPings: Ping[];
+  branches: Branch[];
+}) {
   const [pings, setPings] = useState(initialPings);
   const { showToast } = useToast();
 
-  function dismissPing(id: string) {
-    setPings((prev) => prev.filter((p) => p.id !== id));
-    showToast("Ping descartado", "info");
+  async function dismissPing(id: string) {
+    try {
+      await fetch(`/api/pings/${id}`, { method: "PATCH" });
+      setPings((prev) => prev.filter((p) => p.id !== id));
+      showToast("Ping descartado", "info");
+    } catch {
+      showToast("Error al descartar ping", "error");
+    }
   }
 
   function callDriver(ping: Ping) {
@@ -152,7 +162,14 @@ export function DashboardHeader() {
     setExporting(true);
     await new Promise((r) => setTimeout(r, 600));
 
-    const csv = ["ID,Cliente,Tipo,Sucursal,Estado,Tiempo"].join("\n");
+    const res = await fetch("/api/orders?limit=1000&offset=0");
+    const data = await res.json();
+    const header = "ID,Cliente,Tipo,Sucursal,Estado,Tiempo";
+    const rows = data.orders.map(
+      (o: Order) =>
+        `${o.id},${o.customerName},${o.type},${o.branchId},${o.status},${o.elapsedTime}`,
+    );
+    const csv = [header, ...rows].join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
