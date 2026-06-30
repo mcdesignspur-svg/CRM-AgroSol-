@@ -1,5 +1,5 @@
-import { getRecentOrders, getOrdersCount } from "@/lib/db";
-import { OrdenesContent } from "@/components/ordenes/OrdenesContent";
+import { getOrdersCount, getRecentOrders } from "@/lib/db";
+import { OrdenesListContent } from "@/components/ordenes/OrdenesListContent";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ export default async function OrdenesPage({ searchParams }: OrdenesPageProps) {
   ]);
 
   return (
-    <OrdenesContent
+    <OrdenesListContent
       initialOrders={orders}
       initialTotal={total}
       initialSearch={q ?? ""}

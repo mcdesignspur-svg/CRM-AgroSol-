@@ -11,7 +11,6 @@ export const BRANCH_LABELS = Object.fromEntries(
 export const NAV_ITEMS = [
   { href: "/", label: "Panel", icon: "dashboard" },
   { href: "/ordenes", label: "Órdenes", icon: "receipt_long" },
-  { href: "/ordenes/nueva", label: "Nueva Orden", icon: "add_shopping_cart" },
   { href: "/productos", label: "Productos", icon: "inventory_2" },
   { href: "/entregas", label: "Entregas", icon: "local_shipping" },
   { href: "/sucursales", label: "Sucursales", icon: "storefront" },

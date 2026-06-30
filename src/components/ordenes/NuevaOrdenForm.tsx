@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { AppShell } from "@/components/layout/AppShell";
-import { TopBar } from "@/components/layout/TopBar";
 import { useToast } from "@/components/providers/ToastProvider";
 import { AddProductModal } from "@/components/productos/AddProductModal";
 import { ProductPickerModal } from "@/components/productos/ProductPickerModal";
@@ -18,13 +16,13 @@ import type { BranchId, OrderLineItem, Product } from "@/lib/types";
 
 type FulfillmentMethod = "pickup" | "delivery";
 
-interface NuevaOrdenClientProps {
+interface NuevaOrdenFormProps {
   catalogProducts: Product[];
 }
 
-export default function NuevaOrdenClient({
+export function NuevaOrdenForm({
   catalogProducts: initialCatalogProducts,
-}: NuevaOrdenClientProps) {
+}: NuevaOrdenFormProps) {
   const [catalogProducts, setCatalogProducts] = useState(initialCatalogProducts);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [addProductOpen, setAddProductOpen] = useState(false);
@@ -135,23 +133,8 @@ export default function NuevaOrdenClient({
   }
 
   return (
-    <AppShell
-      topBar={
-        <TopBar
-          title="Registro de Nueva Orden"
-          showSearch={false}
-          showBranchSelector={false}
-        >
-          <div className="hidden sm:flex items-center gap-2 px-4 py-2 border-2 border-black bg-white">
-            <span className="font-bold uppercase text-[10px]">Activo:</span>
-            <span className="font-bold uppercase text-[10px] text-primary">
-              {BRANCH_LABELS[DEFAULT_BRANCH]}
-            </span>
-          </div>
-        </TopBar>
-      }
-    >
-      <div className="flex-1 overflow-y-auto pt-4 sm:pt-8 pb-36 lg:pb-16 px-4 sm:px-6 md:px-8">
+    <>
+      <div className="pb-36 lg:pb-16">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-6">
@@ -160,9 +143,9 @@ export default function NuevaOrdenClient({
                   <span className="material-symbols-outlined text-primary font-bold">
                     person
                   </span>
-                  <h2 className="font-bold uppercase text-lg">
+                  <h3 className="font-bold uppercase text-lg">
                     Información del Cliente
-                  </h2>
+                  </h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
@@ -200,9 +183,9 @@ export default function NuevaOrdenClient({
                   <span className="material-symbols-outlined text-primary font-bold">
                     store
                   </span>
-                  <h2 className="font-bold uppercase text-lg">
+                  <h3 className="font-bold uppercase text-lg">
                     Logística y Sucursal
-                  </h2>
+                  </h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
@@ -283,9 +266,9 @@ export default function NuevaOrdenClient({
                     <span className="material-symbols-outlined text-primary font-bold">
                       shopping_bag
                     </span>
-                    <h2 className="font-bold uppercase text-lg">
+                    <h3 className="font-bold uppercase text-lg">
                       Lista de Productos
-                    </h2>
+                    </h3>
                   </div>
                   <div className="flex items-center gap-2">
                     <Link
@@ -316,40 +299,88 @@ export default function NuevaOrdenClient({
                       </button>
                     </p>
                   ) : (
-                  <table className="w-full text-left border-collapse">
-                    <thead className="bg-black text-white">
-                      <tr>
-                        <th className="py-3 px-4 font-bold uppercase text-[10px]">
-                          Producto
-                        </th>
-                        <th className="py-3 px-4 font-bold uppercase text-[10px] w-24">
-                          Cant.
-                        </th>
-                        <th className="py-3 px-4 font-bold uppercase text-[10px] w-32">
-                          Precio Unit.
-                        </th>
-                        <th className="py-3 px-4 font-bold uppercase text-[10px] w-32 text-right">
-                          Total
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="font-medium text-sm">
-                      {lineItems.map((item) => (
-                        <tr
-                          key={item.id}
-                          className="border-b-2 border-gray-100 hover:bg-gray-50"
-                        >
-                          <td className="py-4 px-4">
-                            <div className="font-bold text-black uppercase">
-                              {item.name}
-                            </div>
-                            <div className="text-[10px] text-gray-500 font-mono">
-                              SKU: {item.sku}
-                            </div>
-                          </td>
-                          <td className="py-4 px-4">
+                    <table className="w-full text-left border-collapse">
+                      <thead className="bg-black text-white">
+                        <tr>
+                          <th className="py-3 px-4 font-bold uppercase text-[10px]">
+                            Producto
+                          </th>
+                          <th className="py-3 px-4 font-bold uppercase text-[10px] w-24">
+                            Cant.
+                          </th>
+                          <th className="py-3 px-4 font-bold uppercase text-[10px] w-32">
+                            Precio Unit.
+                          </th>
+                          <th className="py-3 px-4 font-bold uppercase text-[10px] w-32 text-right">
+                            Total
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="font-medium text-sm">
+                        {lineItems.map((item) => (
+                          <tr
+                            key={item.id}
+                            className="border-b-2 border-gray-100 hover:bg-gray-50"
+                          >
+                            <td className="py-4 px-4">
+                              <div className="font-bold text-black uppercase">
+                                {item.name}
+                              </div>
+                              <div className="text-[10px] text-gray-500 font-mono">
+                                SKU: {item.sku}
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <input
+                                className="w-16 bg-white border-2 border-black px-2 py-1 font-bold text-center"
+                                type="number"
+                                min={1}
+                                value={item.quantity}
+                                onChange={(e) =>
+                                  updateQuantity(
+                                    item.id,
+                                    parseInt(e.target.value, 10) || 1,
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="py-4 px-4 font-bold">
+                              ${item.unitPrice.toFixed(2)}
+                            </td>
+                            <td className="py-4 px-4 font-extrabold text-right">
+                              ${(item.unitPrice * item.quantity).toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+                <div className="sm:hidden space-y-3">
+                  {lineItems.length === 0 ? (
+                    <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
+                      Sin productos en la orden
+                    </p>
+                  ) : (
+                    lineItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className="border-2 border-black p-4 bg-gray-50"
+                      >
+                        <div className="font-bold text-black uppercase text-sm">
+                          {item.name}
+                        </div>
+                        <div className="text-[10px] text-gray-500 font-mono mt-1">
+                          SKU: {item.sku}
+                        </div>
+                        <div className="flex justify-between items-center mt-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold uppercase">
+                              Cant.
+                            </span>
                             <input
-                              className="w-16 bg-white border-2 border-black px-2 py-1 font-bold text-center"
+                              className="w-16 bg-white border-2 border-black px-2 py-2 font-bold text-center min-h-[44px]"
                               type="number"
                               min={1}
                               value={item.quantity}
@@ -360,65 +391,18 @@ export default function NuevaOrdenClient({
                                 )
                               }
                             />
-                          </td>
-                          <td className="py-4 px-4 font-bold">
-                            ${item.unitPrice.toFixed(2)}
-                          </td>
-                          <td className="py-4 px-4 font-extrabold text-right">
-                            ${(item.unitPrice * item.quantity).toFixed(2)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  )}
-                </div>
-
-                {/* Productos — vista móvil */}
-                <div className="sm:hidden space-y-3">
-                  {lineItems.length === 0 ? (
-                    <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
-                      Sin productos en la orden
-                    </p>
-                  ) : (
-                  lineItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="border-2 border-black p-4 bg-gray-50"
-                    >
-                      <div className="font-bold text-black uppercase text-sm">
-                        {item.name}
-                      </div>
-                      <div className="text-[10px] text-gray-500 font-mono mt-1">
-                        SKU: {item.sku}
-                      </div>
-                      <div className="flex justify-between items-center mt-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase">Cant.</span>
-                          <input
-                            className="w-16 bg-white border-2 border-black px-2 py-2 font-bold text-center min-h-[44px]"
-                            type="number"
-                            min={1}
-                            value={item.quantity}
-                            onChange={(e) =>
-                              updateQuantity(
-                                item.id,
-                                parseInt(e.target.value, 10) || 1,
-                              )
-                            }
-                          />
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xs font-bold">
-                            ${item.unitPrice.toFixed(2)} c/u
                           </div>
-                          <div className="font-extrabold text-primary">
-                            ${(item.unitPrice * item.quantity).toFixed(2)}
+                          <div className="text-right">
+                            <div className="text-xs font-bold">
+                              ${item.unitPrice.toFixed(2)} c/u
+                            </div>
+                            <div className="font-extrabold text-primary">
+                              ${(item.unitPrice * item.quantity).toFixed(2)}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    ))
                   )}
                 </div>
               </section>
@@ -437,9 +421,7 @@ export default function NuevaOrdenClient({
                       <span className="uppercase text-xs text-gray-600 font-bold">
                         Subtotal ({itemCount} Artículos)
                       </span>
-                      <span className="font-bold">
-                        ${subtotal.toFixed(2)}
-                      </span>
+                      <span className="font-bold">${subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between font-medium">
                       <span className="uppercase text-xs text-gray-600 font-bold">
@@ -544,7 +526,6 @@ export default function NuevaOrdenClient({
         </div>
       </div>
 
-      {/* Footer fijo móvil */}
       <div className="lg:hidden fixed bottom-16 left-0 right-0 z-40 bg-white border-t-2 border-black px-4 py-3 flex items-center gap-3 safe-area-bottom">
         <div className="shrink-0">
           <p className="text-[9px] font-bold uppercase text-gray-500">Total</p>
@@ -562,12 +543,16 @@ export default function NuevaOrdenClient({
         >
           {submitting ? (
             <>
-              <span className="material-symbols-outlined animate-spin text-lg">sync</span>
+              <span className="material-symbols-outlined animate-spin text-lg">
+                sync
+              </span>
               Procesando...
             </>
           ) : submitted ? (
             <>
-              <span className="material-symbols-outlined text-lg">check_circle</span>
+              <span className="material-symbols-outlined text-lg">
+                check_circle
+              </span>
               Realizada
             </>
           ) : (
@@ -578,8 +563,6 @@ export default function NuevaOrdenClient({
           )}
         </button>
       </div>
-
-      <div className="hidden md:block fixed bottom-0 left-0 w-full h-2 bg-primary z-50 md:left-64" />
 
       <ProductPickerModal
         open={pickerOpen}
@@ -598,6 +581,6 @@ export default function NuevaOrdenClient({
         onClose={() => setAddProductOpen(false)}
         onCreated={handleProductCreated}
       />
-    </AppShell>
+    </>
   );
 }
