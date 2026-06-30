@@ -4,6 +4,7 @@ export { getDashboardMetrics } from "./metrics";
 export { clearNotificationLogs, getNotificationLogs } from "./notifications";
 export {
   createOrder,
+  getActiveDeliveryOrders,
   getOrderByDisplayId,
   getOrdersCount,
   getRecentOrders,
