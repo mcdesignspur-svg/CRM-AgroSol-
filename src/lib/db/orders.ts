@@ -1,4 +1,8 @@
 import { ensureBranches } from "@/lib/db/branches";
+import {
+  completeDeliveryForOrder,
+  createDeliveryForOrder,
+} from "@/lib/db/deliveries";
 import { isBranchId } from "@/lib/branch-definitions";
 import { DELIVERY_SLA_HOURS, PICKUP_SLA_HOURS } from "@/lib/constants";
 import {
@@ -229,6 +233,23 @@ export async function createOrder(input: CreateOrderInput) {
       },
     });
 
+    if (input.fulfillment === "delivery" && input.deliveryAddress?.trim()) {
+      await createDeliveryForOrder(tx, {
+        orderId: created.id,
+        branchId: input.branchId,
+        destination: input.deliveryAddress.trim(),
+        createdAt: created.createdAt,
+      });
+
+      await tx.notificationLog.create({
+        data: {
+          source: "SISTEMA",
+          message: `Entrega asignada para orden ${displayId}.`,
+          accent: "primary",
+        },
+      });
+    }
+
     return created;
   });
 
@@ -304,6 +325,10 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
           description: `La orden de ${existing.customerName} fue finalizada.`,
         },
       });
+
+      if (existing.fulfillment === "delivery") {
+        await completeDeliveryForOrder(tx, existing.id);
+      }
     }
 
     return order;

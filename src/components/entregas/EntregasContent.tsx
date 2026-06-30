@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useToast } from "@/components/providers/ToastProvider";
 import { NotificationsButton } from "@/components/ui/NotificationsButton";
-import type { Branch, Delivery, NotificationLog } from "@/lib/types";
+import { BRANCH_LABELS } from "@/lib/constants";
+import { isBranchId } from "@/lib/branch-definitions";
+import type { Branch, BranchId, Delivery, NotificationLog } from "@/lib/types";
 
 interface EntregasPageContentProps {
   initialBranches: Branch[];
@@ -124,6 +126,24 @@ export function EntregasPageContent({
 
 type MobileTab = "mapa" | "entregas" | "sucursales";
 
+function matchesDeliverySearch(delivery: Delivery, query: string) {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return true;
+
+  return [
+    delivery.id,
+    delivery.driverName,
+    delivery.destination,
+    delivery.orderId,
+  ].some((value) => value?.toLowerCase().includes(normalized));
+}
+
+function isDeliveryHighlighted(delivery: Delivery, ordenId: string | null) {
+  if (!ordenId) return false;
+  if (delivery.orderId && delivery.orderId === ordenId) return true;
+  return delivery.id.toLowerCase().includes(ordenId.slice(-4).toLowerCase());
+}
+
 function EntregasContent({
   initialBranches,
   initialDeliveries,
@@ -131,6 +151,7 @@ function EntregasContent({
   completedCount,
 }: EntregasPageContentProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const ordenId = searchParams.get("orden");
   const branchFilter = searchParams.get("branch");
   const { showToast } = useToast();
@@ -138,7 +159,7 @@ function EntregasContent({
   const [branches, setBranches] = useState(initialBranches);
   const [activeDeliveries] = useState(initialDeliveries);
   const [logs, setLogs] = useState<NotificationLog[]>(initialLogs);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [mobileTab, setMobileTab] = useState<MobileTab>(() => {
     if (branchFilter) return "sucursales";
     if (ordenId) return "entregas";
@@ -148,16 +169,47 @@ function EntregasContent({
   const [sendingPing, setSendingPing] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [branchOpen, setBranchOpen] = useState(false);
+  const branchRef = useRef<HTMLDivElement>(null);
 
-  const handleSearch = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      if (searchQuery.trim()) {
-        showToast(`Buscando: "${searchQuery}"`, "info");
+  const activeBranchId =
+    branchFilter && isBranchId(branchFilter) ? branchFilter : null;
+
+  const filteredDeliveries = useMemo(() => {
+    return activeDeliveries.filter((delivery) => {
+      if (activeBranchId && delivery.branchId !== activeBranchId) {
+        return false;
       }
-    },
-    [searchQuery, showToast],
-  );
+      return matchesDeliverySearch(delivery, searchQuery);
+    });
+  }, [activeBranchId, activeDeliveries, searchQuery]);
+
+  useEffect(() => {
+    if (!branchOpen) return;
+    function handleClick(event: MouseEvent) {
+      if (branchRef.current && !branchRef.current.contains(event.target as Node)) {
+        setBranchOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [branchOpen]);
+
+  const handleSearch = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+  }, []);
+
+  function selectBranchFilter(branchId: BranchId | null) {
+    setBranchOpen(false);
+    const params = new URLSearchParams(searchParams.toString());
+    if (branchId) {
+      params.set("branch", branchId);
+    } else {
+      params.delete("branch");
+    }
+    const query = params.toString();
+    router.push(query ? `/entregas?${query}` : "/entregas");
+  }
 
   async function handleBranchPing(branchId: string) {
     setSendingPing(branchId);
@@ -195,16 +247,15 @@ function EntregasContent({
   function handleMapControl(action: "zoom-in" | "zoom-out" | "locate") {
     if (action === "zoom-in") {
       setMapZoom((z) => Math.min(z + 0.2, 2));
-      showToast("Zoom aumentado", "info");
     } else if (action === "zoom-out") {
       setMapZoom((z) => Math.max(z - 0.2, 0.6));
-      showToast("Zoom reducido", "info");
     } else {
       showToast("Centrando en tu ubicación...", "info");
     }
   }
 
-  const inTransitCount = activeDeliveries.length;
+  const inTransitCount = filteredDeliveries.length;
+  const hasActiveFilters = Boolean(activeBranchId || searchQuery.trim());
 
   return (
     <AppShell
@@ -227,8 +278,14 @@ function EntregasContent({
                   >
                     Panel
                   </Link>
-                  <span className="text-black font-bold border-b-2 border-primary-container font-mono uppercase tracking-wider text-[11px]">
+                  <Link
+                    href="/ordenes"
+                    className="text-on-surface-variant font-mono hover:text-primary-container transition-all uppercase tracking-wider text-[11px]"
+                  >
                     Órdenes
+                  </Link>
+                  <span className="text-black font-bold border-b-2 border-primary-container font-mono uppercase tracking-wider text-[11px]">
+                    Entregas
                   </span>
                 </div>
               </div>
@@ -250,13 +307,58 @@ function EntregasContent({
                   search
                 </span>
                 <input
-                  className="bg-transparent border-none focus:ring-0 text-sm text-black w-36 placeholder:text-on-surface-variant/70 font-medium"
-                  placeholder="Buscar órdenes..."
+                  className="bg-transparent border-none focus:ring-0 text-sm text-black w-36 md:w-48 placeholder:text-on-surface-variant/70 font-medium"
+                  placeholder="Buscar entregas..."
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </form>
+              <div className="relative hidden lg:block" ref={branchRef}>
+                <button
+                  type="button"
+                  onClick={() => setBranchOpen((value) => !value)}
+                  className="flex items-center gap-2 px-3 py-1.5 border-2 border-black text-[10px] font-bold uppercase hover:bg-surface-container transition-all min-h-[44px]"
+                  aria-expanded={branchOpen}
+                >
+                  <span className="material-symbols-outlined text-base">hub</span>
+                  <span className="max-w-[120px] truncate">
+                    {activeBranchId
+                      ? BRANCH_LABELS[activeBranchId].split(" ")[0]
+                      : "Todas"}
+                  </span>
+                  <span className="material-symbols-outlined text-sm">
+                    expand_more
+                  </span>
+                </button>
+                {branchOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-56 bg-white industrial-border industrial-shadow z-50">
+                    <button
+                      type="button"
+                      onClick={() => selectBranchFilter(null)}
+                      className={`w-full text-left px-4 py-3 text-sm font-bold hover:bg-surface-container transition-colors min-h-[44px] ${
+                        !activeBranchId ? "bg-secondary-container" : ""
+                      }`}
+                    >
+                      Todas las sucursales
+                    </button>
+                    {(Object.entries(BRANCH_LABELS) as [BranchId, string][]).map(
+                      ([id, label]) => (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => selectBranchFilter(id)}
+                          className={`w-full text-left px-4 py-3 text-sm font-bold hover:bg-surface-container transition-colors min-h-[44px] ${
+                            activeBranchId === id ? "bg-secondary-container" : ""
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                )}
+              </div>
               <NotificationsButton />
             </div>
           </header>
@@ -272,7 +374,7 @@ function EntregasContent({
               <input
                 autoFocus
                 className="w-full industrial-border bg-white text-sm font-bold py-2.5 px-3"
-                placeholder="Buscar órdenes..."
+                placeholder="Buscar entregas..."
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -312,11 +414,43 @@ function EntregasContent({
                 <span className="font-mono text-primary">{ordenId}</span>
               </span>
               <Link
-                href="/entregas"
+                href={activeBranchId ? `/entregas?branch=${activeBranchId}` : "/entregas"}
                 className="text-[10px] font-bold uppercase hover:underline"
               >
                 Cerrar
               </Link>
+            </div>
+          )}
+
+          {hasActiveFilters && !ordenId && (
+            <div className="bg-surface-container-low border-b-2 border-black px-4 sm:px-6 py-2 flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-bold uppercase text-on-surface-variant">
+                Filtros activos:
+              </span>
+              {activeBranchId && (
+                <button
+                  type="button"
+                  onClick={() => selectBranchFilter(null)}
+                  className="inline-flex items-center gap-1 bg-white border border-black px-2 py-1 text-[10px] font-bold uppercase"
+                >
+                  {BRANCH_LABELS[activeBranchId]}
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
+              )}
+              {searchQuery.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="inline-flex items-center gap-1 bg-white border border-black px-2 py-1 text-[10px] font-bold uppercase"
+                >
+                  &quot;{searchQuery.trim()}&quot;
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
+              )}
+              <span className="text-[10px] font-mono font-bold uppercase ml-auto">
+                {filteredDeliveries.length} resultado
+                {filteredDeliveries.length === 1 ? "" : "s"}
+              </span>
             </div>
           )}
         </>
@@ -391,6 +525,9 @@ function EntregasContent({
                   local_shipping
                 </span>
                 Entregas Activas
+                <span className="text-sm font-mono text-on-surface-variant">
+                  ({filteredDeliveries.length})
+                </span>
               </h3>
               <div className="flex gap-2 w-full sm:w-auto">
                 <button
@@ -422,16 +559,18 @@ function EntregasContent({
               <>
                 {/* Lista móvil — tarjetas */}
                 <div className="md:hidden flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
-                  {activeDeliveries.length === 0 ? (
+                  {filteredDeliveries.length === 0 ? (
                     <p className="text-center text-sm font-bold uppercase opacity-50 py-12">
-                      Sin entregas activas
+                      {hasActiveFilters
+                        ? "Sin entregas con estos filtros"
+                        : "Sin entregas activas"}
                     </p>
                   ) : (
-                    activeDeliveries.map((delivery) => (
+                    filteredDeliveries.map((delivery) => (
                     <div
                       key={delivery.id}
                       className={`border-2 border-black p-4 industrial-shadow ${
-                        ordenId && delivery.id.includes(ordenId.slice(-4))
+                        isDeliveryHighlighted(delivery, ordenId)
                           ? "bg-secondary-container/30"
                           : ""
                       }`}
@@ -457,7 +596,22 @@ function EntregasContent({
                         <span className="font-semibold text-sm">{delivery.driverName}</span>
                       </div>
                       <p className="text-xs text-on-surface-variant">{delivery.destination}</p>
-                      <p className="text-xs font-mono mt-1 opacity-70">ETA: {delivery.eta}</p>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <p className="text-xs font-mono opacity-70">ETA: {delivery.eta}</p>
+                        {delivery.branchId && (
+                          <span className="text-[9px] font-bold uppercase bg-surface-container px-2 py-0.5 border border-black">
+                            {BRANCH_LABELS[delivery.branchId]}
+                          </span>
+                        )}
+                        {delivery.orderId && (
+                          <Link
+                            href={`/entregas?orden=${encodeURIComponent(delivery.orderId)}`}
+                            className="text-[9px] font-bold uppercase text-primary hover:underline"
+                          >
+                            {delivery.orderId}
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   ))
                   )}
@@ -485,27 +639,39 @@ function EntregasContent({
                     </tr>
                   </thead>
                   <tbody>
-                    {activeDeliveries.length === 0 ? (
+                    {filteredDeliveries.length === 0 ? (
                       <tr>
                         <td
                           colSpan={5}
                           className="px-6 py-12 text-center text-sm font-bold uppercase opacity-50"
                         >
-                          Sin entregas activas
+                          {hasActiveFilters
+                            ? "Sin entregas con estos filtros"
+                            : "Sin entregas activas"}
                         </td>
                       </tr>
                     ) : (
-                      activeDeliveries.map((delivery) => (
+                      filteredDeliveries.map((delivery) => (
                       <tr
                         key={delivery.id}
                         className={`hover:bg-surface-container-low transition-colors border-b border-black/10 ${
-                          ordenId && delivery.id.includes(ordenId.slice(-4))
+                          isDeliveryHighlighted(delivery, ordenId)
                             ? "bg-secondary-container/30"
                             : ""
                         }`}
                       >
                         <td className="px-6 py-4 text-primary-container font-bold font-mono">
-                          #{delivery.id}
+                          <div className="flex flex-col gap-1">
+                            <span>#{delivery.id}</span>
+                            {delivery.orderId && (
+                              <Link
+                                href={`/entregas?orden=${encodeURIComponent(delivery.orderId)}`}
+                                className="text-[10px] text-black hover:underline"
+                              >
+                                {delivery.orderId}
+                              </Link>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
@@ -518,7 +684,12 @@ function EntregasContent({
                           </div>
                         </td>
                         <td className="px-6 py-4 font-medium">
-                          {delivery.destination}
+                          <div>{delivery.destination}</div>
+                          {delivery.branchId && (
+                            <span className="text-[10px] font-bold uppercase text-on-surface-variant">
+                              {BRANCH_LABELS[delivery.branchId]}
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-on-surface-variant font-medium">
                           {delivery.eta}
@@ -545,15 +716,21 @@ function EntregasContent({
               </>
             ) : (
               <div className="flex-1 overflow-y-auto custom-scrollbar p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {activeDeliveries.length === 0 ? (
+                {filteredDeliveries.length === 0 ? (
                   <p className="col-span-full text-center text-sm font-bold uppercase opacity-50 py-12">
-                    Sin entregas activas
+                    {hasActiveFilters
+                      ? "Sin entregas con estos filtros"
+                      : "Sin entregas activas"}
                   </p>
                 ) : (
-                  activeDeliveries.map((delivery) => (
+                  filteredDeliveries.map((delivery) => (
                   <div
                     key={delivery.id}
-                    className="border-2 border-black p-4 industrial-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all"
+                    className={`border-2 border-black p-4 industrial-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all ${
+                      isDeliveryHighlighted(delivery, ordenId)
+                        ? "bg-secondary-container/30"
+                        : ""
+                    }`}
                   >
                     <div className="flex justify-between items-start mb-3">
                       <span className="font-mono font-bold text-primary-container">
@@ -576,6 +753,21 @@ function EntregasContent({
                     <p className="text-xs font-mono mt-2 opacity-70">
                       ETA: {delivery.eta}
                     </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      {delivery.branchId && (
+                        <span className="text-[9px] font-bold uppercase bg-surface-container px-2 py-0.5 border border-black">
+                          {BRANCH_LABELS[delivery.branchId]}
+                        </span>
+                      )}
+                      {delivery.orderId && (
+                        <Link
+                          href={`/entregas?orden=${encodeURIComponent(delivery.orderId)}`}
+                          className="text-[9px] font-bold uppercase text-primary hover:underline"
+                        >
+                          {delivery.orderId}
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 ))
                 )}
@@ -599,7 +791,7 @@ function EntregasContent({
                 <BranchCard
                   key={branch.id}
                   branch={branch}
-                  highlighted={branch.id === branchFilter}
+                  highlighted={branch.id === activeBranchId}
                   onPing={handleBranchPing}
                   sending={sendingPing}
                 />
