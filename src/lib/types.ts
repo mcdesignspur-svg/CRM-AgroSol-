@@ -15,6 +15,7 @@ export interface Branch {
   id: BranchId;
   name: string;
   address: string;
+  loyverseStoreId?: string;
   capacityPercent: number;
   currentVolume: number;
   status: "online" | "offline" | "warning";
@@ -53,6 +54,8 @@ export interface OrderDetail extends Order {
   lineItems: OrderLineItemSnapshot[];
   allowedTransitions: OrderStatus[];
   updatedAt: string;
+  loyverseReceiptNumber?: string;
+  loyverseSyncedAt?: string;
 }
 
 export interface Delivery {
@@ -85,6 +88,8 @@ export interface Product {
   name: string;
   sku: string;
   unitPrice: number;
+  loyverseVariantId?: string;
+  categoryName?: string;
 }
 
 export interface OrderLineItem extends Product {
@@ -98,4 +103,14 @@ export interface DashboardMetrics {
   activePickups: number;
   activePickupsLocation: string;
   systemAlerts: number;
+}
+
+export interface LoyverseIntegrationStatus {
+  configured: boolean;
+  connected: boolean;
+  receiptSource: string;
+  mappedStores: number;
+  syncedProducts: number;
+  syncedCustomers: number;
+  lastError?: string;
 }

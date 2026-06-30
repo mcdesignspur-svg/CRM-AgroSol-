@@ -84,6 +84,9 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
             </div>
             <p className="text-sm text-on-surface-variant mt-2">
               Creada hace {order.elapsedTime} · {BRANCH_LABELS[order.branchId]}
+              {order.loyverseReceiptNumber && (
+                <> · Receipt Loyverse {order.loyverseReceiptNumber}</>
+              )}
             </p>
           </div>
 

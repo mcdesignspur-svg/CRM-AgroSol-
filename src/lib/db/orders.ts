@@ -1,6 +1,12 @@
 import { ensureBranches } from "@/lib/db/branches";
+import { findOrCreateCustomerForOrder } from "@/lib/db/customers";
 import { isBranchId } from "@/lib/branch-definitions";
 import { DELIVERY_SLA_HOURS, PICKUP_SLA_HOURS } from "@/lib/constants";
+import {
+  checkInventoryForOrder,
+  isLoyverseConfigured,
+  pushReceiptToLoyverse,
+} from "@/lib/loyverse";
 import {
   getAllowedStatusTransitions,
   resolveDisplayStatus,
@@ -177,7 +183,27 @@ export async function createOrder(input: CreateOrderInput) {
     );
   }
 
+  if (isLoyverseConfigured()) {
+    const stockIssues = await checkInventoryForOrder({
+      branchId: input.branchId,
+      lineItems: input.lineItems,
+    });
+
+    if (stockIssues.length > 0) {
+      const first = stockIssues[0];
+      throw new OrderValidationError(
+        `Stock insuficiente para ${first.name} (${first.sku}): solicitado ${first.requested}, disponible ${first.available}`,
+      );
+    }
+  }
+
   await ensureBranches();
+
+  const customer = await findOrCreateCustomerForOrder({
+    name: input.customerName,
+    phone: input.customerPhone,
+    address: input.deliveryAddress,
+  });
 
   const status: OrderStatus =
     input.fulfillment === "delivery" ? "en-transito" : "pendiente";
@@ -188,6 +214,7 @@ export async function createOrder(input: CreateOrderInput) {
     const created = await tx.order.create({
       data: {
         displayId,
+        customerId: customer.id,
         customerName: input.customerName.trim(),
         customerPhone: input.customerPhone?.trim() || null,
         deliveryAddress: input.deliveryAddress?.trim() || null,
@@ -309,5 +336,32 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
     return order;
   });
 
-  return mapOrderDetail(updated);
+  if (nextStatus === "completado" && isLoyverseConfigured()) {
+    try {
+      await pushReceiptToLoyverse(displayId);
+      await prisma.notificationLog.create({
+        data: {
+          source: "LOYVERSE",
+          message: `Receipt Loyverse creado para orden ${displayId}.`,
+          accent: "primary",
+        },
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Error al sincronizar receipt";
+      await prisma.notificationLog.create({
+        data: {
+          source: "LOYVERSE",
+          message: `No se pudo crear receipt para ${displayId}: ${message}`,
+        },
+      });
+    }
+  }
+
+  const refreshed = await prisma.order.findUnique({
+    where: { displayId },
+    include: { lineItems: { orderBy: { name: "asc" } } },
+  });
+
+  return mapOrderDetail(refreshed ?? updated);
 }

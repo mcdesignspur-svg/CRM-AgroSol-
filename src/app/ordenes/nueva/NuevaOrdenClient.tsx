@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -14,7 +14,7 @@ import {
   DELIVERY_FEE,
   TAX_RATE,
 } from "@/lib/constants";
-import type { BranchId, OrderLineItem, Product } from "@/lib/types";
+import type { BranchId, LoyverseIntegrationStatus, OrderLineItem, Product } from "@/lib/types";
 
 type FulfillmentMethod = "pickup" | "delivery";
 
@@ -40,6 +40,15 @@ export default function NuevaOrdenClient({
   const { showToast } = useToast();
   const router = useRouter();
   const [smsNotify, setSmsNotify] = useState(false);
+  const [loyverseStatus, setLoyverseStatus] =
+    useState<LoyverseIntegrationStatus | null>(null);
+
+  useEffect(() => {
+    fetch("/api/integrations/loyverse/status")
+      .then((res) => res.json())
+      .then((data: LoyverseIntegrationStatus) => setLoyverseStatus(data))
+      .catch(() => setLoyverseStatus(null));
+  }, []);
 
   function addLineItem() {
     setPickerOpen(true);
@@ -532,10 +541,24 @@ export default function NuevaOrdenClient({
                 </div>
 
                 <div className="bg-white border-2 border-black p-4 flex items-center gap-4">
-                  <div className="w-4 h-4 border-2 border-black bg-surface-container shrink-0" />
+                  <div
+                    className={`w-4 h-4 border-2 border-black shrink-0 ${
+                      loyverseStatus?.connected
+                        ? "bg-green-500"
+                        : "bg-surface-container"
+                    }`}
+                  />
                   <div className="text-[10px]">
-                    <div className="font-bold uppercase">Conexión ERP</div>
-                    <div className="font-mono opacity-60">No conectado</div>
+                    <div className="font-bold uppercase">Conexión Loyverse</div>
+                    <div className="font-mono opacity-60">
+                      {!loyverseStatus
+                        ? "Consultando..."
+                        : !loyverseStatus.configured
+                          ? "No configurado"
+                          : loyverseStatus.connected
+                            ? `Activa · ${loyverseStatus.syncedProducts} productos`
+                            : "Token inválido o sin conexión"}
+                    </div>
                   </div>
                 </div>
               </div>

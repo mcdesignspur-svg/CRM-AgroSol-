@@ -72,6 +72,7 @@ export function mapBranch(branch: PrismaBranch): Branch {
     id: branch.id as BranchId,
     name: branch.name,
     address: branch.address,
+    loyverseStoreId: branch.loyverseStoreId ?? undefined,
     capacityPercent: branch.capacityPercent,
     currentVolume: branch.currentVolume,
     status: branch.status,
@@ -129,6 +130,8 @@ export function mapOrderDetail(
     elapsedTime: formatElapsedTime(order.createdAt),
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
+    loyverseReceiptNumber: order.loyverseReceiptNumber ?? undefined,
+    loyverseSyncedAt: order.loyverseSyncedAt?.toISOString(),
     lineItems: order.lineItems.map((item) => ({
       id: item.id,
       productId: item.productId ?? undefined,
@@ -184,6 +187,8 @@ export function mapProduct(product: PrismaProduct): Product {
     name: product.name,
     sku: product.sku,
     unitPrice: Number(product.unitPrice),
+    loyverseVariantId: product.loyverseVariantId ?? undefined,
+    categoryName: product.categoryName ?? undefined,
   };
 }
 

@@ -77,6 +77,35 @@ npm start
 
 Requiere `DATABASE_URL` apuntando a una instancia PostgreSQL accesible.
 
+### Integración Loyverse
+
+1. Obtén un token en [Loyverse Back Office → Integrations → Tokens](https://r.loyverse.com/dashboard/#/integrations/tokens)
+2. Configura en `.env`:
+
+```
+LOYVERSE_ACCESS_TOKEN="tu-token"
+LOYVERSE_RECEIPT_SOURCE="AgroSol CRM"
+LOYVERSE_WEBHOOK_SECRET="opcional"
+```
+
+3. Sincroniza catálogo y tiendas desde `/productos` → **Sync Loyverse**, o vía API:
+
+```bash
+curl -X POST http://localhost:3000/api/integrations/loyverse/sync \
+  -H "Content-Type: application/json" \
+  -d '{"scope":"all"}'
+```
+
+4. Registra el webhook en Loyverse apuntando a:
+
+```
+https://tu-dominio/api/integrations/loyverse/webhook
+```
+
+Eventos soportados: `items.update`, `customers.update`, `receipts.update`, `inventory_levels.update`.
+
+Al completar una orden en el CRM se crea un receipt en Loyverse. Las ventas del POS se importan como órdenes logísticas.
+
 ### Deploy en Vercel
 
 1. Conecta el repositorio de GitHub en [vercel.com](https://vercel.com)
@@ -109,6 +138,7 @@ design/               # Mockups originales de Stitch (referencia)
 - [ ] Autenticación de operadores
 - [ ] WebSockets / actualizaciones en tiempo real
 - [ ] Integración ERP
+- [x] Integración Loyverse (items, stores, receipts, webhooks)
 - [ ] Notificaciones SMS / push
 
 ## Licencia
