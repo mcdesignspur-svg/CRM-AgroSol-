@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
@@ -69,6 +70,7 @@ export function OrdenesContent({
   initialTotal,
   initialSearch = "",
 }: OrdenesContentProps) {
+  const router = useRouter();
   const { showToast } = useToast();
   const [orders, setOrders] = useState(initialOrders);
   const [total, setTotal] = useState(initialTotal);
@@ -78,6 +80,7 @@ export function OrdenesContent({
   const [loadingMore, setLoadingMore] = useState(false);
 
   const hasMore = orders.length < total;
+  const activeSearch = initialSearch;
 
   const loadOrders = useCallback(
     async (
@@ -86,9 +89,9 @@ export function OrdenesContent({
       offset = 0,
       replace = true,
     ) => {
-      const res = await fetch(
-        `/api/orders?${buildQuery(nextFilter, nextSearch, offset)}`,
-      );
+      const res = await fetch(`/api/orders?${buildQuery(nextFilter, nextSearch, offset)}`, {
+        cache: "no-store",
+      });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error ?? "Error al cargar órdenes");
@@ -100,18 +103,40 @@ export function OrdenesContent({
     [],
   );
 
-  const cycleFilter = useCallback(() => {
+  async function applyFilter(nextFilter: FilterMode) {
+    setFilter(nextFilter);
+    setRefreshing(true);
+    try {
+      if (nextFilter === "all" && !activeSearch) {
+        setOrders(initialOrders);
+        setTotal(initialTotal);
+        return;
+      }
+      await loadOrders(nextFilter, activeSearch, 0, true);
+    } catch {
+      showToast("Error al filtrar órdenes", "error");
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  function cycleFilter() {
     const idx = filterCycle.indexOf(filter);
     const next = filterCycle[(idx + 1) % filterCycle.length];
-    setFilter(next);
-    void loadOrders(next, search, 0, true);
     showToast(`Filtro: ${filterLabels[next]}`, "info");
-  }, [filter, loadOrders, search, showToast]);
+    void applyFilter(next);
+  }
 
   async function handleRefresh() {
     setRefreshing(true);
     try {
-      await loadOrders(filter, search, 0, true);
+      if (filter === "all" && !activeSearch) {
+        setOrders(initialOrders);
+        setTotal(initialTotal);
+        showToast("Datos actualizados", "success");
+        return;
+      }
+      await loadOrders(filter, activeSearch, 0, true);
       showToast("Datos actualizados", "success");
     } catch {
       showToast("Error al actualizar", "error");
@@ -120,23 +145,26 @@ export function OrdenesContent({
     }
   }
 
-  async function handleSearchSubmit(event: React.FormEvent) {
+  function handleSearchSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setRefreshing(true);
-    try {
-      await loadOrders(filter, search, 0, true);
-    } catch {
-      showToast("Error al buscar órdenes", "error");
-    } finally {
-      setRefreshing(false);
+    const trimmed = search.trim();
+    const params = new URLSearchParams();
+    if (trimmed) {
+      params.set("q", trimmed);
     }
+    router.push(params.size > 0 ? `/ordenes?${params}` : "/ordenes");
+  }
+
+  function clearSearch() {
+    setSearch("");
+    router.push("/ordenes");
   }
 
   async function handleLoadMore() {
     if (!hasMore || loadingMore) return;
     setLoadingMore(true);
     try {
-      const data = await loadOrders(filter, search, orders.length, false);
+      const data = await loadOrders(filter, activeSearch, orders.length, false);
       if (data.orders.length > 0) {
         showToast(`${data.orders.length} órdenes cargadas`, "success");
       }
@@ -183,6 +211,15 @@ export function OrdenesContent({
               >
                 Buscar
               </button>
+              {activeSearch && (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="btn-secondary px-4 py-2 text-xs font-bold uppercase min-h-[44px]"
+                >
+                  Limpiar
+                </button>
+              )}
             </form>
             <div className="flex gap-2 items-center">
               <span className="text-xs font-bold uppercase opacity-60">
@@ -216,6 +253,12 @@ export function OrdenesContent({
             </div>
           </div>
 
+          {activeSearch && (
+            <div className="px-4 py-2 bg-primary/10 border-b-2 border-black text-xs font-bold uppercase">
+              Búsqueda: <span className="font-mono">&quot;{activeSearch}&quot;</span>
+            </div>
+          )}
+
           {filter !== "all" && (
             <div className="px-4 py-2 bg-secondary-container border-b-2 border-black text-xs font-bold uppercase">
               Filtro activo: {filterLabels[filter]}
@@ -242,7 +285,9 @@ export function OrdenesContent({
                       colSpan={7}
                       className="p-8 text-center text-sm font-bold uppercase opacity-50"
                     >
-                      Sin órdenes registradas
+                      {activeSearch
+                        ? "Sin resultados para esta búsqueda"
+                        : "Sin órdenes registradas"}
                     </td>
                   </tr>
                 ) : (
@@ -293,7 +338,9 @@ export function OrdenesContent({
           <div className="md:hidden divide-y divide-gray-200">
             {orders.length === 0 ? (
               <p className="p-8 text-center text-sm font-bold uppercase opacity-50">
-                Sin órdenes registradas
+                {activeSearch
+                  ? "Sin resultados para esta búsqueda"
+                  : "Sin órdenes registradas"}
               </p>
             ) : (
               orders.map((order) => (
@@ -349,10 +396,7 @@ export function OrdenesContent({
               <button
                 key={status}
                 type="button"
-                onClick={() => {
-                  setFilter(status);
-                  void loadOrders(status, search, 0, true);
-                }}
+                onClick={() => void applyFilter(status)}
                 className={`p-3 border-2 border-black text-left hover:bg-surface-container transition-colors ${
                   filter === status ? "bg-secondary-container" : "bg-white"
                 }`}

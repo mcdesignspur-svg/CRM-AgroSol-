@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useBranch } from "@/components/providers/BranchProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { NotificationsButton } from "@/components/ui/NotificationsButton";
+import { useDashboardSearch } from "@/components/dashboard/DashboardSearchProvider";
 import { BRANCH_LABELS } from "@/lib/constants";
 import type { BranchId } from "@/lib/types";
 
@@ -24,6 +25,7 @@ export function TopBar({
   const { branchId, setBranchId } = useBranch();
   const { showToast } = useToast();
   const router = useRouter();
+  const dashboardSearch = useDashboardSearch();
   const [branchOpen, setBranchOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,10 +51,28 @@ export function TopBar({
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const query = searchQuery.trim();
-    if (query) {
-      router.push(`/ordenes?q=${encodeURIComponent(query)}`);
+
+    if (dashboardSearch) {
+      void dashboardSearch.submitSearch(query).catch(() => {
+        showToast("Error al buscar órdenes", "error");
+      });
+      setSearchQuery("");
       setSearchOpen(false);
+      if (query) {
+        requestAnimationFrame(() => {
+          document
+            .querySelector("[data-orders-section]")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+      return;
     }
+
+    if (!query) return;
+
+    router.push(`/ordenes?q=${encodeURIComponent(query)}`);
+    setSearchQuery("");
+    setSearchOpen(false);
   }
 
   const branchSelector = showBranchSelector && !title && (

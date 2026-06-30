@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
+import { DashboardSearchProvider } from "@/components/dashboard/DashboardSearchProvider";
 import {
   CriticalAlertsLink,
   DashboardOrdersSection,
@@ -30,15 +31,16 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <PingsSheetProvider initialPings={pings}>
-      <AppShell
-        topBar={<TopBar />}
-        rightPanel={
-          <div data-pings-panel>
-            <LivePingsPanel initialPings={pings} branches={branches} />
-          </div>
-        }
-      >
+    <DashboardSearchProvider>
+      <PingsSheetProvider initialPings={pings}>
+        <AppShell
+          topBar={<TopBar />}
+          rightPanel={
+            <div data-pings-panel>
+              <LivePingsPanel initialPings={pings} branches={branches} />
+            </div>
+          }
+        >
         <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 pb-10">
           <DashboardHeader />
 
@@ -106,5 +108,6 @@ export default async function DashboardPage() {
         </div>
       </AppShell>
     </PingsSheetProvider>
+    </DashboardSearchProvider>
   );
 }
