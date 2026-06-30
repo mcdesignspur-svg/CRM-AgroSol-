@@ -109,7 +109,7 @@ export async function loyverseGetAllPages<TKey extends string, TItem>(
   let cursor: string | undefined;
 
   do {
-    const page = await loyverseGetPage(path, collectionKey, branchId, {
+    const page = await loyverseGetPage<TKey, TItem>(path, collectionKey, branchId, {
       ...options,
       cursor,
     });
