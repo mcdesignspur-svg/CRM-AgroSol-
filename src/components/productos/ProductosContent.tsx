@@ -22,12 +22,12 @@ export function ProductosContent({ initialProducts }: ProductosContentProps) {
   }
 
   return (
-    <AppShell topBar={<TopBar title="Catálogo de Productos" showSearch={false} />}>
+    <AppShell topBar={<TopBar title="Productos" showSearch={false} />}>
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 pb-10">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div>
             <h2 className="font-display text-2xl sm:text-3xl font-extrabold uppercase tracking-tight">
-              Catálogo de Productos
+              Productos
             </h2>
             <p className="text-lg text-on-surface-variant mt-2">
               Administra los artículos disponibles para nuevas órdenes.

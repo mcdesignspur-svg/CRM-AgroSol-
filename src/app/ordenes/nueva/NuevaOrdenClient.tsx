@@ -285,7 +285,7 @@ export default function NuevaOrdenClient({
                       href="/productos"
                       className="text-xs font-bold uppercase px-3 py-2 border-2 border-black hover:bg-surface-container transition-all hidden sm:inline-flex"
                     >
-                      Catálogo
+                      Productos
                     </Link>
                     <button
                       type="button"
