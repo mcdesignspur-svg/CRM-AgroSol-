@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { useToast } from "@/components/providers/ToastProvider";
+import { useDashboardSearch } from "@/components/dashboard/DashboardSearchProvider";
 import { usePingsSheet } from "@/components/dashboard/PingsSheetProvider";
 import {
   BranchLabel,
@@ -43,19 +44,43 @@ export function DashboardOrdersSection({
   initialTotal: number;
 }) {
   const { showToast } = useToast();
+  const dashboardSearch = useDashboardSearch();
+  const searchQuery = dashboardSearch?.query ?? "";
+  const isSearching = dashboardSearch?.isSearching ?? false;
   const [orders, setOrders] = useState(initialOrders);
   const [total, setTotal] = useState(initialTotal);
   const [filter, setFilter] = useState<FilterMode>("all");
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const hasMore = orders.length < total;
+  const sourceOrders = dashboardSearch?.results ?? orders;
+  const sourceTotal = dashboardSearch?.results
+    ? dashboardSearch.resultsTotal
+    : total;
+  const hasMore = !searchQuery && orders.length < total;
 
-  const filteredOrders = orders.filter((order) => {
+  const filteredOrders = sourceOrders.filter((order) => {
     if (filter === "all") return true;
     if (filter === "entrega" || filter === "retiro") return order.type === filter;
     return order.status === filter;
   });
+
+  const fetchOrders = useCallback(async (offset = 0, replace = true) => {
+    const params = new URLSearchParams({
+      limit: "20",
+      offset: String(offset),
+    });
+
+    const res = await fetch(`/api/orders?${params}`, { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error ?? "Error al cargar órdenes");
+    }
+
+    setTotal(data.total);
+    setOrders((prev) => (replace ? data.orders : [...prev, ...data.orders]));
+    return data;
+  }, []);
 
   const cycleFilter = useCallback(() => {
     const idx = filterCycle.indexOf(filter);
@@ -67,10 +92,7 @@ export function DashboardOrdersSection({
   async function handleRefresh() {
     setRefreshing(true);
     try {
-      const res = await fetch("/api/orders?limit=20&offset=0");
-      const data = await res.json();
-      setOrders(data.orders);
-      setTotal(data.total);
+      await fetchOrders(0, true);
       showToast("Datos actualizados", "success");
     } catch {
       showToast("Error al actualizar", "error");
@@ -86,10 +108,7 @@ export function DashboardOrdersSection({
     }
     setLoadingMore(true);
     try {
-      const res = await fetch(`/api/orders?limit=20&offset=${orders.length}`);
-      const data = await res.json();
-      setOrders((prev) => [...prev, ...data.orders]);
-      setTotal(data.total);
+      const data = await fetchOrders(orders.length, false);
       if (data.orders.length > 0) {
         showToast(`${data.orders.length} órdenes cargadas`, "success");
       }
@@ -102,10 +121,13 @@ export function DashboardOrdersSection({
 
   return (
     <>
-      <section className="industrial-border bg-white overflow-hidden">
+      <section
+        data-orders-section
+        className="industrial-border bg-white overflow-hidden"
+      >
         <div className="p-6 industrial-divider flex justify-between items-center">
           <h3 className="font-display text-2xl font-bold uppercase">
-            Órdenes Recientes
+            {searchQuery ? "Resultados de Búsqueda" : "Órdenes Recientes"}
             {filter !== "all" && (
               <span className="ml-2 text-sm text-primary font-mono">
                 [{filterLabels[filter]}]
@@ -141,6 +163,33 @@ export function DashboardOrdersSection({
           </div>
         </div>
 
+        {searchQuery && (
+          <div className="px-6 py-2 bg-primary/10 border-b-2 border-black text-xs font-bold uppercase flex flex-wrap items-center justify-between gap-2">
+            <span>
+              Búsqueda: <span className="font-mono">&quot;{searchQuery}&quot;</span>
+              {!isSearching && (
+                <span className="ml-2 opacity-60">({sourceTotal} encontradas)</span>
+              )}
+              {isSearching && <span className="ml-2 opacity-60">(buscando...)</span>}
+            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => dashboardSearch?.clearSearch()}
+                className="underline hover:text-primary"
+              >
+                Limpiar
+              </button>
+              <Link
+                href={`/ordenes?q=${encodeURIComponent(searchQuery)}`}
+                className="underline hover:text-primary"
+              >
+                Ver en Órdenes
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Vista tabla — desktop */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -163,7 +212,9 @@ export function DashboardOrdersSection({
                     colSpan={6}
                     className="p-8 text-center text-sm font-bold uppercase opacity-50"
                   >
-                    Sin órdenes registradas
+                    {searchQuery
+                      ? "Sin resultados para esta búsqueda"
+                      : "Sin órdenes registradas"}
                   </td>
                 </tr>
               ) : (
@@ -212,7 +263,9 @@ export function DashboardOrdersSection({
         <div className="md:hidden divide-y divide-gray-200">
           {filteredOrders.length === 0 ? (
             <p className="p-8 text-center text-sm font-bold uppercase opacity-50">
-              Sin órdenes registradas
+              {searchQuery
+                ? "Sin resultados para esta búsqueda"
+                : "Sin órdenes registradas"}
             </p>
           ) : (
             filteredOrders.map((order) => (
