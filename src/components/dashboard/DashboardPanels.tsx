@@ -203,7 +203,7 @@ export function DashboardHeader() {
           {exporting ? "Exportando..." : "Exportar Datos"}
         </button>
         <Link
-          href="/ordenes?tab=nueva"
+          href="/ordenes#nueva-orden"
           className="btn-primary px-4 sm:px-6 py-3 text-sm font-bold uppercase industrial-border inline-flex items-center justify-center w-full sm:w-auto min-h-[44px]"
         >
           Crear Nueva Orden
