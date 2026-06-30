@@ -36,7 +36,7 @@ export function StatusBadge({ status }: { status: OrderStatus }) {
 export function TypeBadge({ type }: { type: OrderType }) {
   return (
     <span className={`px-2 py-1 text-xs font-bold uppercase ${typeStyles[type]}`}>
-      {type === "entrega" ? "Entrega" : "Retiro"}
+      {type === "entrega" ? "Entrega" : "Pickup"}
     </span>
   );
 }

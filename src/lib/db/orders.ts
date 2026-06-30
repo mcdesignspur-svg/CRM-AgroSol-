@@ -273,7 +273,7 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
 
     const statusLabel =
       nextStatus === "listo"
-        ? "lista para retiro"
+        ? "lista para pickup"
         : nextStatus === "completado"
           ? "completada"
           : nextStatus;
