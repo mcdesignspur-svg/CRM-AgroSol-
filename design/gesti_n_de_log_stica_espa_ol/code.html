@@ -1,0 +1,427 @@
+<html class="light" lang="es"><head></head><body class="bg-background text-on-surface font-body-md overflow-hidden h-screen flex">```html
+
+
+
+    <meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Agrocentro Solá | Logistics CRM</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#5d3f3c",
+                        "primary-fixed-dim": "#ffb4ab",
+                        "surface-variant": "#e2e2e2",
+                        "on-secondary-fixed-variant": "#544600",
+                        "on-secondary-container": "#6e5c00",
+                        "surface-container-high": "#e8e8e8",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#c00014",
+                        "tertiary-container": "#007bb5",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "inverse-surface": "#303030",
+                        "on-surface": "#000000",
+                        "tertiary-fixed-dim": "#8ecdff",
+                        "secondary-fixed-dim": "#e9c400",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#006190",
+                        "background": "#ffffff",
+                        "surface": "#f9f9f9",
+                        "surface-bright": "#f9f9f9",
+                        "surface-container": "#eeeeee",
+                        "primary-container": "#e31e24",
+                        "on-primary-container": "#fffafa",
+                        "on-background": "#1b1b1b",
+                        "outline": "#926f6b",
+                        "secondary": "#705d00",
+                        "inverse-primary": "#ffb4ab",
+                        "primary": "#ba0013",
+                        "surface-dim": "#dadada",
+                        "tertiary-fixed": "#cbe6ff",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#e7bdb8",
+                        "on-primary-fixed-variant": "#93000d",
+                        "on-tertiary-fixed-variant": "#004b71",
+                        "on-tertiary-container": "#fbfcff",
+                        "primary-fixed": "#ffdad6",
+                        "on-primary-fixed": "#410002",
+                        "inverse-on-surface": "#f1f1f1",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed": "#ffe16d",
+                        "on-tertiary-fixed": "#001e30",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#fcd400",
+                        "surface-container-low": "#f3f3f3",
+                        "on-secondary-fixed": "#221b00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "xs": "4px",
+                        "lg": "40px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "sm": "12px",
+                        "md": "24px",
+                        "xl": "64px"
+                    },
+                    "fontFamily": {
+                        "display": ["Montserrat"],
+                        "body-sm": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Montserrat"],
+                        "data-table": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Montserrat"]
+                    },
+                    "fontSize": {
+                        "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "data-table": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f9f9f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #dadada;
+            border-radius: 10px;
+        }
+        .industrial-border { border: 2px solid #000000; }
+        .industrial-shadow { box-shadow: 4px 4px 0px 0px #000000; }
+        .light-grid-pattern {
+            background-image: radial-gradient(#d1d1d1 1px, transparent 0);
+            background-size: 20px 20px;
+        }
+    </style>
+<!-- SideNavBar -->
+<nav class="w-64 h-screen fixed left-0 top-0 border-r-2 border-black flex flex-col py-md bg-surface-container-lowest z-50">
+<div class="px-gutter mb-xl">
+<h1 class="font-display text-headline-md font-extrabold text-primary-container">Agrocentro Solá</h1>
+<p class="font-label-caps text-[10px] text-on-surface-variant tracking-widest mt-1 uppercase">Logística CRM</p>
+</div>
+<div class="flex-1 space-y-2">
+<a class="flex items-center px-gutter py-sm text-on-surface-variant hover:text-black hover:bg-surface-container transition-colors group" href="#">
+<span class="material-symbols-outlined mr-4">dashboard</span>
+<span class="font-body-md font-semibold">Panel</span>
+</a>
+<a class="flex items-center px-gutter py-sm text-on-surface-variant hover:text-black hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined mr-4">add_shopping_cart</span>
+<span class="font-body-md font-semibold">Nueva Orden</span>
+</a>
+<a class="flex items-center px-gutter py-sm text-on-surface bg-secondary-container border-l-4 border-primary-container active:scale-95 duration-150 ease-in-out font-bold" href="#">
+<span class="material-symbols-outlined mr-4">local_shipping</span>
+<span class="font-body-md">Entregas</span>
+</a>
+<a class="flex items-center px-gutter py-sm text-on-surface-variant hover:text-black hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined mr-4">location_on</span>
+<span class="font-body-md font-semibold">Sucursales</span>
+</a>
+</div>
+<div class="mt-auto pt-md border-t-2 border-black">
+<div class="px-gutter mb-md">
+<button class="w-full bg-primary-container text-white py-sm font-bold industrial-border industrial-shadow active:translate-x-1 active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">flash_on</span>
+                    PING RÁPIDO
+                </button>
+</div>
+<a class="flex items-center px-gutter py-sm text-on-surface-variant hover:text-black hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined mr-4">notifications</span>
+<span class="font-body-md font-semibold">Notificaciones</span>
+</a>
+<a class="flex items-center px-gutter py-sm text-on-surface-variant hover:text-black hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined mr-4">settings</span>
+<span class="font-body-md font-semibold">Configuración</span>
+</a>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="ml-64 flex-1 flex flex-col h-screen">
+<!-- TopAppBar -->
+<header class="h-16 flex justify-between items-center px-gutter py-xs border-b-2 border-black bg-white z-40">
+<div class="flex items-center gap-8">
+<h2 class="font-display text-headline-sm font-extrabold text-primary-container uppercase">Entregas y Sucursales</h2>
+<div class="hidden md:flex gap-6">
+<a class="text-on-surface-variant font-label-caps hover:text-primary-container transition-all uppercase tracking-wider text-[11px]" href="#">Panel</a>
+<a class="text-black font-bold border-b-2 border-primary-container font-label-caps uppercase tracking-wider text-[11px]" href="#">Órdenes</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative flex items-center bg-surface-container-low border-2 border-black px-4 py-1">
+<span class="material-symbols-outlined text-black text-[18px] mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm text-black w-48 placeholder:text-on-surface-variant/70 font-medium" placeholder="Buscar órdenes..." type="text"/>
+</div>
+<button class="flex items-center gap-2 px-3 py-1.5 border-2 border-black text-label-caps font-bold hover:bg-surface-container transition-all uppercase">
+<span class="material-symbols-outlined text-[18px]">hub</span>
+                    SELECTOR DE SUCURSAL
+                </button>
+<button class="text-black hover:text-primary-container transition-all active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-8 h-8 border-2 border-black bg-gray-200 overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnc0sORYbPhhO5-_gNCfwEBDVKv5onu76mSqPjd4awdUM2hSQCGo6P-3q4jP1qCq-Zlznm008A0yy1OWBX4gqxO-gXxohZcWasZUFCJovdK84LwAmJ_eHH_V9_Mz30jEHACSg2oIbZBiWX93U9guh59XgwpjLF5MRSmaUb5dPHXT1bXIaGtR4wxM0MGr7aSKmkxPX1sFfjbjFfvKc8_pWeMmb9Q-54m17LTKbKch2I7rdha77o1V9mST8fKC5pCERu5a2_ZBHvDVtg"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="flex-1 overflow-hidden grid grid-cols-12 gap-0">
+<!-- Map & Active Deliveries (Left Column) -->
+<div class="col-span-8 flex flex-col border-r-2 border-black relative">
+<!-- High Visibility Map View -->
+<div class="h-1/2 w-full bg-surface-container relative border-b-2 border-black">
+<div class="absolute inset-0 z-0 overflow-hidden">
+<div class="w-full h-full bg-cover bg-center grayscale contrast-125 opacity-40 light-grid-pattern" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD6Pcah07a36xREVv1SfomwKQ_QaSbDwR8MtnN_zAUKf1dBbquDkQuuyd1U_mvagVaEnWvP-Z5qchkI6kYQV-zIKC7ZTYc1j6zUES9Q_nAyp_PjR_LQiBfQuPTdpp4wcuMpll1LmowmL1oJk6wzvDxo0xHiLG-HpOuybp9Lo-5CqiwvBVgj8gvkzLJRycVaZhtd5vUAiFXCVrsET5p3abYgjDfgpyBldQL6_C2xIEocQuXi8EesucN4v4Al2Ze71N4c4cIv8Ox9_lL2')"></div>
+<!-- Simulated Map UI -->
+<div class="absolute top-md right-md flex flex-col gap-2">
+<button class="bg-white p-2 border-2 border-black hover:bg-surface-container active:scale-95 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"><span class="material-symbols-outlined">add</span></button>
+<button class="bg-white p-2 border-2 border-black hover:bg-surface-container active:scale-95 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"><span class="material-symbols-outlined">remove</span></button>
+<button class="bg-white p-2 border-2 border-black text-primary-container hover:bg-surface-container active:scale-95 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"><span class="material-symbols-outlined">my_location</span></button>
+</div>
+</div>
+<!-- Map Overlays -->
+<div class="absolute bottom-md left-md bg-white p-md border-2 border-black industrial-shadow flex gap-gutter">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 border border-black bg-primary-container animate-pulse"></div>
+<span class="text-label-caps font-bold text-black uppercase">12 EN TRÁNSITO</span>
+</div>
+<div class="flex items-center gap-3 border-l-2 border-black pl-gutter">
+<div class="w-3 h-3 border border-black bg-secondary-container"></div>
+<span class="text-label-caps font-bold text-black uppercase">4 ENTREGAS REALIZADAS</span>
+</div>
+</div>
+</div>
+<!-- Active Deliveries List -->
+<div class="h-1/2 flex flex-col bg-white">
+<div class="p-gutter border-b-2 border-black flex justify-between items-center bg-surface-container-lowest">
+<h3 class="font-headline-md text-black flex items-center gap-2 uppercase">
+<span class="material-symbols-outlined text-primary-container">local_shipping</span>
+                            Entregas Activas
+                        </h3>
+<div class="flex gap-2">
+<button class="px-4 py-1.5 bg-black text-white font-label-caps text-[10px] font-bold uppercase">Vista de Lista</button>
+<button class="px-4 py-1.5 bg-white border-2 border-black text-black font-label-caps text-[10px] font-bold hover:bg-surface-container transition-all uppercase">Vista de Cuadrícula</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-black text-white z-10">
+<tr>
+<th class="px-gutter py-3 font-label-caps text-[11px] uppercase tracking-wider">ID</th>
+<th class="px-gutter py-3 font-label-caps text-[11px] uppercase tracking-wider">Conductor</th>
+<th class="px-gutter py-3 font-label-caps text-[11px] uppercase tracking-wider">Destino</th>
+<th class="px-gutter py-3 font-label-caps text-[11px] uppercase tracking-wider">ETA</th>
+<th class="px-gutter py-3 font-label-caps text-[11px] uppercase tracking-wider text-right pr-gutter">Estado</th>
+</tr>
+</thead>
+<tbody class="font-data-table">
+<tr class="hover:bg-surface-container-low transition-colors border-b-2 border-black/10 group">
+<td class="px-gutter py-4 text-primary-container font-bold font-mono">#TRK-8921</td>
+<td class="px-gutter py-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 border border-black bg-surface-container flex items-center justify-center text-[10px] font-bold">JR</div>
+<span class="font-semibold text-black">Juan Rodriguez</span>
+</div>
+</td>
+<td class="px-gutter py-4 font-medium">Finca Santa Maria, SE</td>
+<td class="px-gutter py-4 text-on-surface-variant font-medium">14:30 (45m)</td>
+<td class="px-gutter py-4 text-right pr-gutter">
+<span class="bg-primary-container text-white px-3 py-1 text-[10px] font-bold uppercase industrial-border">Recogida</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors border-b-2 border-black/10 group">
+<td class="px-gutter py-4 text-primary-container font-bold font-mono">#TRK-7740</td>
+<td class="px-gutter py-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 border border-black bg-surface-container flex items-center justify-center text-[10px] font-bold">MA</div>
+<span class="font-semibold text-black">Miguel Angel</span>
+</div>
+</td>
+<td class="px-gutter py-4 font-medium">Centro Logístico Sur</td>
+<td class="px-gutter py-4 text-on-surface-variant font-medium">Llegando Ahora</td>
+<td class="px-gutter py-4 text-right pr-gutter">
+<span class="bg-secondary-container text-black px-3 py-1 text-[10px] font-bold uppercase industrial-border">Entrega</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors border-b-2 border-black/10 group">
+<td class="px-gutter py-4 text-primary-container font-bold font-mono">#TRK-1055</td>
+<td class="px-gutter py-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 border border-black bg-surface-container flex items-center justify-center text-[10px] font-bold">CM</div>
+<span class="font-semibold text-black">Carlos Mendez</span>
+</div>
+</td>
+<td class="px-gutter py-4 font-medium">Rancho Las Palmas</td>
+<td class="px-gutter py-4 text-on-surface-variant font-medium">16:15 (2h 30m)</td>
+<td class="px-gutter py-4 text-right pr-gutter">
+<span class="bg-primary-container text-white px-3 py-1 text-[10px] font-bold uppercase industrial-border">Recogida</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors border-b-2 border-black/10 group">
+<td class="px-gutter py-4 text-primary-container font-bold font-mono">#TRK-4422</td>
+<td class="px-gutter py-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 border border-black bg-surface-container flex items-center justify-center text-[10px] font-bold">SG</div>
+<span class="font-semibold text-black">Sofia Garcia</span>
+</div>
+</td>
+<td class="px-gutter py-4 font-medium">Bodega Central</td>
+<td class="px-gutter py-4 text-on-surface-variant font-medium">15:00 (1h 15m)</td>
+<td class="px-gutter py-4 text-right pr-gutter">
+<span class="bg-secondary-container text-black px-3 py-1 text-[10px] font-bold uppercase industrial-border">Entrega</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Branch Status & Logs (Right Column) -->
+<div class="col-span-4 flex flex-col bg-surface-container-lowest overflow-hidden">
+<!-- Branch Status Section -->
+<section class="p-gutter border-b-2 border-black bg-white">
+<h3 class="font-label-caps text-black font-extrabold mb-gutter uppercase tracking-widest text-xs flex justify-between items-center">
+                        Estado de Sucursales (3)
+                        <span class="material-symbols-outlined text-[16px]">info</span>
+</h3>
+<div class="space-y-4">
+<!-- Branch Card 1 -->
+<div class="bg-white border-2 border-black p-4 industrial-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all group">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h4 class="font-headline-md text-lg leading-none uppercase">Gurabo (Central)</h4>
+<p class="text-[10px] font-bold text-on-surface-variant mt-1">Av. Agrícola 450</p>
+</div>
+<span class="bg-black text-white px-2 py-1 text-[9px] font-bold uppercase">88% CAP</span>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex flex-col">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Vol. Actual</span>
+<span class="text-xl font-extrabold text-black">142 Unidades</span>
+</div>
+<button class="bg-primary-container text-white font-bold py-2 px-4 text-[10px] active:scale-95 transition-all border-2 border-black flex items-center gap-2 uppercase">
+<span class="material-symbols-outlined text-[14px]">cell_tower</span>
+                                    GESTIONAR PING
+                                </button>
+</div>
+</div>
+<!-- Branch Card 2 -->
+<div class="bg-secondary-container/10 border-2 border-black p-4 industrial-shadow border-l-8 border-l-primary-container group">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h4 class="font-headline-md text-lg leading-none uppercase">San Lorenzo</h4>
+<p class="text-[10px] font-bold text-on-surface-variant mt-1">Km 12 Carretera Federal</p>
+</div>
+<span class="bg-white border border-black text-black px-2 py-1 text-[9px] font-bold uppercase">42% CAP</span>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex flex-col">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Vol. Actual</span>
+<span class="text-xl font-extrabold text-black">68 Unidades</span>
+</div>
+<div class="flex items-center gap-2 text-black">
+<span class="material-symbols-outlined text-[16px] fill-current">check_circle</span>
+<span class="text-[10px] font-extrabold uppercase">ENVIADO HACE 2m</span>
+</div>
+</div>
+</div>
+<!-- Branch Card 3 -->
+<div class="bg-white border-2 border-black p-4 industrial-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all group">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h4 class="font-headline-md text-lg leading-none uppercase">Ferretería Navarro</h4>
+<p class="text-[10px] font-bold text-on-surface-variant mt-1">Zona Industrial Lote 9</p>
+</div>
+<span class="bg-black text-white px-2 py-1 text-[9px] font-bold uppercase">95% CAP</span>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex flex-col">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Vol. Actual</span>
+<span class="text-xl font-extrabold text-black">210 Unidades</span>
+</div>
+<button class="bg-primary-container text-white font-bold py-2 px-4 text-[10px] active:scale-95 transition-all border-2 border-black flex items-center gap-2 uppercase">
+<span class="material-symbols-outlined text-[14px]">cell_tower</span>
+                                    GESTIONAR PING
+                                </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Notification Log -->
+<section class="flex-1 flex flex-col p-gutter overflow-hidden bg-surface-container-lowest">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-label-caps text-black font-extrabold uppercase tracking-widest text-xs">Registro de Notificaciones</h3>
+<button class="text-primary-container text-[10px] font-extrabold hover:underline uppercase">Limpiar Todo</button>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
+<div class="bg-white p-3 border-l-4 border-primary-container border-y border-r border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+<div class="flex justify-between items-center mb-1">
+<span class="text-[10px] text-black font-bold font-mono">14:22:10</span>
+<span class="text-[10px] bg-black text-white px-1 font-bold">SISTEMA</span>
+</div>
+<p class="text-xs font-medium text-black">Ping de gerente enviado a <span class="font-extrabold">San Lorenzo</span> por Admin_Solá.</p>
+</div>
+<div class="bg-white p-3 border-l-4 border-black border-y border-r border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+<div class="flex justify-between items-center mb-1">
+<span class="text-[10px] text-black font-bold font-mono">13:45:02</span>
+<span class="text-[10px] bg-surface-container-high text-black px-1 font-bold uppercase">Conductor</span>
+</div>
+<p class="text-xs font-medium text-black">Conductor <span class="font-extrabold">M. Angel</span> confirmó entrega #TRK-5510.</p>
+</div>
+<div class="bg-white p-3 border-l-4 border-black border-y border-r border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+<div class="flex justify-between items-center mb-1">
+<span class="text-[10px] text-black font-bold font-mono">13:10:44</span>
+<span class="text-[10px] bg-surface-container-high text-black px-1 font-bold">SISTEMA</span>
+</div>
+<p class="text-xs font-medium text-black">Alerta automática de inventario: <span class="font-extrabold">Ferretería Navarro</span> alcanzando límite de capacidad.</p>
+</div>
+<div class="bg-white p-3 border-l-4 border-primary-container border-y border-r border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+<div class="flex justify-between items-center mb-1">
+<span class="text-[10px] text-black font-bold font-mono">12:55:18</span>
+<span class="text-[10px] bg-black text-white px-1 font-bold uppercase">Propietario</span>
+</div>
+<p class="text-xs font-medium text-black">Mensaje de difusión enviado a todo el personal de entrega: "Cierre de carretera en la Hwy 45".</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interactions and real-time feel
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('mousedown', () => {
+                button.classList.add('scale-95');
+            });
+            button.addEventListener('mouseup', () => {
+                button.classList.remove('scale-95');
+            });
+            button.addEventListener('mouseleave', ()</script></body></html>

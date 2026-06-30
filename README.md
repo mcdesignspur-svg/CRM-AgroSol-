@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CRM AgroSol — Agrocentro Solá
 
-## Getting Started
+CRM de logística para **Agrocentro Solá**. Gestión de órdenes, entregas, sucursales y pings en tiempo real.
 
-First, run the development server:
+Repositorio oficial: [github.com/mcdesignspur-svg/CRM-AgroSol-](https://github.com/mcdesignspur-svg/CRM-AgroSol-)
+
+## Stack
+
+- **Next.js 16** (App Router)
+- **React 19**
+- **TypeScript**
+- **Tailwind CSS v4**
+
+## Pantallas
+
+| Ruta | Descripción |
+|------|-------------|
+| `/` | Panel de logística — métricas, órdenes recientes, pings en vivo |
+| `/ordenes/nueva` | Registro de nueva orden con retiro/entrega |
+| `/entregas` | Mapa, entregas activas, estado de sucursales |
+| `/sucursales` | Vista de red y capacidad por sucursal |
+
+## Desarrollo local
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Producción
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+### Deploy en Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. Conecta el repositorio de GitHub en [vercel.com](https://vercel.com)
+2. Framework preset: **Next.js**
+3. Deploy automático en cada push a `main`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Estructura
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/              # Rutas (App Router)
+├── components/       # UI reutilizable
+│   ├── dashboard/
+│   ├── layout/
+│   └── ui/
+└── lib/              # Tipos, constantes, datos mock
+design/               # Mockups originales de Stitch (referencia)
+```
 
-## Deploy on Vercel
+## Próximos pasos
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [ ] Conectar base de datos (Supabase / PostgreSQL)
+- [ ] Autenticación de operadores
+- [ ] API de órdenes y entregas en tiempo real
+- [ ] Integración ERP
+- [ ] Notificaciones SMS / push
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Licencia
+
+Privado — MC Designs / Agrocentro Solá
