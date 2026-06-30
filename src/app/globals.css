@@ -132,3 +132,35 @@ textarea:focus {
 .safe-area-top {
   padding-top: env(safe-area-inset-top, 0px);
 }
+
+/* Hamburger animado */
+.hamburger-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 20px;
+  height: 14px;
+}
+
+.hamburger-icon span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background-color: #1b1b1b;
+  border-radius: 1px;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+  transform-origin: center;
+}
+
+.hamburger-icon--open span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.hamburger-icon--open span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.hamburger-icon--open span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}

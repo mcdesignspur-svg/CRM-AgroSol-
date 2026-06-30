@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { MenuButton } from "@/components/layout/MenuButton";
+import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useToast } from "@/components/providers/ToastProvider";
 import { NotificationsButton } from "@/components/ui/NotificationsButton";
 import {
@@ -188,12 +188,14 @@ function EntregasContent() {
       topBar={
         <>
           <header className="flex justify-between items-center px-3 sm:px-4 md:px-6 py-2 border-b-2 border-black bg-white z-40 shrink-0 gap-2">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <MenuButton />
-              <h2 className="font-display text-base sm:text-lg md:text-xl font-extrabold text-primary-container uppercase truncate">
-                Entregas
+            <div className="md:hidden flex-1 min-w-0">
+              <MobileHeader title="Entregas y Sucursales" />
+            </div>
+            <div className="hidden md:flex items-center gap-4 md:gap-8 min-w-0 flex-1">
+              <h2 className="font-display text-lg md:text-xl font-extrabold text-primary-container uppercase truncate">
+                Entregas y Sucursales
               </h2>
-              <div className="hidden md:flex gap-6 ml-4">
+              <div className="flex gap-6">
                 <Link
                   href="/"
                   className="text-on-surface-variant font-mono hover:text-primary-container transition-all uppercase tracking-wider text-[11px]"

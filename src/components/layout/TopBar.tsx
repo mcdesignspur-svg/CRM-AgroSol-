@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useBranch } from "@/components/providers/BranchProvider";
 import { useToast } from "@/components/providers/ToastProvider";
-import { MenuButton } from "@/components/layout/MenuButton";
+import { MobileHeader } from "@/components/layout/MobileHeader";
 import { NotificationsButton } from "@/components/ui/NotificationsButton";
 import { BRANCH_LABELS } from "@/lib/constants";
 import type { BranchId } from "@/lib/types";
@@ -91,21 +91,36 @@ export function TopBar({
   return (
     <>
       <header className="flex justify-between items-center w-full px-4 md:px-8 py-3 md:py-4 bg-surface-container-lowest border-b-2 border-on-background shrink-0 gap-2">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <MenuButton />
-          {title ? (
-            <h1 className="font-display text-lg sm:text-xl md:text-2xl font-extrabold uppercase tracking-tight truncate">
-              {title}
-            </h1>
-          ) : (
-            <>
-              <div className="font-bold text-primary text-lg sm:text-xl shrink-0">
-                AS
-              </div>
-              {showSearch && (
+        <div className="flex items-center gap-2 min-w-0 flex-1 md:flex-none">
+          <div className="md:hidden flex-1 min-w-0">
+            <MobileHeader
+              title={title}
+              right={
+                !title && showSearch ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearchOpen((v) => !v)}
+                    className="p-2 hover:bg-surface-container min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
+                    aria-label="Buscar"
+                  >
+                    <span className="material-symbols-outlined">search</span>
+                  </button>
+                ) : undefined
+              }
+            />
+          </div>
+
+          {/* Desktop header */}
+          <div className="hidden md:flex items-center gap-4 min-w-0 flex-1">
+            {title ? (
+              <h1 className="font-display text-xl md:text-2xl font-extrabold uppercase tracking-tight truncate">
+                {title}
+              </h1>
+            ) : (
+              showSearch && (
                 <form
                   onSubmit={handleSearch}
-                  className="relative hidden sm:block flex-1 max-w-md"
+                  className="relative flex-1 max-w-md"
                 >
                   <span className="absolute inset-y-0 left-3 flex items-center text-gray-500">
                     <span className="material-symbols-outlined text-xl">
@@ -120,23 +135,13 @@ export function TopBar({
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </form>
-              )}
-            </>
-          )}
+              )
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {children}
-          {showSearch && !title && (
-            <button
-              type="button"
-              onClick={() => setSearchOpen((v) => !v)}
-              className="sm:hidden p-2 hover:bg-surface-container min-h-[44px] min-w-[44px] flex items-center justify-center"
-              aria-label="Buscar"
-            >
-              <span className="material-symbols-outlined">search</span>
-            </button>
-          )}
           {branchSelector}
           <NotificationsButton />
           <div className="hidden sm:flex w-10 h-10 industrial-border bg-gray-200 overflow-hidden items-center justify-center">
@@ -148,7 +153,7 @@ export function TopBar({
       {searchOpen && !title && showSearch && (
         <form
           onSubmit={handleSearch}
-          className="sm:hidden px-4 py-2 bg-surface-container-low border-b-2 border-on-background"
+          className="md:hidden px-4 py-2 bg-surface-container-low border-b-2 border-on-background"
         >
           <div className="relative">
             <span className="absolute inset-y-0 left-3 flex items-center text-gray-500">
