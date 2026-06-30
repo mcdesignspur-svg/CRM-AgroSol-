@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
 import { ErpConnectionStatus } from "@/components/integrations/ErpConnectionStatus";
 import { AddProductModal } from "@/components/productos/AddProductModal";
+import { ProductSearchBar } from "@/components/productos/ProductSearchBar";
 import { useProductSearch } from "@/hooks/useProductSearch";
 import type { LoyverseStatus } from "@/lib/loyverse/types";
 import type { Product } from "@/lib/types";
@@ -25,8 +26,8 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
   return (
     <AppShell topBar={<TopBar title="Productos" showSearch={false} />}>
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 pb-10">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-          <div>
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
+          <div className="flex-1 min-w-0">
             <h2 className="font-display text-2xl sm:text-3xl font-extrabold uppercase tracking-tight">
               Productos
             </h2>
@@ -34,7 +35,7 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
               Busca en el cache de Loyverse de Gurabo (Central) o agrega productos manuales.
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto shrink-0">
             <button
               type="button"
               onClick={() => setModalOpen(true)}
@@ -51,6 +52,12 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
           </div>
         </div>
 
+        <ProductSearchBar
+          value={query}
+          onChange={setQuery}
+          helperText={`${(loyverseStatus.cachedProductCount ?? 0).toLocaleString("es-PR")} productos en cache · mínimo 2 caracteres`}
+        />
+
         <ErpConnectionStatus
           branchId="gurabo"
           initialStatus={loyverseStatus}
@@ -58,19 +65,6 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
         />
 
         <section className="industrial-border bg-white industrial-shadow overflow-hidden">
-          <div className="p-4 md:p-6 border-b-2 border-black">
-            <label className="font-bold uppercase text-[10px]">
-              Buscar productos
-            </label>
-            <input
-              className="mt-2 w-full industrial-border px-3 py-2 text-sm font-medium min-h-[44px]"
-              type="search"
-              placeholder="Nombre o SKU (mín. 2 caracteres)..."
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </div>
-
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead className="bg-black text-white">
@@ -93,7 +87,7 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
                       colSpan={3}
                       className="px-6 py-16 text-center text-sm font-bold uppercase opacity-50"
                     >
-                      Escribe al menos 2 caracteres para buscar en el cache
+                      Usa la barra de búsqueda para encontrar productos
                     </td>
                   </tr>
                 ) : loading ? (
@@ -102,7 +96,12 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
                       colSpan={3}
                       className="px-6 py-16 text-center text-sm font-bold uppercase opacity-50"
                     >
-                      Buscando...
+                      <span className="inline-flex items-center gap-2">
+                        <span className="material-symbols-outlined animate-spin text-primary">
+                          sync
+                        </span>
+                        Buscando...
+                      </span>
                     </td>
                   </tr>
                 ) : error ? (
@@ -120,7 +119,7 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
                       colSpan={3}
                       className="px-6 py-16 text-center text-sm font-bold uppercase opacity-50"
                     >
-                      Sin resultados — importa el catálogo Loyverse si aún no lo hiciste
+                      Sin resultados para &quot;{query.trim()}&quot;
                     </td>
                   </tr>
                 ) : (
@@ -148,7 +147,7 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
           <div className="sm:hidden p-4 space-y-3">
             {query.trim().length < 2 ? (
               <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
-                Escribe al menos 2 caracteres para buscar
+                Usa la barra de búsqueda para encontrar productos
               </p>
             ) : loading ? (
               <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
@@ -160,7 +159,7 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
               </p>
             ) : results.length === 0 ? (
               <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
-                Sin resultados
+                Sin resultados para &quot;{query.trim()}&quot;
               </p>
             ) : (
               results.map((product) => (
@@ -181,13 +180,11 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
           </div>
         </section>
 
-        <div className="text-center sm:text-left">
+        {query.trim().length >= 2 && !loading && (
           <p className="text-xs font-bold uppercase opacity-60">
-            {query.trim().length >= 2
-              ? `${results.length} resultados mostrados`
-              : `${(loyverseStatus.cachedProductCount ?? 0).toLocaleString("es-PR")} productos en cache de Gurabo`}
+            {results.length} resultados para &quot;{query.trim()}&quot;
           </p>
-        </div>
+        )}
       </div>
 
       <AddProductModal

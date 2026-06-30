@@ -1,6 +1,7 @@
 "use client";
 
 import { Modal } from "@/components/ui/Modal";
+import { ProductSearchBar } from "@/components/productos/ProductSearchBar";
 import { useProductSearch } from "@/hooks/useProductSearch";
 import { BRANCH_LABELS } from "@/lib/constants";
 import type { BranchId, Product } from "@/lib/types";
@@ -50,22 +51,13 @@ export function ProductPickerModal({
       }
     >
       <div className="space-y-4">
-        <div className="space-y-1">
-          <label className="font-bold uppercase text-[10px]">
-            Buscar en {BRANCH_LABELS[branchId]}
-          </label>
-          <input
-            className="w-full industrial-border px-3 py-2 text-sm font-medium min-h-[44px]"
-            type="search"
-            placeholder="Nombre o SKU (mín. 2 caracteres)..."
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            autoFocus
-          />
-          <p className="text-[10px] font-bold uppercase opacity-60">
-            Catálogo cacheado de Loyverse para esta sucursal
-          </p>
-        </div>
+        <ProductSearchBar
+          value={query}
+          onChange={setQuery}
+          placeholder="Nombre o SKU..."
+          helperText={`Buscando en ${BRANCH_LABELS[branchId]}`}
+          autoFocus
+        />
 
         {query.trim().length < 2 ? (
           <p className="text-sm font-bold uppercase opacity-60 text-center py-8">
