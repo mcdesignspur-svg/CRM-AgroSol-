@@ -77,7 +77,7 @@ export default function SucursalesPage() {
                   </p>
                 </div>
                 <Link
-                  href="/entregas"
+                  href={`/entregas?branch=${branch.id}`}
                   className="btn-primary px-4 py-2 text-xs font-bold uppercase industrial-border"
                 >
                   Ver Entregas
