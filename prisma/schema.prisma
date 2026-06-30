@@ -48,23 +48,46 @@ model Branch {
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
 
-  orders     Order[]
-  deliveries Delivery[]
+  orders              Order[]
+  deliveries          Delivery[]
+  products            Product[]
+  loyverseIntegration LoyverseIntegration?
 
   @@map("branches")
 }
 
 model Product {
-  id        String   @id @default(cuid())
-  name      String
-  sku       String   @unique
-  unitPrice Decimal  @map("unit_price") @db.Decimal(10, 2)
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
+  id                String    @id @default(cuid())
+  branchId          String    @default("gurabo") @map("branch_id")
+  name              String
+  sku               String
+  unitPrice         Decimal   @map("unit_price") @db.Decimal(10, 2)
+  loyverseItemId    String?   @map("loyverse_item_id")
+  loyverseVariantId String?   @map("loyverse_variant_id")
+  active            Boolean   @default(true)
+  syncedAt          DateTime? @map("synced_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
 
+  branch     Branch          @relation(fields: [branchId], references: [id])
   orderItems OrderLineItem[]
 
+  @@unique([branchId, sku])
+  @@index([branchId, name])
+  @@index([branchId, active])
   @@map("products")
+}
+
+model LoyverseIntegration {
+  branchId              String    @id @map("branch_id")
+  merchantName          String?   @map("merchant_name")
+  productCount          Int       @default(0) @map("product_count")
+  lastFullSyncAt        DateTime? @map("last_full_sync_at")
+  lastIncrementalSyncAt DateTime? @map("last_incremental_sync_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@map("loyverse_integrations")
 }
 
 model Order {

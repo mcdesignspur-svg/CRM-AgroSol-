@@ -15,21 +15,19 @@ import {
   DELIVERY_FEE,
   TAX_RATE,
 } from "@/lib/constants";
+import { isLoyverseBranchEnabled } from "@/lib/loyverse";
 import type { LoyverseStatus } from "@/lib/loyverse/types";
 import type { BranchId, OrderLineItem, Product } from "@/lib/types";
 
 type FulfillmentMethod = "pickup" | "delivery";
 
 interface NuevaOrdenClientProps {
-  catalogProducts: Product[];
   loyverseStatus: LoyverseStatus;
 }
 
 export default function NuevaOrdenClient({
-  catalogProducts: initialCatalogProducts,
   loyverseStatus,
 }: NuevaOrdenClientProps) {
-  const [catalogProducts, setCatalogProducts] = useState(initialCatalogProducts);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [addProductOpen, setAddProductOpen] = useState(false);
   const [method, setMethod] = useState<FulfillmentMethod>("pickup");
@@ -45,17 +43,9 @@ export default function NuevaOrdenClient({
   const router = useRouter();
   const [smsNotify, setSmsNotify] = useState(false);
 
-  function handleProductsSynced() {
-    void fetch("/api/products")
-      .then((res) => res.json())
-      .then((products: Product[]) => {
-        if (Array.isArray(products)) {
-          setCatalogProducts(products);
-        }
-      })
-      .catch(() => {
-        showToast("No se pudo recargar el catálogo", "warning");
-      });
+  function handleProductCreated(product: Product) {
+    setLineItems((items) => [...items, { ...product, quantity: 1 }]);
+    showToast(`${product.name} creado y agregado a la orden`, "success");
   }
 
   function addLineItem() {
@@ -65,14 +55,6 @@ export default function NuevaOrdenClient({
   function selectProduct(product: Product) {
     setLineItems((items) => [...items, { ...product, quantity: 1 }]);
     showToast(`${product.name} agregado`, "success");
-  }
-
-  function handleProductCreated(product: Product) {
-    setCatalogProducts((prev) =>
-      [...prev, product].sort((a, b) => a.name.localeCompare(b.name)),
-    );
-    setLineItems((items) => [...items, { ...product, quantity: 1 }]);
-    showToast(`${product.name} creado y agregado a la orden`, "success");
   }
 
   async function handleSaveDraft() {
@@ -548,11 +530,13 @@ export default function NuevaOrdenClient({
                   </div>
                 </div>
 
-                <ErpConnectionStatus
-                  initialStatus={loyverseStatus}
-                  showSyncAction
-                  onSynced={handleProductsSynced}
-                />
+                {isLoyverseBranchEnabled("gurabo") && (
+                  <ErpConnectionStatus
+                    branchId="gurabo"
+                    initialStatus={loyverseStatus}
+                    showSyncAction
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -599,7 +583,7 @@ export default function NuevaOrdenClient({
       <ProductPickerModal
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        products={catalogProducts}
+        branchId={branchId}
         selectedIds={lineItems.map((item) => item.id)}
         onSelect={selectProduct}
         onCreateNew={() => {

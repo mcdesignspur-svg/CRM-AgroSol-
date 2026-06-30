@@ -71,9 +71,12 @@ LOYVERSE_ACCESS_TOKEN="tu-token-aqui"
 ```
 
 3. Reinicia el servidor (`npm run dev`)
-4. En **Productos** o **Nueva Orden**, usa **Sincronizar Productos** para importar el catálogo desde Loyverse
+4. En **Productos** (Gurabo), usa **Importar catálogo completo** una vez (~12k productos, tarda 1–2 min)
+5. Al crear órdenes, busca productos por **nombre o SKU** — no se cargan los 12k en pantalla
 
-La app verifica la conexión contra la API de Loyverse y muestra el estado en pantalla.
+Por ahora solo **Gurabo (Central)** tiene Loyverse. Cada sucursal tendrá su propio token más adelante.
+
+La app verifica la conexión contra la API de Loyverse y guarda el catálogo en cache local por sucursal.
 
 ### Scripts de base de datos
 
@@ -143,7 +146,7 @@ design/               # Mockups originales de Stitch (referencia)
 - [x] Conectar base de datos PostgreSQL
 - [ ] Autenticación de operadores
 - [ ] WebSockets / actualizaciones en tiempo real
-- [ ] Integración ERP (Loyverse: productos conectados; órdenes/inventario pendiente)
+- [ ] Integración ERP (Loyverse Gurabo: cache + búsqueda; otras sucursales y órdenes pendiente)
 - [ ] Notificaciones SMS / push
 
 ## Licencia

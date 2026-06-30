@@ -1,4 +1,9 @@
-import { getLoyverseAccessToken, LOYVERSE_API_BASE } from "./config";
+import {
+  getLoyverseAccessToken,
+  getLoyverseBranchLabel,
+  LOYVERSE_API_BASE,
+} from "./config";
+import type { BranchId } from "@/lib/types";
 
 export class LoyverseApiError extends Error {
   status: number;
@@ -12,8 +17,17 @@ export class LoyverseApiError extends Error {
 
 async function parseErrorMessage(res: Response): Promise<string> {
   try {
-    const data = (await res.json()) as { message?: string; error?: string };
-    return data.message ?? data.error ?? res.statusText;
+    const data = (await res.json()) as {
+      message?: string;
+      error?: string;
+      errors?: Array<{ details?: string }>;
+    };
+    return (
+      data.message ??
+      data.error ??
+      data.errors?.[0]?.details ??
+      res.statusText
+    );
   } catch {
     return res.statusText || "Error desconocido";
   }
@@ -21,11 +35,15 @@ async function parseErrorMessage(res: Response): Promise<string> {
 
 export async function loyverseRequest<T>(
   path: string,
+  branchId: BranchId,
   init?: RequestInit,
 ): Promise<T> {
-  const token = getLoyverseAccessToken();
+  const token = getLoyverseAccessToken(branchId);
   if (!token) {
-    throw new LoyverseApiError(401, "LOYVERSE_ACCESS_TOKEN no configurado");
+    throw new LoyverseApiError(
+      401,
+      `Token Loyverse no configurado para ${getLoyverseBranchLabel(branchId)}`,
+    );
   }
 
   const res = await fetch(`${LOYVERSE_API_BASE}${path}`, {
@@ -53,20 +71,27 @@ export async function loyverseRequest<T>(
 export async function loyverseGetAllPages<TKey extends string, TItem>(
   path: string,
   collectionKey: TKey,
-  limit = 250,
+  branchId: BranchId,
+  options?: {
+    limit?: number;
+    query?: Record<string, string | undefined>;
+  },
 ): Promise<TItem[]> {
   const items: TItem[] = [];
+  const limit = options?.limit ?? 250;
   let cursor: string | undefined;
 
   do {
     const params = new URLSearchParams({ limit: String(limit) });
-    if (cursor) {
-      params.set("cursor", cursor);
+    if (cursor) params.set("cursor", cursor);
+
+    for (const [key, value] of Object.entries(options?.query ?? {})) {
+      if (value) params.set(key, value);
     }
 
     const page = await loyverseRequest<
       Record<TKey, TItem[]> & { cursor?: string | null }
-    >(`${path}?${params.toString()}`);
+    >(`${path}?${params.toString()}`, branchId);
 
     items.push(...(page[collectionKey] ?? []));
     cursor = page.cursor ?? undefined;

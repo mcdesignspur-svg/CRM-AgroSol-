@@ -1,10 +1,18 @@
 import { prisma } from "@/lib/prisma";
-import { LoyverseApiError, loyverseGetAllPages } from "./client";
+import {
+  getLoyverseBranchLabel,
+  isLoyverseBranchEnabled,
+  isLoyverseConfigured,
+} from "./config";
+import { LoyverseApiError, loyverseGetAllPages, loyverseRequest } from "./client";
+import type { BranchId } from "@/lib/types";
 import type {
   LoyverseItem,
   LoyverseSyncResult,
   LoyverseVariant,
 } from "./types";
+
+const UPSERT_BATCH_SIZE = 50;
 
 function getItemName(item: LoyverseItem): string {
   return (item.item_name ?? item.name ?? "Producto sin nombre").trim();
@@ -32,7 +40,7 @@ function getVariantSku(variant: LoyverseVariant, itemId: string): string {
     return sku.toUpperCase();
   }
 
-  return variant.variant_id || itemId;
+  return (variant.variant_id || itemId).toUpperCase();
 }
 
 function getVariantPrice(variant: LoyverseVariant): number {
@@ -40,21 +48,23 @@ function getVariantPrice(variant: LoyverseVariant): number {
   return Number.isFinite(price) ? price : 0;
 }
 
-export async function syncLoyverseProducts(): Promise<LoyverseSyncResult> {
-  const items = await loyverseGetAllPages<"items", LoyverseItem>(
-    "/items",
-    "items",
-  );
+interface NormalizedProductRow {
+  branchId: BranchId;
+  name: string;
+  sku: string;
+  unitPrice: number;
+  loyverseItemId: string;
+  loyverseVariantId: string;
+}
 
-  let created = 0;
-  let updated = 0;
-  let skipped = 0;
+function normalizeLoyverseItems(
+  items: LoyverseItem[],
+  branchId: BranchId,
+): NormalizedProductRow[] {
+  const rows: NormalizedProductRow[] = [];
 
   for (const item of items) {
-    if (item.deleted_at) {
-      skipped += item.variants?.length ?? 1;
-      continue;
-    }
+    if (item.deleted_at) continue;
 
     const itemName = getItemName(item);
     const variants = item.variants?.length
@@ -62,53 +72,172 @@ export async function syncLoyverseProducts(): Promise<LoyverseSyncResult> {
       : [{ variant_id: item.id, default_price: 0 } satisfies LoyverseVariant];
 
     for (const variant of variants) {
-      if (variant.deleted_at) {
-        skipped += 1;
-        continue;
-      }
+      if (variant.deleted_at) continue;
 
-      const sku = getVariantSku(variant, item.id);
-      const name = getVariantLabel(itemName, variant);
-      const unitPrice = getVariantPrice(variant);
-
-      const existing = await prisma.product.findUnique({ where: { sku } });
-
-      await prisma.product.upsert({
-        where: { sku },
-        update: {
-          name,
-          unitPrice,
-          active: true,
-        },
-        create: {
-          name,
-          sku,
-          unitPrice,
-          active: true,
-        },
+      rows.push({
+        branchId,
+        name: getVariantLabel(itemName, variant),
+        sku: getVariantSku(variant, item.id),
+        unitPrice: getVariantPrice(variant),
+        loyverseItemId: item.id,
+        loyverseVariantId: variant.variant_id,
       });
-
-      if (existing) {
-        updated += 1;
-      } else {
-        created += 1;
-      }
     }
   }
 
+  return rows;
+}
+
+async function upsertProductBatch(
+  rows: NormalizedProductRow[],
+  syncedAt: Date,
+): Promise<{ created: number; updated: number }> {
+  let created = 0;
+  let updated = 0;
+
+  for (let index = 0; index < rows.length; index += UPSERT_BATCH_SIZE) {
+    const batch = rows.slice(index, index + UPSERT_BATCH_SIZE);
+
+    await prisma.$transaction(async (tx) => {
+      for (const row of batch) {
+        const existing = await tx.product.findUnique({
+          where: {
+            branchId_sku: {
+              branchId: row.branchId,
+              sku: row.sku,
+            },
+          },
+        });
+
+        await tx.product.upsert({
+          where: {
+            branchId_sku: {
+              branchId: row.branchId,
+              sku: row.sku,
+            },
+          },
+          update: {
+            name: row.name,
+            unitPrice: row.unitPrice,
+            loyverseItemId: row.loyverseItemId,
+            loyverseVariantId: row.loyverseVariantId,
+            active: true,
+            syncedAt,
+          },
+          create: {
+            branchId: row.branchId,
+            name: row.name,
+            sku: row.sku,
+            unitPrice: row.unitPrice,
+            loyverseItemId: row.loyverseItemId,
+            loyverseVariantId: row.loyverseVariantId,
+            active: true,
+            syncedAt,
+          },
+        });
+
+        if (existing) {
+          updated += 1;
+        } else {
+          created += 1;
+        }
+      }
+    });
+  }
+
+  return { created, updated };
+}
+
+export async function syncLoyverseProducts(input: {
+  branchId: BranchId;
+  mode?: "full" | "incremental";
+}): Promise<LoyverseSyncResult> {
+  const branchId = input.branchId;
+  const mode = input.mode ?? "full";
+
+  if (!isLoyverseBranchEnabled(branchId)) {
+    throw new LoyverseApiError(
+      400,
+      `Loyverse no está habilitado para ${getLoyverseBranchLabel(branchId)}`,
+    );
+  }
+
+  if (!isLoyverseConfigured(branchId)) {
+    throw new LoyverseApiError(
+      401,
+      `Token Loyverse no configurado para ${getLoyverseBranchLabel(branchId)}`,
+    );
+  }
+
+  const integration = await prisma.loyverseIntegration.findUnique({
+    where: { branchId },
+  });
+
+  const query: Record<string, string | undefined> = {};
+  if (
+    mode === "incremental" &&
+    integration?.lastIncrementalSyncAt
+  ) {
+    query.updated_at_min = integration.lastIncrementalSyncAt.toISOString();
+  }
+
+  const items = await loyverseGetAllPages<"items", LoyverseItem>(
+    "/items",
+    "items",
+    branchId,
+    { query },
+  );
+
+  const rows = normalizeLoyverseItems(items, branchId);
+  const syncedAt = new Date();
+  const { created, updated } = await upsertProductBatch(rows, syncedAt);
+  const productCount = await prisma.product.count({
+    where: { branchId, active: true },
+  });
+
+  const merchant = await loyverseRequest<{
+    business_name?: string;
+    name?: string;
+  }>("/merchant", branchId).catch(() => null);
+
+  const merchantName =
+    merchant?.business_name?.trim() ||
+    merchant?.name?.trim() ||
+    getLoyverseBranchLabel(branchId);
+
+  await prisma.loyverseIntegration.upsert({
+    where: { branchId },
+    update: {
+      merchantName,
+      productCount,
+      lastIncrementalSyncAt: syncedAt,
+      ...(mode === "full" ? { lastFullSyncAt: syncedAt } : {}),
+    },
+    create: {
+      branchId,
+      merchantName,
+      productCount,
+      lastFullSyncAt: mode === "full" ? syncedAt : null,
+      lastIncrementalSyncAt: syncedAt,
+    },
+  });
+
   return {
+    branchId,
+    mode,
     created,
     updated,
-    skipped,
+    skipped: Math.max(0, items.length - rows.length),
     total: created + updated,
   };
 }
 
-export async function safeSyncLoyverseProducts(): Promise<
-  LoyverseSyncResult | { error: string }
-> {
+export async function safeSyncLoyverseProducts(input: {
+  branchId: BranchId;
+  mode?: "full" | "incremental";
+}): Promise<LoyverseSyncResult | { error: string }> {
   try {
-    return await syncLoyverseProducts();
+    return await syncLoyverseProducts(input);
   } catch (error) {
     if (error instanceof LoyverseApiError) {
       return { error: error.message };

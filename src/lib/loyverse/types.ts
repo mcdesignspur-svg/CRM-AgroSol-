@@ -1,3 +1,5 @@
+import type { BranchId } from "@/lib/types";
+
 export interface LoyverseMerchant {
   id?: string;
   business_name?: string;
@@ -19,6 +21,7 @@ export interface LoyverseItem {
   item_name?: string;
   name?: string;
   deleted_at?: string | null;
+  updated_at?: string | null;
   variants?: LoyverseVariant[];
 }
 
@@ -27,13 +30,18 @@ export type LoyversePaginated<TKey extends string, TItem> = {
 } & Record<TKey, TItem[]>;
 
 export interface LoyverseStatus {
+  branchId: BranchId;
   configured: boolean;
   connected: boolean;
   merchantName?: string;
   message: string;
+  cachedProductCount?: number;
+  lastSyncAt?: string | null;
 }
 
 export interface LoyverseSyncResult {
+  branchId: BranchId;
+  mode: "full" | "incremental";
   created: number;
   updated: number;
   skipped: number;

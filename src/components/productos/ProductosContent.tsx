@@ -1,45 +1,25 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
 import { ErpConnectionStatus } from "@/components/integrations/ErpConnectionStatus";
 import { AddProductModal } from "@/components/productos/AddProductModal";
+import { useProductSearch } from "@/hooks/useProductSearch";
 import type { LoyverseStatus } from "@/lib/loyverse/types";
 import type { Product } from "@/lib/types";
 
 interface ProductosContentProps {
-  initialProducts: Product[];
   loyverseStatus: LoyverseStatus;
 }
 
-export function ProductosContent({
-  initialProducts,
-  loyverseStatus,
-}: ProductosContentProps) {
-  const router = useRouter();
-  const [products, setProducts] = useState(initialProducts);
+export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
   const [modalOpen, setModalOpen] = useState(false);
-
-  async function handleProductsSynced() {
-    router.refresh();
-    try {
-      const res = await fetch("/api/products");
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setProducts(data);
-      }
-    } catch {
-      // router.refresh() already triggers a server re-fetch on next navigation
-    }
-  }
+  const { query, setQuery, results, loading, error } = useProductSearch("gurabo");
 
   function handleCreated(product: Product) {
-    setProducts((prev) =>
-      [...prev, product].sort((a, b) => a.name.localeCompare(b.name)),
-    );
+    setQuery(product.name);
   }
 
   return (
@@ -51,7 +31,7 @@ export function ProductosContent({
               Productos
             </h2>
             <p className="text-lg text-on-surface-variant mt-2">
-              Administra los artículos disponibles para nuevas órdenes.
+              Busca en el cache de Loyverse de Gurabo (Central) o agrega productos manuales.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -72,12 +52,25 @@ export function ProductosContent({
         </div>
 
         <ErpConnectionStatus
+          branchId="gurabo"
           initialStatus={loyverseStatus}
           showSyncAction
-          onSynced={handleProductsSynced}
         />
 
         <section className="industrial-border bg-white industrial-shadow overflow-hidden">
+          <div className="p-4 md:p-6 border-b-2 border-black">
+            <label className="font-bold uppercase text-[10px]">
+              Buscar productos
+            </label>
+            <input
+              className="mt-2 w-full industrial-border px-3 py-2 text-sm font-medium min-h-[44px]"
+              type="search"
+              placeholder="Nombre o SKU (mín. 2 caracteres)..."
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </div>
+
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead className="bg-black text-white">
@@ -94,17 +87,44 @@ export function ProductosContent({
                 </tr>
               </thead>
               <tbody>
-                {products.length === 0 ? (
+                {query.trim().length < 2 ? (
                   <tr>
                     <td
                       colSpan={3}
                       className="px-6 py-16 text-center text-sm font-bold uppercase opacity-50"
                     >
-                      Sin productos — agrega el primero al catálogo
+                      Escribe al menos 2 caracteres para buscar en el cache
+                    </td>
+                  </tr>
+                ) : loading ? (
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="px-6 py-16 text-center text-sm font-bold uppercase opacity-50"
+                    >
+                      Buscando...
+                    </td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="px-6 py-16 text-center text-sm font-bold uppercase text-red-600"
+                    >
+                      {error}
+                    </td>
+                  </tr>
+                ) : results.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="px-6 py-16 text-center text-sm font-bold uppercase opacity-50"
+                    >
+                      Sin resultados — importa el catálogo Loyverse si aún no lo hiciste
                     </td>
                   </tr>
                 ) : (
-                  products.map((product) => (
+                  results.map((product) => (
                     <tr
                       key={product.id}
                       className="border-b border-black/10 hover:bg-surface-container-low transition-colors"
@@ -126,12 +146,24 @@ export function ProductosContent({
           </div>
 
           <div className="sm:hidden p-4 space-y-3">
-            {products.length === 0 ? (
+            {query.trim().length < 2 ? (
               <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
-                Sin productos — agrega el primero al catálogo
+                Escribe al menos 2 caracteres para buscar
+              </p>
+            ) : loading ? (
+              <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
+                Buscando...
+              </p>
+            ) : error ? (
+              <p className="py-12 text-center text-sm font-bold uppercase text-red-600">
+                {error}
+              </p>
+            ) : results.length === 0 ? (
+              <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
+                Sin resultados
               </p>
             ) : (
-              products.map((product) => (
+              results.map((product) => (
                 <article
                   key={product.id}
                   className="border-2 border-black p-4 bg-gray-50"
@@ -151,8 +183,9 @@ export function ProductosContent({
 
         <div className="text-center sm:text-left">
           <p className="text-xs font-bold uppercase opacity-60">
-            {products.length}{" "}
-            {products.length === 1 ? "producto activo" : "productos activos"}
+            {query.trim().length >= 2
+              ? `${results.length} resultados mostrados`
+              : `${(loyverseStatus.cachedProductCount ?? 0).toLocaleString("es-PR")} productos en cache de Gurabo`}
           </p>
         </div>
       </div>
