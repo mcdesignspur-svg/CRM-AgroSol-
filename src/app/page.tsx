@@ -32,12 +32,16 @@ export default function DashboardPage() {
               value={dashboardMetrics.totalOrders.toLocaleString("es-PR")}
               icon="inventory"
               subtitle={
-                <span className="text-green-600 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-sm">
-                    trending_up
+                dashboardMetrics.totalOrdersChange ? (
+                  <span className="text-green-600 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">
+                      trending_up
+                    </span>
+                    {dashboardMetrics.totalOrdersChange}
                   </span>
-                  {dashboardMetrics.totalOrdersChange}
-                </span>
+                ) : (
+                  <span className="text-gray-500 uppercase">Sin datos</span>
+                )
               }
             />
             <MetricCard
@@ -53,9 +57,13 @@ export default function DashboardPage() {
               value={dashboardMetrics.activePickups}
               icon="hail"
               subtitle={
-                <span className="text-secondary uppercase">
-                  {dashboardMetrics.activePickupsLocation}
-                </span>
+                dashboardMetrics.activePickupsLocation ? (
+                  <span className="text-secondary uppercase">
+                    {dashboardMetrics.activePickupsLocation}
+                  </span>
+                ) : (
+                  <span className="text-gray-500 uppercase">Sin retiros</span>
+                )
               }
             />
             <MetricCard
@@ -63,7 +71,15 @@ export default function DashboardPage() {
               value={String(dashboardMetrics.systemAlerts).padStart(2, "0")}
               icon="warning"
               variant="alert"
-              subtitle={<CriticalAlertsLink />}
+              subtitle={
+                dashboardMetrics.systemAlerts > 0 ? (
+                  <CriticalAlertsLink />
+                ) : (
+                  <span className="text-white opacity-90 uppercase">
+                    Sin alertas
+                  </span>
+                )
+              }
             />
           </div>
 

@@ -63,7 +63,7 @@ export function DashboardOrdersSection() {
   }
 
   function handleLoadMore() {
-    if (loadedMore) {
+    if (extraOrders.length === 0 || loadedMore) {
       showToast("No hay más órdenes disponibles", "info");
       return;
     }
@@ -135,7 +135,7 @@ export function DashboardOrdersSection() {
                     colSpan={6}
                     className="p-8 text-center text-sm font-bold uppercase opacity-50"
                   >
-                    Sin órdenes con este filtro
+                    Sin órdenes registradas
                   </td>
                 </tr>
               ) : (
@@ -184,7 +184,7 @@ export function DashboardOrdersSection() {
         <div className="md:hidden divide-y divide-gray-200">
           {filteredOrders.length === 0 ? (
             <p className="p-8 text-center text-sm font-bold uppercase opacity-50">
-              Sin órdenes con este filtro
+              Sin órdenes registradas
             </p>
           ) : (
             filteredOrders.map((order) => (
@@ -224,13 +224,15 @@ export function DashboardOrdersSection() {
         </div>
 
         <div className="p-4 bg-gray-50 flex justify-center">
-          <button
-            type="button"
-            onClick={handleLoadMore}
-            className="text-sm font-bold uppercase tracking-widest hover:text-primary transition-colors"
-          >
-            {loadedMore ? "Sin Más Resultados" : "Cargar Más Órdenes"}
-          </button>
+          {extraOrders.length > 0 && (
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              className="text-sm font-bold uppercase tracking-widest hover:text-primary transition-colors"
+            >
+              {loadedMore ? "Sin Más Resultados" : "Cargar Más Órdenes"}
+            </button>
+          )}
         </div>
       </section>
     </>

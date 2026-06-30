@@ -181,6 +181,9 @@ function EntregasContent() {
     }
   }
 
+  const inTransitCount = activeDeliveries.length;
+  const completedCount = 0;
+
   return (
     <AppShell
       fullWidth
@@ -343,13 +346,13 @@ function EntregasContent() {
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-3 h-3 border border-black bg-primary-container animate-pulse shrink-0" />
                 <span className="font-mono font-bold text-black uppercase text-[10px] sm:text-xs">
-                  12 EN TRÁNSITO
+                  {inTransitCount} EN TRÁNSITO
                 </span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 sm:border-l-2 sm:border-black sm:pl-6">
                 <div className="w-3 h-3 border border-black bg-secondary-container shrink-0" />
                 <span className="font-mono font-bold text-black uppercase text-[10px] sm:text-xs">
-                  4 ENTREGAS REALIZADAS
+                  {completedCount} ENTREGAS REALIZADAS
                 </span>
               </div>
             </div>
@@ -397,7 +400,12 @@ function EntregasContent() {
               <>
                 {/* Lista móvil — tarjetas */}
                 <div className="md:hidden flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
-                  {activeDeliveries.map((delivery) => (
+                  {activeDeliveries.length === 0 ? (
+                    <p className="text-center text-sm font-bold uppercase opacity-50 py-12">
+                      Sin entregas activas
+                    </p>
+                  ) : (
+                    activeDeliveries.map((delivery) => (
                     <div
                       key={delivery.id}
                       className={`border-2 border-black p-4 industrial-shadow ${
@@ -429,7 +437,8 @@ function EntregasContent() {
                       <p className="text-xs text-on-surface-variant">{delivery.destination}</p>
                       <p className="text-xs font-mono mt-1 opacity-70">ETA: {delivery.eta}</p>
                     </div>
-                  ))}
+                  ))
+                  )}
                 </div>
                 {/* Lista desktop — tabla */}
                 <div className="hidden md:block flex-1 overflow-y-auto custom-scrollbar">
@@ -454,7 +463,17 @@ function EntregasContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {activeDeliveries.map((delivery) => (
+                    {activeDeliveries.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="px-6 py-12 text-center text-sm font-bold uppercase opacity-50"
+                        >
+                          Sin entregas activas
+                        </td>
+                      </tr>
+                    ) : (
+                      activeDeliveries.map((delivery) => (
                       <tr
                         key={delivery.id}
                         className={`hover:bg-surface-container-low transition-colors border-b border-black/10 ${
@@ -496,14 +515,20 @@ function EntregasContent() {
                           </span>
                         </td>
                       </tr>
-                    ))}
+                    ))
+                    )}
                   </tbody>
                 </table>
                 </div>
               </>
             ) : (
               <div className="flex-1 overflow-y-auto custom-scrollbar p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {activeDeliveries.map((delivery) => (
+                {activeDeliveries.length === 0 ? (
+                  <p className="col-span-full text-center text-sm font-bold uppercase opacity-50 py-12">
+                    Sin entregas activas
+                  </p>
+                ) : (
+                  activeDeliveries.map((delivery) => (
                   <div
                     key={delivery.id}
                     className="border-2 border-black p-4 industrial-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all"
@@ -530,7 +555,8 @@ function EntregasContent() {
                       ETA: {delivery.eta}
                     </p>
                   </div>
-                ))}
+                ))
+                )}
               </div>
             )}
           </div>
@@ -551,9 +577,7 @@ function EntregasContent() {
                 <BranchCard
                   key={branch.id}
                   branch={branch}
-                  highlighted={
-                    branch.id === "san-lorenzo" || branch.id === branchFilter
-                  }
+                  highlighted={branch.id === branchFilter}
                   onPing={handleBranchPing}
                   sending={sendingPing}
                 />

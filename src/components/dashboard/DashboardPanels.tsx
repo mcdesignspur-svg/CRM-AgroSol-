@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { branches } from "@/lib/data";
 import { useToast } from "@/components/providers/ToastProvider";
 import type { Ping } from "@/lib/types";
 
@@ -33,8 +34,7 @@ export function LivePingsPanel({ initialPings }: { initialPings: Ping[] }) {
   }
 
   function callDriver(ping: Ping) {
-    showToast(`Llamando al conductor — ${ping.title}`, "info");
-    window.open("tel:+17875550142", "_self");
+    showToast(`Contactando — ${ping.title}`, "info");
   }
 
   return (
@@ -100,12 +100,14 @@ export function LivePingsPanel({ initialPings }: { initialPings: Ping[] }) {
           })
         )}
 
-        <div className="pt-8 opacity-20 text-center">
-          <span className="material-symbols-outlined text-6xl">history</span>
-          <p className="text-xs font-bold uppercase mt-2">
-            Fin del historial reciente
-          </p>
-        </div>
+        {pings.length > 0 && (
+          <div className="pt-8 opacity-20 text-center">
+            <span className="material-symbols-outlined text-6xl">history</span>
+            <p className="text-xs font-bold uppercase mt-2">
+              Fin del historial reciente
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="p-6 border-t-2 border-on-background bg-gray-50">
@@ -114,15 +116,27 @@ export function LivePingsPanel({ initialPings }: { initialPings: Ping[] }) {
             Estado de la Red
           </p>
           <div className="flex justify-between items-center">
-            <span className="flex items-center gap-1 text-[10px] font-bold">
-              <span className="w-2 h-2 rounded-full bg-green-500" /> GUR
-            </span>
-            <span className="flex items-center gap-1 text-[10px] font-bold">
-              <span className="w-2 h-2 rounded-full bg-green-500" /> SLZ
-            </span>
-            <span className="flex items-center gap-1 text-[10px] font-bold">
-              <span className="w-2 h-2 rounded-full bg-red-500" /> NAV
-            </span>
+            {branches.map((branch) => (
+              <span
+                key={branch.id}
+                className="flex items-center gap-1 text-[10px] font-bold"
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    branch.status === "online"
+                      ? "bg-green-500"
+                      : branch.status === "warning"
+                        ? "bg-yellow-500"
+                        : "bg-red-500"
+                  }`}
+                />
+                {branch.id === "gurabo"
+                  ? "GUR"
+                  : branch.id === "san-lorenzo"
+                    ? "SLZ"
+                    : "NAV"}
+              </span>
+            ))}
           </div>
         </div>
       </div>
@@ -138,13 +152,7 @@ export function DashboardHeader() {
     setExporting(true);
     await new Promise((r) => setTimeout(r, 600));
 
-    const csv = [
-      "ID,Cliente,Tipo,Sucursal,Estado,Tiempo",
-      "ORD-99021,Juan del Pueblo,entrega,gurabo,en-transito,02:14:00",
-      "ORD-99018,María Rodríguez,retiro,navarro,listo,08:45:12",
-      "ORD-99015,Carlos Ortiz,entrega,san-lorenzo,pendiente,00:15:30",
-      "ORD-99010,Agro Industrias PR,entrega,gurabo,atrasado,14:22:05",
-    ].join("\n");
+    const csv = ["ID,Cliente,Tipo,Sucursal,Estado,Tiempo"].join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);

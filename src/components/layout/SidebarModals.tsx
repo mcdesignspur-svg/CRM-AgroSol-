@@ -97,11 +97,11 @@ export function useSidebarModals() {
       >
         <div className="space-y-4">
           <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
-            <input type="checkbox" defaultChecked className="w-4 h-4" />
+            <input type="checkbox" className="w-4 h-4" />
             <span className="text-sm font-bold">Notificaciones push activas</span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
-            <input type="checkbox" defaultChecked className="w-4 h-4" />
+            <input type="checkbox" className="w-4 h-4" />
             <span className="text-sm font-bold">Alertas de inventario bajo</span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
@@ -114,29 +114,13 @@ export function useSidebarModals() {
       <Modal open={supportOpen} onClose={() => setSupportOpen(false)} title="Soporte">
         <div className="space-y-4 text-sm">
           <p className="font-medium">
-            ¿Necesitas ayuda con el sistema de logística?
+            Contacta al administrador del sistema para asistencia técnica.
           </p>
-          <div className="space-y-2">
-            <a
-              href="tel:+17875550100"
-              className="flex items-center gap-2 font-bold hover:text-primary transition-colors min-h-[44px]"
-            >
-              <span className="material-symbols-outlined">call</span>
-              +1 (787) 555-0100
-            </a>
-            <a
-              href="mailto:soporte@agrosol.pr"
-              className="flex items-center gap-2 font-bold hover:text-primary transition-colors min-h-[44px]"
-            >
-              <span className="material-symbols-outlined">mail</span>
-              soporte@agrosol.pr
-            </a>
-          </div>
           <button
             type="button"
             onClick={() => {
               setSupportOpen(false);
-              showToast("Ticket de soporte creado #SUP-4821", "success");
+              showToast("Solicitud de soporte registrada", "success");
             }}
             className="w-full btn-secondary py-3 text-xs font-bold uppercase min-h-[44px]"
           >

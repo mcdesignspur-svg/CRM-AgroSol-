@@ -19,9 +19,7 @@ type FulfillmentMethod = "pickup" | "delivery";
 export default function NuevaOrdenPage() {
   const [method, setMethod] = useState<FulfillmentMethod>("pickup");
   const [branchId, setBranchId] = useState<BranchId>(DEFAULT_BRANCH);
-  const [lineItems, setLineItems] = useState<OrderLineItem[]>(
-    catalogProducts.map((p) => ({ ...p, quantity: p.id === "prod-1" ? 10 : 2 })),
-  );
+  const [lineItems, setLineItems] = useState<OrderLineItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
@@ -29,14 +27,14 @@ export default function NuevaOrdenPage() {
   const [smsNotify, setSmsNotify] = useState(false);
 
   function addLineItem() {
-    const available = extraCatalogProducts.find(
+    const available = [...catalogProducts, ...extraCatalogProducts].find(
       (p) => !lineItems.some((item) => item.id === p.id),
     );
     if (available) {
       setLineItems((items) => [...items, { ...available, quantity: 1 }]);
       showToast(`${available.name} agregado`, "success");
     } else {
-      showToast("Todos los productos del catálogo ya están en la orden", "info");
+      showToast("No hay productos en el catálogo", "info");
     }
   }
 
@@ -114,7 +112,6 @@ export default function NuevaOrdenPage() {
                     </label>
                     <input
                       className="w-full bg-white border-2 border-black px-4 py-2 font-medium"
-                      placeholder="ej. Juan Carlos Perez"
                       type="text"
                     />
                   </div>
@@ -128,7 +125,6 @@ export default function NuevaOrdenPage() {
                       </span>
                       <input
                         className="w-full bg-white border-2 border-black pl-12 pr-4 py-2 font-medium"
-                        placeholder="+1 787 ..."
                         type="tel"
                       />
                     </div>
@@ -209,7 +205,6 @@ export default function NuevaOrdenPage() {
                       </label>
                       <textarea
                         className="w-full bg-white border-2 border-black px-4 py-2 font-medium"
-                        placeholder="Ingrese la dirección completa, calle, número e instrucciones adicionales..."
                         rows={3}
                       />
                     </div>
@@ -236,6 +231,11 @@ export default function NuevaOrdenPage() {
                   </button>
                 </div>
                 <div className="overflow-x-auto hidden sm:block">
+                  {lineItems.length === 0 ? (
+                    <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
+                      Sin productos — usa &quot;Agregar artículo&quot; o conecta el catálogo ERP
+                    </p>
+                  ) : (
                   <table className="w-full text-left border-collapse">
                     <thead className="bg-black text-white">
                       <tr>
@@ -291,11 +291,17 @@ export default function NuevaOrdenPage() {
                       ))}
                     </tbody>
                   </table>
+                  )}
                 </div>
 
                 {/* Productos — vista móvil */}
                 <div className="sm:hidden space-y-3">
-                  {lineItems.map((item) => (
+                  {lineItems.length === 0 ? (
+                    <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
+                      Sin productos en la orden
+                    </p>
+                  ) : (
+                  lineItems.map((item) => (
                     <div
                       key={item.id}
                       className="border-2 border-black p-4 bg-gray-50"
@@ -332,7 +338,8 @@ export default function NuevaOrdenPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  ))
+                  )}
                 </div>
               </section>
             </div>
@@ -398,7 +405,7 @@ export default function NuevaOrdenPage() {
                     </div>
                     <button
                       type="button"
-                      disabled={submitting || submitted}
+                      disabled={submitting || submitted || lineItems.length === 0}
                       onClick={handleSubmit}
                       className={`w-full py-4 text-white font-extrabold text-lg industrial-border industrial-shadow active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 disabled:opacity-80 ${
                         submitted ? "bg-green-600" : "bg-primary hover:bg-black"
@@ -445,13 +452,10 @@ export default function NuevaOrdenPage() {
                 </div>
 
                 <div className="bg-white border-2 border-black p-4 flex items-center gap-4">
-                  <div className="relative w-4 h-4">
-                    <div className="absolute inset-0 bg-green-500 animate-ping opacity-50" />
-                    <div className="absolute inset-0 bg-green-500" />
-                  </div>
+                  <div className="w-4 h-4 border-2 border-black bg-surface-container shrink-0" />
                   <div className="text-[10px]">
-                    <div className="font-bold uppercase">Conexión ERP Activa</div>
-                    <div className="font-mono opacity-60">LATENCIA: 12ms</div>
+                    <div className="font-bold uppercase">Conexión ERP</div>
+                    <div className="font-mono opacity-60">No conectado</div>
                   </div>
                 </div>
               </div>

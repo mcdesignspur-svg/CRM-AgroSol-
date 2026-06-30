@@ -52,30 +52,28 @@ export function PingsSheetProvider({
   }
 
   function callDriver(ping: Ping) {
-    showToast(`Llamando al conductor — ${ping.title}`, "info");
-    window.open("tel:+17875550142", "_self");
+    showToast(`Contactando — ${ping.title}`, "info");
   }
 
   return (
     <PingsSheetContext.Provider value={{ openPings }}>
       {children}
 
-      {/* FAB móvil */}
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="lg:hidden fixed bottom-20 right-4 z-40 btn-primary industrial-border industrial-shadow w-14 h-14 flex items-center justify-center"
-        aria-label="Ver pings en vivo"
-      >
-        <span className="relative">
-          <span className="material-symbols-outlined text-2xl">bolt</span>
-          {pings.length > 0 && (
+      {pings.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="lg:hidden fixed bottom-20 right-4 z-40 btn-primary industrial-border industrial-shadow w-14 h-14 flex items-center justify-center"
+          aria-label="Ver pings en vivo"
+        >
+          <span className="relative">
+            <span className="material-symbols-outlined text-2xl">bolt</span>
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-black text-white text-[9px] font-bold rounded-full flex items-center justify-center">
               {pings.length}
             </span>
-          )}
-        </span>
-      </button>
+          </span>
+        </button>
+      )}
 
       {/* Bottom sheet */}
       {open && (
