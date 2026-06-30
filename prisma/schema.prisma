@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BranchStatus {
+  online
+  offline
+  warning
+}
+
+enum OrderType {
+  entrega
+  retiro
+}
+
+enum OrderStatus {
+  pendiente
+  en_transito
+  listo
+  atrasado
+  completado
+}
+
+enum PingPriority {
+  urgente
+  sistema
+  advertencia
+}
+
+enum DeliveryStatus {
+  recogida
+  entrega
+}
+
+model Branch {
+  id              String       @id
+  name            String
+  address         String
+  capacityPercent Int          @default(0) @map("capacity_percent")
+  currentVolume   Int          @default(0) @map("current_volume")
+  status          BranchStatus @default(online)
+  lastPingAt      DateTime?    @map("last_ping_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  orders     Order[]
+  deliveries Delivery[]
+
+  @@map("branches")
+}
+
+model Product {
+  id        String   @id @default(cuid())
+  name      String
+  sku       String   @unique
+  unitPrice Decimal  @map("unit_price") @db.Decimal(10, 2)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  orderItems OrderLineItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  displayId       String      @unique @map("display_id")
+  customerName    String      @map("customer_name")
+  customerPhone   String?     @map("customer_phone")
+  deliveryAddress String?     @map("delivery_address")
+  type            OrderType
+  branchId        String      @map("branch_id")
+  status          OrderStatus @default(pendiente)
+  fulfillment     String      @default("pickup")
+  smsNotify       Boolean     @default(false) @map("sms_notify")
+  subtotal        Decimal     @db.Decimal(12, 2)
+  taxes           Decimal     @db.Decimal(12, 2)
+  deliveryFee     Decimal     @default(0) @map("delivery_fee") @db.Decimal(12, 2)
+  total           Decimal     @db.Decimal(12, 2)
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  branch    Branch          @relation(fields: [branchId], references: [id])
+  lineItems OrderLineItem[]
+
+  @@index([createdAt(sort: Desc)])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderLineItem {
+  id        String  @id @default(cuid())
+  orderId   String  @map("order_id")
+  productId String? @map("product_id")
+  name      String
+  sku       String
+  unitPrice Decimal @map("unit_price") @db.Decimal(10, 2)
+  quantity  Int
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@map("order_line_items")
+}
+
+model Delivery {
+  id             String         @id @default(cuid())
+  displayId      String         @unique @map("display_id")
+  driverName     String         @map("driver_name")
+  driverInitials String         @map("driver_initials")
+  destination    String
+  eta            String?
+  status         DeliveryStatus
+  branchId       String?        @map("branch_id")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  branch Branch? @relation(fields: [branchId], references: [id])
+
+  @@map("deliveries")
+}
+
+model Ping {
+  id          String       @id @default(cuid())
+  priority    PingPriority
+  title       String
+  description String
+  dismissed   Boolean      @default(false)
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@index([dismissed, createdAt(sort: Desc)])
+  @@map("pings")
+}
+
+model NotificationLog {
+  id        String   @id @default(cuid())
+  source    String
+  message   String
+  accent    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt(sort: Desc)])
+  @@map("notification_logs")
+}

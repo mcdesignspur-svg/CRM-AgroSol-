@@ -17,11 +17,25 @@ export function useSidebarModals() {
 
   async function handleQuickPing() {
     setSendingPing(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setSendingPing(false);
-    setPingOpen(false);
-    setPingMessage("");
-    showToast(`Ping enviado a ${BRANCH_LABELS[pingBranch]}`, "success");
+    try {
+      const res = await fetch("/api/pings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          branchId: pingBranch,
+          message: pingMessage.trim() || undefined,
+          priority: "urgente",
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setPingOpen(false);
+      setPingMessage("");
+      showToast(`Ping enviado a ${BRANCH_LABELS[pingBranch]}`, "success");
+    } catch {
+      showToast("Error al enviar ping", "error");
+    } finally {
+      setSendingPing(false);
+    }
   }
 
   const modals = (

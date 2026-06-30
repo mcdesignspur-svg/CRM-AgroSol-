@@ -46,9 +46,14 @@ export function PingsSheetProvider({
 
   const openPings = useCallback(() => setOpen(true), []);
 
-  function dismissPing(id: string) {
-    setPings((prev) => prev.filter((p) => p.id !== id));
-    showToast("Ping descartado", "info");
+  async function dismissPing(id: string) {
+    try {
+      await fetch(`/api/pings/${id}`, { method: "PATCH" });
+      setPings((prev) => prev.filter((p) => p.id !== id));
+      showToast("Ping descartado", "info");
+    } catch {
+      showToast("Error al descartar ping", "error");
+    }
   }
 
   function callDriver(ping: Ping) {

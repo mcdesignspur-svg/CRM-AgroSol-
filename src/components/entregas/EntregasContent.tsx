@@ -6,12 +6,14 @@ import { Suspense, useCallback, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useToast } from "@/components/providers/ToastProvider";
 import { NotificationsButton } from "@/components/ui/NotificationsButton";
-import {
-  activeDeliveries,
-  branches as initialBranches,
-  notificationLogs as initialLogs,
-} from "@/lib/data";
-import type { Branch, NotificationLog } from "@/lib/types";
+import type { Branch, Delivery, NotificationLog } from "@/lib/types";
+
+interface EntregasPageContentProps {
+  initialBranches: Branch[];
+  initialDeliveries: Delivery[];
+  initialLogs: NotificationLog[];
+  completedCount: number;
+}
 
 function BranchCard({
   branch,
@@ -94,7 +96,12 @@ function BranchCard({
   );
 }
 
-export function EntregasPageContent() {
+export function EntregasPageContent({
+  initialBranches,
+  initialDeliveries,
+  initialLogs,
+  completedCount,
+}: EntregasPageContentProps) {
   return (
     <Suspense
       fallback={
@@ -105,20 +112,31 @@ export function EntregasPageContent() {
         </div>
       }
     >
-      <EntregasContent />
+      <EntregasContent
+        initialBranches={initialBranches}
+        initialDeliveries={initialDeliveries}
+        initialLogs={initialLogs}
+        completedCount={completedCount}
+      />
     </Suspense>
   );
 }
 
 type MobileTab = "mapa" | "entregas" | "sucursales";
 
-function EntregasContent() {
+function EntregasContent({
+  initialBranches,
+  initialDeliveries,
+  initialLogs,
+  completedCount,
+}: EntregasPageContentProps) {
   const searchParams = useSearchParams();
   const ordenId = searchParams.get("orden");
   const branchFilter = searchParams.get("branch");
   const { showToast } = useToast();
 
   const [branches, setBranches] = useState(initialBranches);
+  const [activeDeliveries] = useState(initialDeliveries);
   const [logs, setLogs] = useState<NotificationLog[]>(initialLogs);
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   const [mobileTab, setMobileTab] = useState<MobileTab>(() => {
@@ -143,30 +161,35 @@ function EntregasContent() {
 
   async function handleBranchPing(branchId: string) {
     setSendingPing(branchId);
-    await new Promise((r) => setTimeout(r, 1000));
-    setBranches((prev) =>
-      prev.map((b) =>
-        b.id === branchId ? { ...b, lastPingSent: "ENVIADO AHORA" } : b,
-      ),
-    );
-    const branch = branches.find((b) => b.id === branchId);
-    setLogs((prev) => [
-      {
-        id: `log-${Date.now()}`,
-        time: new Date().toLocaleTimeString("es-PR", { hour12: false }),
-        source: "SISTEMA",
-        message: `Ping de gerente enviado a ${branch?.name ?? branchId}.`,
-        accent: "primary",
-      },
-      ...prev,
-    ]);
-    setSendingPing(null);
-    showToast(`Ping enviado a ${branch?.name}`, "success");
+    try {
+      const res = await fetch(`/api/branches/${branchId}/ping`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error();
+      const updatedBranch = await res.json();
+      setBranches((prev) =>
+        prev.map((b) => (b.id === branchId ? updatedBranch : b)),
+      );
+      const notifRes = await fetch("/api/notifications");
+      if (notifRes.ok) setLogs(await notifRes.json());
+      showToast(`Ping enviado a ${updatedBranch.name}`, "success");
+    } catch {
+      showToast("Error al enviar ping", "error");
+    } finally {
+      setSendingPing(null);
+    }
   }
 
-  function handleClearLogs() {
-    setLogs([]);
-    showToast("Registro de notificaciones limpiado", "info");
+  async function handleClearLogs() {
+    try {
+      await fetch("/api/notifications", { method: "DELETE" });
+      setLogs([]);
+      showToast("Registro de notificaciones limpiado", "info");
+    } catch {
+      showToast("Error al limpiar notificaciones", "error");
+    }
   }
 
   function handleMapControl(action: "zoom-in" | "zoom-out" | "locate") {
@@ -182,7 +205,6 @@ function EntregasContent() {
   }
 
   const inTransitCount = activeDeliveries.length;
-  const completedCount = 0;
 
   return (
     <AppShell

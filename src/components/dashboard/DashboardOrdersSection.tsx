@@ -9,8 +9,7 @@ import {
   StatusBadge,
   TypeBadge,
 } from "@/components/ui/badges";
-import { extraOrders, recentOrders } from "@/lib/data";
-import type { OrderStatus, OrderType } from "@/lib/types";
+import type { Order, OrderStatus, OrderType } from "@/lib/types";
 
 type FilterMode = "all" | OrderType | OrderStatus;
 
@@ -33,12 +32,21 @@ const filterCycle: FilterMode[] = [
   "en-transito",
 ];
 
-export function DashboardOrdersSection() {
+export function DashboardOrdersSection({
+  initialOrders,
+  initialTotal,
+}: {
+  initialOrders: Order[];
+  initialTotal: number;
+}) {
   const { showToast } = useToast();
-  const [orders, setOrders] = useState(recentOrders);
+  const [orders, setOrders] = useState(initialOrders);
+  const [total, setTotal] = useState(initialTotal);
   const [filter, setFilter] = useState<FilterMode>("all");
   const [refreshing, setRefreshing] = useState(false);
-  const [loadedMore, setLoadedMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const hasMore = orders.length < total;
 
   const filteredOrders = orders.filter((order) => {
     if (filter === "all") return true;
@@ -55,21 +63,38 @@ export function DashboardOrdersSection() {
 
   async function handleRefresh() {
     setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setOrders(recentOrders);
-    setLoadedMore(false);
-    setRefreshing(false);
-    showToast("Datos actualizados", "success");
+    try {
+      const res = await fetch("/api/orders?limit=20&offset=0");
+      const data = await res.json();
+      setOrders(data.orders);
+      setTotal(data.total);
+      showToast("Datos actualizados", "success");
+    } catch {
+      showToast("Error al actualizar", "error");
+    } finally {
+      setRefreshing(false);
+    }
   }
 
-  function handleLoadMore() {
-    if (extraOrders.length === 0 || loadedMore) {
+  async function handleLoadMore() {
+    if (!hasMore || loadingMore) {
       showToast("No hay más órdenes disponibles", "info");
       return;
     }
-    setOrders((prev) => [...prev, ...extraOrders]);
-    setLoadedMore(true);
-    showToast(`${extraOrders.length} órdenes cargadas`, "success");
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/orders?limit=20&offset=${orders.length}`);
+      const data = await res.json();
+      setOrders((prev) => [...prev, ...data.orders]);
+      setTotal(data.total);
+      if (data.orders.length > 0) {
+        showToast(`${data.orders.length} órdenes cargadas`, "success");
+      }
+    } catch {
+      showToast("Error al cargar órdenes", "error");
+    } finally {
+      setLoadingMore(false);
+    }
   }
 
   return (
@@ -224,13 +249,14 @@ export function DashboardOrdersSection() {
         </div>
 
         <div className="p-4 bg-gray-50 flex justify-center">
-          {extraOrders.length > 0 && (
+          {hasMore && (
             <button
               type="button"
               onClick={handleLoadMore}
-              className="text-sm font-bold uppercase tracking-widest hover:text-primary transition-colors"
+              disabled={loadingMore}
+              className="text-sm font-bold uppercase tracking-widest hover:text-primary transition-colors disabled:opacity-60"
             >
-              {loadedMore ? "Sin Más Resultados" : "Cargar Más Órdenes"}
+              {loadingMore ? "Cargando..." : "Cargar Más Órdenes"}
             </button>
           )}
         </div>
