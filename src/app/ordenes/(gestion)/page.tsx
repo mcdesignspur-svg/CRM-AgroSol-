@@ -1,5 +1,5 @@
-import { getCatalogProducts, getOrdersCount, getRecentOrders } from "@/lib/db";
-import { OrdenesContent } from "@/components/ordenes/OrdenesContent";
+import { getOrdersCount, getRecentOrders } from "@/lib/db";
+import { OrdenesListContent } from "@/components/ordenes/OrdenesListContent";
 
 export const dynamic = "force-dynamic";
 
@@ -11,18 +11,16 @@ export default async function OrdenesPage({ searchParams }: OrdenesPageProps) {
   const { q } = await searchParams;
   const filters = q ? { q } : {};
 
-  const [orders, total, catalogProducts] = await Promise.all([
+  const [orders, total] = await Promise.all([
     getRecentOrders(20, 0, filters),
     getOrdersCount(filters),
-    getCatalogProducts(),
   ]);
 
   return (
-    <OrdenesContent
+    <OrdenesListContent
       initialOrders={orders}
       initialTotal={total}
       initialSearch={q ?? ""}
-      catalogProducts={catalogProducts}
     />
   );
 }

@@ -17,8 +17,8 @@ Repositorio oficial: [github.com/mcdesignspur-svg/CRM-AgroSol-](https://github.c
 | Ruta | Descripción |
 |------|-------------|
 | `/` | Panel de logística — métricas, órdenes recientes, pings en vivo |
-| `/ordenes` | Gestión de órdenes — formulario de nueva orden y listado en una sola página |
-| `/ordenes#nueva-orden` | Atajo para ir directo al formulario de nueva orden |
+| `/ordenes` | Listado de órdenes |
+| `/ordenes/nueva` | Registro de nueva orden |
 | `/entregas` | Mapa, entregas activas, estado de sucursales |
 | `/sucursales` | Vista de red y capacidad por sucursal |
 
