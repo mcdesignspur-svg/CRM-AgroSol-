@@ -1,19 +1,40 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
+import { ErpConnectionStatus } from "@/components/integrations/ErpConnectionStatus";
 import { AddProductModal } from "@/components/productos/AddProductModal";
+import type { LoyverseStatus } from "@/lib/loyverse/types";
 import type { Product } from "@/lib/types";
 
 interface ProductosContentProps {
   initialProducts: Product[];
+  loyverseStatus: LoyverseStatus;
 }
 
-export function ProductosContent({ initialProducts }: ProductosContentProps) {
+export function ProductosContent({
+  initialProducts,
+  loyverseStatus,
+}: ProductosContentProps) {
+  const router = useRouter();
   const [products, setProducts] = useState(initialProducts);
   const [modalOpen, setModalOpen] = useState(false);
+
+  async function handleProductsSynced() {
+    router.refresh();
+    try {
+      const res = await fetch("/api/products");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setProducts(data);
+      }
+    } catch {
+      // router.refresh() already triggers a server re-fetch on next navigation
+    }
+  }
 
   function handleCreated(product: Product) {
     setProducts((prev) =>
@@ -49,6 +70,12 @@ export function ProductosContent({ initialProducts }: ProductosContentProps) {
             </Link>
           </div>
         </div>
+
+        <ErpConnectionStatus
+          initialStatus={loyverseStatus}
+          showSyncAction
+          onSynced={handleProductsSynced}
+        />
 
         <section className="industrial-border bg-white industrial-shadow overflow-hidden">
           <div className="hidden sm:block overflow-x-auto">

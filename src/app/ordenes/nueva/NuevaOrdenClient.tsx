@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
+import { ErpConnectionStatus } from "@/components/integrations/ErpConnectionStatus";
 import { useToast } from "@/components/providers/ToastProvider";
 import { AddProductModal } from "@/components/productos/AddProductModal";
 import { ProductPickerModal } from "@/components/productos/ProductPickerModal";
@@ -14,16 +15,19 @@ import {
   DELIVERY_FEE,
   TAX_RATE,
 } from "@/lib/constants";
+import type { LoyverseStatus } from "@/lib/loyverse/types";
 import type { BranchId, OrderLineItem, Product } from "@/lib/types";
 
 type FulfillmentMethod = "pickup" | "delivery";
 
 interface NuevaOrdenClientProps {
   catalogProducts: Product[];
+  loyverseStatus: LoyverseStatus;
 }
 
 export default function NuevaOrdenClient({
   catalogProducts: initialCatalogProducts,
+  loyverseStatus,
 }: NuevaOrdenClientProps) {
   const [catalogProducts, setCatalogProducts] = useState(initialCatalogProducts);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -40,6 +44,19 @@ export default function NuevaOrdenClient({
   const { showToast } = useToast();
   const router = useRouter();
   const [smsNotify, setSmsNotify] = useState(false);
+
+  function handleProductsSynced() {
+    void fetch("/api/products")
+      .then((res) => res.json())
+      .then((products: Product[]) => {
+        if (Array.isArray(products)) {
+          setCatalogProducts(products);
+        }
+      })
+      .catch(() => {
+        showToast("No se pudo recargar el catálogo", "warning");
+      });
+  }
 
   function addLineItem() {
     setPickerOpen(true);
@@ -531,13 +548,11 @@ export default function NuevaOrdenClient({
                   </div>
                 </div>
 
-                <div className="bg-white border-2 border-black p-4 flex items-center gap-4">
-                  <div className="w-4 h-4 border-2 border-black bg-surface-container shrink-0" />
-                  <div className="text-[10px]">
-                    <div className="font-bold uppercase">Conexión ERP</div>
-                    <div className="font-mono opacity-60">No conectado</div>
-                  </div>
-                </div>
+                <ErpConnectionStatus
+                  initialStatus={loyverseStatus}
+                  showSyncAction
+                  onSynced={handleProductsSynced}
+                />
               </div>
             </div>
           </div>

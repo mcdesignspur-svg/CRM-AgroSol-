@@ -59,6 +59,22 @@ npm run dev
 
 Abre [http://localhost:3000](http://localhost:3000).
 
+### 4. Loyverse (opcional)
+
+Si ya tienes el **Personal Access Token** de Loyverse:
+
+1. En Loyverse Back Office → **Access Tokens** → copia el token
+2. Añádelo a `.env` (y a las variables de entorno en Vercel):
+
+```
+LOYVERSE_ACCESS_TOKEN="tu-token-aqui"
+```
+
+3. Reinicia el servidor (`npm run dev`)
+4. En **Productos** o **Nueva Orden**, usa **Sincronizar Productos** para importar el catálogo desde Loyverse
+
+La app verifica la conexión contra la API de Loyverse y muestra el estado en pantalla.
+
 ### Scripts de base de datos
 
 | Comando | Descripción |
@@ -127,7 +143,7 @@ design/               # Mockups originales de Stitch (referencia)
 - [x] Conectar base de datos PostgreSQL
 - [ ] Autenticación de operadores
 - [ ] WebSockets / actualizaciones en tiempo real
-- [ ] Integración ERP
+- [ ] Integración ERP (Loyverse: productos conectados; órdenes/inventario pendiente)
 - [ ] Notificaciones SMS / push
 
 ## Licencia
