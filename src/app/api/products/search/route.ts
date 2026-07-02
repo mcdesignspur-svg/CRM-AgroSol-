@@ -35,7 +35,7 @@ export async function GET(request: Request) {
       branchId: branchIdParam,
       query,
       categoryId,
-      limit: Number.isFinite(limitParam) ? Math.min(limitParam, 200) : 100,
+      limit: Number.isFinite(limitParam) ? Math.min(limitParam, 500) : 500,
     });
 
     return NextResponse.json({ products, total: products.length });
