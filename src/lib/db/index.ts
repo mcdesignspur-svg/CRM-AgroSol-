@@ -14,6 +14,12 @@ export {
   updateOrderStatus,
 } from "./orders";
 export type { OrderFilters } from "./orders";
+export {
+  getPickupByToken,
+  linkTelegramChatToPickup,
+  markCustomerArrived,
+  PickupArrivalError,
+} from "./pickup";
 export { createQuickPing, dismissPing, getLivePings, getSystemAlertsCount } from "./pings";
 export {
   countCatalogProducts,

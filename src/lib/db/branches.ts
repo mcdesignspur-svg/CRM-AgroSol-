@@ -11,11 +11,13 @@ export async function ensureBranches() {
         update: {
           name: branch.name,
           address: branch.address,
+          phone: branch.phone,
         },
         create: {
           id: branch.id,
           name: branch.name,
           address: branch.address,
+          phone: branch.phone,
           capacityPercent: 0,
           currentVolume: 0,
           status: "online",

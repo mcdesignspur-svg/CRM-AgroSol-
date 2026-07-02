@@ -41,6 +41,7 @@ model Branch {
   id              String       @id
   name            String
   address         String
+  phone           String?
   capacityPercent Int          @default(0) @map("capacity_percent")
   currentVolume   Int          @default(0) @map("current_volume")
   status          BranchStatus @default(online)
@@ -121,6 +122,11 @@ model Order {
   status          OrderStatus @default(pendiente)
   fulfillment     String      @default("pickup")
   smsNotify       Boolean     @default(false) @map("sms_notify")
+  pickupToken             String?     @unique @map("pickup_token")
+  telegramChatId          String?     @map("telegram_chat_id")
+  arrivedAt               DateTime?   @map("arrived_at")
+  confirmationNotifiedAt  DateTime?   @map("confirmation_notified_at")
+  readyNotifiedAt         DateTime?   @map("ready_notified_at")
   subtotal        Decimal     @db.Decimal(12, 2)
   taxes           Decimal     @db.Decimal(12, 2)
   deliveryFee     Decimal     @default(0) @map("delivery_fee") @db.Decimal(12, 2)

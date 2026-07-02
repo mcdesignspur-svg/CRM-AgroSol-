@@ -183,6 +183,9 @@ export async function POST(request: Request) {
       customerPhone: body.customerPhone
         ? String(body.customerPhone)
         : undefined,
+      telegramChatId: body.telegramChatId
+        ? String(body.telegramChatId)
+        : undefined,
       deliveryAddress: body.deliveryAddress
         ? String(body.deliveryAddress)
         : undefined,

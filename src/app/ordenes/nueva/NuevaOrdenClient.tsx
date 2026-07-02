@@ -26,6 +26,7 @@ const DRAFT_STORAGE_KEY = "agrosol-order-draft";
 interface OrderDraft {
   customerName: string;
   customerPhone: string;
+  telegramChatId: string;
   deliveryAddress: string;
   method: FulfillmentMethod;
   branchId: BranchId;
@@ -52,6 +53,7 @@ export default function NuevaOrdenClient({
   const [branchId, setBranchId] = useState<BranchId>(DEFAULT_BRANCH);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [lineItems, setLineItems] = useState<OrderLineItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -73,6 +75,7 @@ export default function NuevaOrdenClient({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setCustomerName(draft.customerName ?? "");
       setCustomerPhone(draft.customerPhone ?? "");
+      setTelegramChatId(draft.telegramChatId ?? "");
       setDeliveryAddress(draft.deliveryAddress ?? "");
       setMethod(draft.method ?? "pickup");
       setBranchId(draft.branchId ?? DEFAULT_BRANCH);
@@ -119,6 +122,7 @@ export default function NuevaOrdenClient({
     const draft: OrderDraft = {
       customerName,
       customerPhone,
+      telegramChatId,
       deliveryAddress,
       method,
       branchId,
@@ -164,6 +168,10 @@ export default function NuevaOrdenClient({
       showToast("Ingresa el nombre del cliente", "warning");
       return;
     }
+    if (method === "pickup" && !customerPhone.trim()) {
+      showToast("Ingresa el teléfono del cliente para pickup", "warning");
+      return;
+    }
     if (method === "delivery" && !deliveryAddress.trim()) {
       setDeliveryAddressError(true);
       showToast("Ingresa la dirección de entrega", "warning");
@@ -178,6 +186,7 @@ export default function NuevaOrdenClient({
         body: JSON.stringify({
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim() || undefined,
+          telegramChatId: telegramChatId.trim() || undefined,
           deliveryAddress:
             method === "delivery" ? deliveryAddress.trim() : undefined,
           branchId,
@@ -250,6 +259,9 @@ export default function NuevaOrdenClient({
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-on-surface-variant">
                       Número de Teléfono
+                      {method === "pickup" && (
+                        <span className="text-primary"> *</span>
+                      )}
                     </label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-black text-sm">
@@ -263,21 +275,46 @@ export default function NuevaOrdenClient({
                       />
                     </div>
                   </div>
+                  {method === "pickup" && (
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="text-xs font-medium text-on-surface-variant">
+                        Chat ID de Telegram (pruebas)
+                      </label>
+                      <input
+                        className="w-full bg-white border border-outline px-4 py-2 font-medium"
+                        type="text"
+                        placeholder="Opcional — o comparte el enlace del bot al cliente"
+                        value={telegramChatId}
+                        onChange={(e) => setTelegramChatId(e.target.value)}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="mt-6 flex items-start gap-4 lg:hidden">
-                  <input
-                    className="mt-1 w-4 h-4 border border-outline"
-                    type="checkbox"
-                    id="sms-notify-mobile"
-                    checked={smsNotify}
-                    onChange={(e) => setSmsNotify(e.target.checked)}
-                  />
-                  <label
-                    htmlFor="sms-notify-mobile"
-                    className="text-xs font-medium leading-tight"
-                  >
-                    Confirmación por SMS al cliente al despachar desde almacén.
-                  </label>
+                  {method === "delivery" && (
+                    <>
+                      <input
+                        className="mt-1 w-4 h-4 border border-outline"
+                        type="checkbox"
+                        id="sms-notify-mobile"
+                        checked={smsNotify}
+                        onChange={(e) => setSmsNotify(e.target.checked)}
+                      />
+                      <label
+                        htmlFor="sms-notify-mobile"
+                        className="text-xs font-medium leading-tight"
+                      >
+                        Confirmación por SMS al cliente al despachar desde almacén.
+                      </label>
+                    </>
+                  )}
+                  {method === "pickup" && (
+                    <p className="text-xs font-medium leading-tight text-on-surface-variant">
+                      El cliente recibirá confirmación y aviso de orden lista por
+                      Telegram (pruebas). Comparte el enlace del bot desde el detalle
+                      de la orden.
+                    </p>
+                  )}
                 </div>
               </section>
 
@@ -594,18 +631,26 @@ export default function NuevaOrdenClient({
                     </div>
                   </div>
                   <div className="p-4 bg-gray-50 border-t border-outline space-y-4 hidden lg:block">
-                    <div className="flex items-start gap-4">
-                      <input
-                        className="mt-1 w-4 h-4 border border-outline"
-                        type="checkbox"
-                        checked={smsNotify}
-                        onChange={(e) => setSmsNotify(e.target.checked)}
-                      />
-                      <label className="text-xs font-medium leading-tight">
-                        Confirmación por SMS al cliente al despachar desde
-                        almacén.
-                      </label>
-                    </div>
+                    {method === "delivery" ? (
+                      <div className="flex items-start gap-4">
+                        <input
+                          className="mt-1 w-4 h-4 border border-outline"
+                          type="checkbox"
+                          checked={smsNotify}
+                          onChange={(e) => setSmsNotify(e.target.checked)}
+                        />
+                        <label className="text-xs font-medium leading-tight">
+                          Confirmación por SMS al cliente al despachar desde
+                          almacén.
+                        </label>
+                      </div>
+                    ) : (
+                      <p className="text-xs font-medium leading-tight text-on-surface-variant">
+                        Pickup: el cliente recibe confirmación y aviso de orden
+                        lista por Telegram. Comparte el enlace del bot desde el
+                        detalle de la orden.
+                      </p>
+                    )}
                     <button
                       type="button"
                       disabled={submitting || submitted || lineItems.length === 0}

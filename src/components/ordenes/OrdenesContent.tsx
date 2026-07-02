@@ -9,6 +9,7 @@ import {
   BranchLabel,
   StatusBadge,
   TypeBadge,
+  ArrivedBadge,
 } from "@/components/ui/badges";
 import { ORDER_STATUS_LABELS } from "@/lib/order-status";
 import type { Order, OrderStatus, OrderType } from "@/lib/types";
@@ -262,7 +263,12 @@ export function OrdenesContent({
                         <BranchLabel branchId={order.branchId} />
                       </td>
                       <td className="px-4 py-3">
-                        <StatusBadge status={order.status} />
+                        <div className="flex flex-wrap gap-1.5">
+                          <StatusBadge status={order.status} />
+                          {order.arrivedAt && order.type === "retiro" && (
+                            <ArrivedBadge />
+                          )}
+                        </div>
                       </td>
                       <td
                         className={`px-4 py-3 text-sm font-mono ${
@@ -305,6 +311,9 @@ export function OrdenesContent({
                       <p className="font-medium text-sm">{order.customerName}</p>
                     </div>
                     <StatusBadge status={order.status} />
+                    {order.arrivedAt && order.type === "retiro" && (
+                      <ArrivedBadge />
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-2 items-center text-xs">
                     <TypeBadge type={order.type} />

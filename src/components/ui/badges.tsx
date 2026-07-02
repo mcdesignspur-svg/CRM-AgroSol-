@@ -15,6 +15,14 @@ const typeStyles: Record<OrderType, string> = {
   retiro: "bg-violet-50 text-violet-700",
 };
 
+export function ArrivedBadge() {
+  return (
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700">
+      Cliente en camino
+    </span>
+  );
+}
+
 export function StatusBadge({ status }: { status: OrderStatus }) {
   return (
     <span

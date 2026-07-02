@@ -3,6 +3,7 @@ import {
   completeDeliveryForOrder,
   createDeliveryForOrder,
 } from "@/lib/db/deliveries";
+import { generatePickupToken } from "@/lib/db/pickup";
 import { isBranchId } from "@/lib/branch-definitions";
 import {
   DELIVERY_FEE,
@@ -17,6 +18,10 @@ import {
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import type { BranchId, OrderStatus, OrderType } from "@/lib/types";
+import {
+  sendPickupOrderConfirmation,
+  sendPickupOrderReady,
+} from "@/lib/pickup/notify";
 import {
   mapDriverOrder,
   mapOrder,
@@ -179,6 +184,7 @@ interface CreateOrderLineItemInput {
 interface CreateOrderInput {
   customerName: string;
   customerPhone?: string;
+  telegramChatId?: string;
   deliveryAddress?: string;
   branchId: BranchId;
   fulfillment: "pickup" | "delivery";
@@ -283,10 +289,12 @@ function computeOrderTotals(
 async function createOrderTransaction(input: {
   customerName: string;
   customerPhone?: string;
+  telegramChatId?: string;
   deliveryAddress?: string;
   branchId: BranchId;
   fulfillment: "pickup" | "delivery";
   smsNotify: boolean;
+  pickupToken?: string;
   type: OrderType;
   status: OrderStatus;
   subtotal: number;
@@ -309,12 +317,14 @@ async function createOrderTransaction(input: {
         displayId,
         customerName: input.customerName.trim(),
         customerPhone: input.customerPhone?.trim() || null,
+        telegramChatId: input.telegramChatId?.trim() || null,
         deliveryAddress: input.deliveryAddress?.trim() || null,
         type: input.type,
         branchId: input.branchId,
         status: toPrismaOrderStatus(input.status),
         fulfillment: input.fulfillment,
         smsNotify: input.smsNotify,
+        pickupToken: input.pickupToken ?? null,
         subtotal: input.subtotal,
         taxes: input.taxes,
         deliveryFee: input.deliveryFee,
@@ -381,6 +391,11 @@ export async function createOrder(input: CreateOrderInput) {
       "La dirección de entrega es obligatoria para entregas",
     );
   }
+  if (input.fulfillment === "pickup" && !input.customerPhone?.trim()) {
+    throw new OrderValidationError(
+      "El teléfono del cliente es obligatorio para pickups",
+    );
+  }
 
   validateLineItems(input.lineItems);
   const resolvedLineItems = await resolveLineItems(input.lineItems);
@@ -399,10 +414,13 @@ export async function createOrder(input: CreateOrderInput) {
   const orderInput = {
     customerName: input.customerName,
     customerPhone: input.customerPhone,
+    telegramChatId: input.telegramChatId,
     deliveryAddress: input.deliveryAddress,
     branchId: input.branchId,
     fulfillment: input.fulfillment,
     smsNotify: input.smsNotify,
+    pickupToken:
+      input.fulfillment === "pickup" ? generatePickupToken() : undefined,
     type,
     status,
     subtotal,
@@ -415,7 +433,13 @@ export async function createOrder(input: CreateOrderInput) {
   for (let attempt = 0; attempt < CREATE_ORDER_MAX_RETRIES; attempt++) {
     try {
       const order = await createOrderTransaction(orderInput);
-      return mapOrderDetail(order);
+      const detail = mapOrderDetail(order);
+
+      if (input.fulfillment === "pickup" && input.telegramChatId?.trim()) {
+        void sendPickupOrderConfirmation(order.id);
+      }
+
+      return detail;
     } catch (error) {
       const isDisplayIdConflict =
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -506,6 +530,10 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
           description: `${existing.customerName} puede retirar en sucursal ${existing.branchId}.`,
         },
       });
+
+      if (existing.fulfillment === "pickup") {
+        void sendPickupOrderReady(existing.id);
+      }
     }
 
     if (nextStatus === "completado") {

@@ -10,6 +10,8 @@ import type {
   Ping,
   Product,
 } from "@/lib/types";
+import { buildPickupUrl } from "@/lib/pickup-url";
+import { buildTelegramStartLink } from "@/lib/telegram/client";
 import type {
   Branch as PrismaBranch,
   Delivery as PrismaDelivery,
@@ -74,6 +76,7 @@ export function mapBranch(branch: PrismaBranch): Branch {
     id: branch.id as BranchId,
     name: branch.name,
     address: branch.address,
+    phone: branch.phone ?? undefined,
     capacityPercent: branch.capacityPercent,
     currentVolume: branch.currentVolume,
     status: branch.status,
@@ -105,6 +108,7 @@ export function mapOrder(order: PrismaOrder): Order {
     status,
     elapsedTime: formatElapsedTime(order.createdAt),
     createdAt: order.createdAt.toISOString(),
+    arrivedAt: order.arrivedAt?.toISOString(),
   };
 }
 
@@ -147,6 +151,15 @@ export function mapOrderDetail(
     status,
     fulfillment,
     smsNotify: order.smsNotify,
+    pickupToken: order.pickupToken ?? undefined,
+    telegramChatId: order.telegramChatId ?? undefined,
+    telegramStartLink: order.pickupToken
+      ? buildTelegramStartLink(order.pickupToken) ?? undefined
+      : undefined,
+    pickupUrl: order.pickupToken ? buildPickupUrl(order.pickupToken) : undefined,
+    confirmationNotifiedAt: order.confirmationNotifiedAt?.toISOString(),
+    readyNotifiedAt: order.readyNotifiedAt?.toISOString(),
+    arrivedAt: order.arrivedAt?.toISOString(),
     subtotal: Number(order.subtotal),
     taxes: Number(order.taxes),
     deliveryFee: Number(order.deliveryFee),

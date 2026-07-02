@@ -10,6 +10,7 @@ import {
   BranchLabel,
   StatusBadge,
   TypeBadge,
+  ArrivedBadge,
 } from "@/components/ui/badges";
 import { BRANCH_LABELS } from "@/lib/constants";
 import {
@@ -81,6 +82,9 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
               </h2>
               <StatusBadge status={order.status} />
               <TypeBadge type={order.type} />
+              {order.arrivedAt && order.fulfillment === "pickup" && (
+                <ArrivedBadge />
+              )}
             </div>
             <p className="text-sm text-on-surface-variant mt-2">
               Creada hace {order.elapsedTime} · {BRANCH_LABELS[order.branchId]}
@@ -262,12 +266,47 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-xs font-medium text-on-surface-variant text-gray-500">
-                  SMS al despachar
+                  Notificación lista (Telegram)
                 </span>
                 <span className="font-bold uppercase text-xs">
-                  {order.smsNotify ? "Sí" : "No"}
+                  {order.readyNotifiedAt ? "Enviada" : "Pendiente"}
                 </span>
               </div>
+              {order.fulfillment === "pickup" && order.pickupUrl && (
+                <div className="pt-2 border-t border-outline space-y-2">
+                  <p className="text-xs font-medium text-on-surface-variant">
+                    Enlace de retiro (cliente)
+                  </p>
+                  <a
+                    href={order.pickupUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-primary break-all hover:underline"
+                  >
+                    {order.pickupUrl}
+                  </a>
+                  {order.telegramStartLink && (
+                    <>
+                      <p className="text-xs font-medium text-on-surface-variant pt-1">
+                        Bot de Telegram (confirmaciones)
+                      </p>
+                      <a
+                        href={order.telegramStartLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-primary break-all hover:underline"
+                      >
+                        {order.telegramStartLink}
+                      </a>
+                    </>
+                  )}
+                  {order.confirmationNotifiedAt && (
+                    <p className="text-xs text-emerald-700">
+                      Confirmación enviada por Telegram
+                    </p>
+                  )}
+                </div>
+              )}
               {order.status === "completado" && (
                 <div className="pt-2 border-t-2 border-dashed border-gray-300 text-center">
                   <span className="material-symbols-outlined text-green-600">

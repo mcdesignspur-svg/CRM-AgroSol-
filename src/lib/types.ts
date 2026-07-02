@@ -15,6 +15,7 @@ export interface Branch {
   id: BranchId;
   name: string;
   address: string;
+  phone?: string;
   capacityPercent: number;
   currentVolume: number;
   status: "online" | "offline" | "warning";
@@ -29,6 +30,7 @@ export interface Order {
   status: OrderStatus;
   elapsedTime: string;
   createdAt: string;
+  arrivedAt?: string;
 }
 
 export interface DriverOrder extends Order {
@@ -52,6 +54,12 @@ export interface OrderDetail extends Order {
   deliveryAddress?: string;
   fulfillment: "pickup" | "delivery";
   smsNotify: boolean;
+  pickupToken?: string;
+  telegramChatId?: string;
+  telegramStartLink?: string;
+  pickupUrl?: string;
+  confirmationNotifiedAt?: string;
+  readyNotifiedAt?: string;
   subtotal: number;
   taxes: number;
   deliveryFee: number;
