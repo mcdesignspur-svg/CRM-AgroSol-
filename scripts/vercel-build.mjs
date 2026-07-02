@@ -4,8 +4,17 @@ const isProduction = process.env.VERCEL_ENV === "production";
 
 // Las migraciones deben ir por la conexión directa (sin pooler): PgBouncer/Neon
 // pooler no soporta los advisory locks que usa prisma migrate (error P1002).
+// La integración de Neon en Vercel expone DATABASE_URL_UNPOOLED automáticamente.
 const migrationUrl =
-  process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL;
+  process.env.DIRECT_DATABASE_URL ||
+  process.env.DATABASE_URL_UNPOOLED ||
+  process.env.POSTGRES_URL_NON_POOLING ||
+  process.env.DATABASE_URL;
+
+const hasDirectUrl =
+  Boolean(process.env.DIRECT_DATABASE_URL) ||
+  Boolean(process.env.DATABASE_URL_UNPOOLED) ||
+  Boolean(process.env.POSTGRES_URL_NON_POOLING);
 
 if (isProduction) {
   if (!migrationUrl) {
@@ -17,9 +26,9 @@ if (isProduction) {
     process.exit(1);
   }
 
-  if (!process.env.DIRECT_DATABASE_URL) {
+  if (!hasDirectUrl) {
     console.warn(
-      "DIRECT_DATABASE_URL is not set; running migrations over DATABASE_URL. " +
+      "No direct (non-pooled) database URL found; running migrations over DATABASE_URL. " +
         "If DATABASE_URL points to a pooled connection (e.g. Neon '-pooler'), " +
         "migrations may fail with advisory lock timeouts (P1002).",
     );

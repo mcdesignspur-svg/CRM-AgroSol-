@@ -96,7 +96,7 @@ Requiere `DATABASE_URL` apuntando a una instancia PostgreSQL accesible.
 2. Framework preset: **Next.js**
 3. Añade las variables de entorno en **Production**:
    - `DATABASE_URL` — URL de la app en runtime (en Neon, la URL **pooled** con `-pooler`)
-   - `DIRECT_DATABASE_URL` — URL **directa** (sin `-pooler`), usada por el build para las migraciones. Las migraciones de Prisma necesitan conexión directa; a través del pooler fallan con timeout (`P1002`).
+   - Una URL **directa** (sin `-pooler`) para las migraciones: la integración de Neon ya expone `DATABASE_URL_UNPOOLED` / `POSTGRES_URL_NON_POOLING` automáticamente; si no usas la integración, define `DIRECT_DATABASE_URL`. Las migraciones de Prisma necesitan conexión directa; a través del pooler fallan con timeout (`P1002`).
 4. En **Settings → Environments → Production**, confirma:
    - **Production Branch**: `main`
    - **Auto-assign Custom Production Domains**: activado (cada push a `main` va directo a producción)
@@ -106,6 +106,8 @@ Requiere `DATABASE_URL` apuntando a una instancia PostgreSQL accesible.
 ### Despliegue automático a producción
 
 Cada **push a `main`** pasa primero por CI (lint, typecheck, tests, build) y, si todo es verde, despliega automáticamente a producción mediante GitHub Actions (`.github/workflows/deploy-production.yml`, disparado al completar CI con éxito).
+
+El workflow ejecuta `vercel deploy --prod`, que **construye en la infraestructura de Vercel**. Esto es necesario porque las variables de entorno del proyecto son sensibles: `vercel pull` las descarga vacías, así que un build local en el runner de GitHub nunca vería `DATABASE_URL`.
 
 > Las ramas distintas de `main` siguen generando **preview deployments** en Vercel. El build de `main` en Vercel está desactivado en `vercel.json` para evitar deploys duplicados; producción la gestiona el workflow.
 
