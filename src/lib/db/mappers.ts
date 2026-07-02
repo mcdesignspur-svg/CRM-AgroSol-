@@ -18,6 +18,7 @@ import type {
   OrderLineItem as PrismaOrderLineItem,
   Ping as PrismaPing,
   Product as PrismaProduct,
+  ProductCategory as PrismaProductCategory,
   OrderStatus as PrismaOrderStatus,
 } from "@prisma/client";
 import {
@@ -207,12 +208,16 @@ export function mapNotification(log: PrismaNotification): NotificationLog {
   };
 }
 
-export function mapProduct(product: PrismaProduct): Product {
+export function mapProduct(
+  product: PrismaProduct & { category?: PrismaProductCategory | null },
+): Product {
   return {
     id: product.id,
     name: product.name,
     sku: product.sku,
     unitPrice: Number(product.unitPrice),
+    categoryId: product.categoryId ?? undefined,
+    categoryName: product.category?.name,
   };
 }
 

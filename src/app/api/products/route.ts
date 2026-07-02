@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
 import { createProduct, getCatalogProducts } from "@/lib/db";
+import { isBranchId } from "@/lib/branch-definitions";
 import { Prisma } from "@prisma/client";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const products = await getCatalogProducts();
+    const { searchParams } = new URL(request.url);
+    const branchIdParam = searchParams.get("branchId") ?? "gurabo";
+
+    if (!isBranchId(branchIdParam)) {
+      return NextResponse.json(
+        { error: "Sucursal inválida" },
+        { status: 400 },
+      );
+    }
+
+    const products = await getCatalogProducts(branchIdParam);
     return NextResponse.json(products);
   } catch (error) {
     console.error("GET /api/products", error);
@@ -21,6 +32,14 @@ export async function POST(request: Request) {
     const name = String(body.name ?? "").trim();
     const sku = String(body.sku ?? "").trim();
     const unitPrice = Number(body.unitPrice);
+    const branchIdParam = String(body.branchId ?? "gurabo");
+
+    if (!isBranchId(branchIdParam)) {
+      return NextResponse.json(
+        { error: "Sucursal inválida" },
+        { status: 400 },
+      );
+    }
 
     if (!name) {
       return NextResponse.json(
@@ -41,7 +60,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const product = await createProduct({ name, sku, unitPrice });
+    const product = await createProduct({
+      branchId: branchIdParam,
+      name,
+      sku,
+      unitPrice,
+    });
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     if (

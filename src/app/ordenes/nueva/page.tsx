@@ -1,4 +1,4 @@
-import { getCatalogProducts } from "@/lib/db";
+import { getLoyverseStatus } from "@/lib/loyverse";
 import NuevaOrdenClient from "./NuevaOrdenClient";
 
 export const metadata = {
@@ -8,7 +8,7 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function NuevaOrdenPage() {
-  const catalogProducts = await getCatalogProducts();
+  const loyverseStatus = await getLoyverseStatus("gurabo");
 
-  return <NuevaOrdenClient catalogProducts={catalogProducts} />;
+  return <NuevaOrdenClient loyverseStatus={loyverseStatus} />;
 }

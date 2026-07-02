@@ -1,24 +1,68 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
+import { ErpConnectionStatus } from "@/components/integrations/ErpConnectionStatus";
 import { AddProductModal } from "@/components/productos/AddProductModal";
-import type { Product } from "@/lib/types";
+import {
+  ProductCategoryFilter,
+  ProductCategoryGrid,
+} from "@/components/productos/ProductCategoryFilter";
+import { ProductCategorySections } from "@/components/productos/ProductCategorySections";
+import { ProductSearchBar } from "@/components/productos/ProductSearchBar";
+import {
+  useProductCategories,
+  useProductSearch,
+} from "@/hooks/useProductSearch";
+import { groupProductsByCategory } from "@/lib/products/group-by-category";
+import type { LoyverseStatus } from "@/lib/loyverse/types";
+import type { Product, ProductCategorySummary } from "@/lib/types";
 
 interface ProductosContentProps {
-  initialProducts: Product[];
+  loyverseStatus: LoyverseStatus;
+  categories: ProductCategorySummary[];
 }
 
-export function ProductosContent({ initialProducts }: ProductosContentProps) {
-  const [products, setProducts] = useState(initialProducts);
+export function ProductosContent({
+  loyverseStatus,
+  categories: initialCategories,
+}: ProductosContentProps) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<
+    string | null | undefined
+  >(undefined);
+
+  const { categories } = useProductCategories("gurabo", initialCategories);
+  const { query, setQuery, results, loading, error } = useProductSearch(
+    "gurabo",
+    selectedCategoryId,
+  );
+
+  const groupedResults = useMemo(
+    () => groupProductsByCategory(results),
+    [results],
+  );
+
+  const selectedCategory = categories.find(
+    (category) => category.id === selectedCategoryId,
+  );
+  const hasSearch = query.trim().length >= 2;
+  const browsingCategory = selectedCategoryId !== undefined;
+  const showResults = browsingCategory || hasSearch;
+  const showCategoryHeaders = !browsingCategory || hasSearch;
 
   function handleCreated(product: Product) {
-    setProducts((prev) =>
-      [...prev, product].sort((a, b) => a.name.localeCompare(b.name)),
-    );
+    setQuery(product.name);
+    setSelectedCategoryId(undefined);
+  }
+
+  function handleCategorySelect(categoryId: string | null | undefined) {
+    setSelectedCategoryId(categoryId);
+    if (categoryId === undefined) {
+      setQuery("");
+    }
   }
 
   return (
@@ -30,7 +74,8 @@ export function ProductosContent({ initialProducts }: ProductosContentProps) {
               Productos
             </h2>
             <p className="text-sm text-on-surface-variant mt-1">
-              Administra los artículos disponibles para nuevas órdenes.
+              Explora por categoría o busca en el cache de Loyverse de Gurabo
+              (Central).
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -50,78 +95,88 @@ export function ProductosContent({ initialProducts }: ProductosContentProps) {
           </div>
         </div>
 
-        <section className="rounded-xl border border-outline bg-white shadow-sm overflow-hidden">
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="table-header">
-                <tr>
-                  <th className="px-4 py-3 text-xs font-medium">Producto</th>
-                  <th className="px-4 py-3 text-xs font-medium">SKU</th>
-                  <th className="px-4 py-3 text-xs font-medium text-right">
-                    Precio
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {products.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={3}
-                      className="px-4 py-12 text-center text-sm text-on-surface-variant"
-                    >
-                      Sin productos — agrega el primero al catálogo
-                    </td>
-                  </tr>
-                ) : (
-                  products.map((product) => (
-                    <tr
-                      key={product.id}
-                      className="hover:bg-surface transition-colors"
-                    >
-                      <td className="px-4 py-3 text-sm font-medium">
-                        {product.name}
-                      </td>
-                      <td className="px-4 py-3 font-mono text-sm text-on-surface-variant">
-                        {product.sku}
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold">
-                        ${product.unitPrice.toFixed(2)}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <ProductSearchBar
+          value={query}
+          onChange={setQuery}
+          helperText={`${(loyverseStatus.cachedProductCount ?? 0).toLocaleString("es-PR")} productos en cache · selecciona una categoría o escribe al menos 2 caracteres`}
+        />
 
-          <div className="sm:hidden p-4 space-y-2">
-            {products.length === 0 ? (
-              <p className="py-12 text-center text-sm text-on-surface-variant">
-                Sin productos — agrega el primero al catálogo
-              </p>
-            ) : (
-              products.map((product) => (
-                <article
-                  key={product.id}
-                  className="rounded-lg border border-outline p-4 bg-surface"
-                >
-                  <p className="font-medium text-sm">{product.name}</p>
-                  <p className="text-xs font-mono text-on-surface-variant mt-0.5">
-                    SKU: {product.sku}
-                  </p>
-                  <p className="text-base font-semibold text-primary mt-1.5">
-                    ${product.unitPrice.toFixed(2)}
-                  </p>
-                </article>
-              ))
-            )}
-          </div>
+        <ProductCategoryFilter
+          categories={categories}
+          selectedCategoryId={selectedCategoryId}
+          onSelect={handleCategorySelect}
+        />
+
+        <ErpConnectionStatus
+          branchId="gurabo"
+          initialStatus={loyverseStatus}
+          showSyncAction
+        />
+
+        <section className="rounded-xl border border-outline bg-white shadow-sm overflow-hidden">
+          {!showResults ? (
+            <div className="p-4 md:p-6 space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-on-surface">
+                  Explorar por categoría
+                </h3>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Selecciona una categoría para ver sus productos ordenados
+                  alfabéticamente.
+                </p>
+              </div>
+              <ProductCategoryGrid
+                categories={categories}
+                onSelect={(categoryId) => setSelectedCategoryId(categoryId)}
+              />
+            </div>
+          ) : loading ? (
+            <div className="px-6 py-16 text-center text-sm text-on-surface-variant">
+              <span className="inline-flex items-center gap-2">
+                <span className="material-symbols-outlined animate-spin text-primary">
+                  sync
+                </span>
+                Cargando productos...
+              </span>
+            </div>
+          ) : error ? (
+            <div className="px-6 py-16 text-center text-sm text-red-600">
+              {error}
+            </div>
+          ) : results.length === 0 ? (
+            <div className="px-6 py-16 text-center text-sm text-on-surface-variant">
+              {hasSearch
+                ? `Sin resultados para "${query.trim()}"`
+                : "Esta categoría no tiene productos visibles"}
+            </div>
+          ) : (
+            <ProductCategorySections
+              products={results}
+              groups={
+                browsingCategory && !hasSearch
+                  ? [
+                      {
+                        categoryId: selectedCategory?.id ?? undefined,
+                        categoryName:
+                          selectedCategory?.name ?? "Sin categoría",
+                        products: results,
+                      },
+                    ]
+                  : groupedResults
+              }
+              showCategoryHeaders={showCategoryHeaders}
+            />
+          )}
         </section>
 
-        <p className="text-xs text-on-surface-variant">
-          {products.length}{" "}
-          {products.length === 1 ? "producto activo" : "productos activos"}
-        </p>
+        {showResults && !loading && results.length > 0 && (
+          <p className="text-xs text-on-surface-variant">
+            {results.length} productos
+            {selectedCategory ? ` en ${selectedCategory.name}` : ""}
+            {hasSearch ? ` para "${query.trim()}"` : ""}
+            {results.length >= 100 ? " · mostrando los primeros 100" : ""}
+          </p>
+        )}
       </div>
 
       <AddProductModal

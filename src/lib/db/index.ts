@@ -15,4 +15,10 @@ export {
 } from "./orders";
 export type { OrderFilters } from "./orders";
 export { createQuickPing, dismissPing, getLivePings, getSystemAlertsCount } from "./pings";
-export { createProduct, getCatalogProducts } from "./products";
+export {
+  countCatalogProducts,
+  createProduct,
+  getCatalogProducts,
+  searchCatalogProducts,
+} from "./products";
+export { listProductCategories } from "./categories";

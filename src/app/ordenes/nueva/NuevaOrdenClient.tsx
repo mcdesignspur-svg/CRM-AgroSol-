@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
+import { ErpConnectionStatus } from "@/components/integrations/ErpConnectionStatus";
 import { useToast } from "@/components/providers/ToastProvider";
 import { AddProductModal } from "@/components/productos/AddProductModal";
 import { ProductPickerModal } from "@/components/productos/ProductPickerModal";
+import { isLoyverseBranchEnabled } from "@/lib/loyverse";
+import type { LoyverseStatus } from "@/lib/loyverse/types";
 import {
   BRANCH_LABELS,
   DEFAULT_BRANCH,
@@ -26,18 +29,23 @@ interface OrderDraft {
   deliveryAddress: string;
   method: FulfillmentMethod;
   branchId: BranchId;
-  lineItems: { productId: string; quantity: number }[];
+  lineItems: {
+    productId: string;
+    name: string;
+    sku: string;
+    unitPrice: number;
+    quantity: number;
+  }[];
   smsNotify: boolean;
 }
 
 interface NuevaOrdenClientProps {
-  catalogProducts: Product[];
+  loyverseStatus: LoyverseStatus;
 }
 
 export default function NuevaOrdenClient({
-  catalogProducts: initialCatalogProducts,
+  loyverseStatus,
 }: NuevaOrdenClientProps) {
-  const [catalogProducts, setCatalogProducts] = useState(initialCatalogProducts);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [addProductOpen, setAddProductOpen] = useState(false);
   const [method, setMethod] = useState<FulfillmentMethod>("pickup");
@@ -70,13 +78,14 @@ export default function NuevaOrdenClient({
       setBranchId(draft.branchId ?? DEFAULT_BRANCH);
       setSmsNotify(draft.smsNotify ?? false);
       const restored = (draft.lineItems ?? [])
-        .map((item) => {
-          const product = initialCatalogProducts.find(
-            (p) => p.id === item.productId,
-          );
-          return product ? { ...product, quantity: item.quantity } : null;
-        })
-        .filter((item): item is OrderLineItem => item !== null);
+        .map((item) => ({
+          id: item.productId,
+          name: item.name,
+          sku: item.sku,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+        }))
+        .filter((item): item is OrderLineItem => Boolean(item.name && item.sku));
       if (restored.length > 0) {
         setLineItems(restored);
         showToast("Borrador restaurado", "info");
@@ -98,9 +107,6 @@ export default function NuevaOrdenClient({
   }
 
   function handleProductCreated(product: Product) {
-    setCatalogProducts((prev) =>
-      [...prev, product].sort((a, b) => a.name.localeCompare(b.name)),
-    );
     setLineItems((items) => [...items, { ...product, quantity: 1 }]);
     showToast(`${product.name} creado y agregado a la orden`, "success");
   }
@@ -119,6 +125,9 @@ export default function NuevaOrdenClient({
       smsNotify,
       lineItems: lineItems.map((item) => ({
         productId: item.id,
+        name: item.name,
+        sku: item.sku,
+        unitPrice: item.unitPrice,
         quantity: item.quantity,
       })),
     };
@@ -645,13 +654,13 @@ export default function NuevaOrdenClient({
                   </div>
                 </div>
 
-                <div className="bg-white border border-outline p-4 flex items-center gap-4">
-                  <div className="w-4 h-4 border border-outline bg-surface-container shrink-0" />
-                  <div className="text-[10px]">
-                    <div className="font-bold uppercase">Conexión ERP</div>
-                    <div className="font-mono opacity-60">No conectado</div>
-                  </div>
-                </div>
+                {isLoyverseBranchEnabled("gurabo") && (
+                  <ErpConnectionStatus
+                    branchId="gurabo"
+                    initialStatus={loyverseStatus}
+                    showSyncAction
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -698,7 +707,7 @@ export default function NuevaOrdenClient({
       <ProductPickerModal
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        products={catalogProducts}
+        branchId={branchId}
         selectedIds={lineItems.map((item) => item.id)}
         onSelect={selectProduct}
         onCreateNew={() => {
