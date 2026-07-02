@@ -7,29 +7,53 @@ if (loaded > 0) {
 }
 
 const isProduction = process.env.VERCEL_ENV === "production";
+const gitRef = process.env.VERCEL_GIT_COMMIT_REF;
+const isMainBranch = !gitRef || gitRef === "main";
 
-// Las migraciones deben ir por la conexión directa (sin pooler): PgBouncer/Neon
-// pooler no soporta los advisory locks que usa prisma migrate (error P1002).
-const migrationUrl =
-  process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL;
+/** Neon pooled URLs use `-pooler.`; Prisma Migrate needs the direct host (P1002 otherwise). */
+function resolveDirectDatabaseUrl() {
+  if (process.env.DIRECT_DATABASE_URL) {
+    return process.env.DIRECT_DATABASE_URL;
+  }
 
-if (isProduction) {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    return null;
+  }
+
+  if (databaseUrl.includes("-pooler.")) {
+    const derived = databaseUrl.replace("-pooler.", ".");
+    console.warn(
+      "DIRECT_DATABASE_URL is not set; derived a direct Neon URL from DATABASE_URL " +
+        "by removing '-pooler' from the host.",
+    );
+    return derived;
+  }
+
+  return databaseUrl;
+}
+
+const migrationUrl = resolveDirectDatabaseUrl();
+const shouldRunMigrations = isProduction && isMainBranch;
+
+if (shouldRunMigrations) {
   if (!migrationUrl) {
     console.error(
-      "FATAL: DATABASE_URL is required for production builds.\n" +
-        "Set DATABASE_URL (and ideally DIRECT_DATABASE_URL) in:\n" +
+      "FATAL: DATABASE_URL (or DIRECT_DATABASE_URL) is required for production builds.\n" +
+        "Set DATABASE_URL (pooled) and DIRECT_DATABASE_URL (direct, no '-pooler') in:\n" +
         "  1) Vercel → Project → Settings → Environment Variables → Production, or\n" +
-        "  2) GitHub → Repository → Settings → Secrets → DATABASE_URL\n" +
+        "  2) GitHub → Repository → Settings → Secrets\n" +
         "Then re-run the Production Deploy workflow.",
     );
     process.exit(1);
   }
 
-  if (!process.env.DIRECT_DATABASE_URL) {
+  if (
+    process.env.DATABASE_URL?.includes("-pooler.") &&
+    !process.env.DIRECT_DATABASE_URL
+  ) {
     console.warn(
-      "DIRECT_DATABASE_URL is not set; running migrations over DATABASE_URL. " +
-        "If DATABASE_URL points to a pooled connection (e.g. Neon '-pooler'), " +
-        "migrations may fail with advisory lock timeouts (P1002).",
+      "Using derived direct URL for migrations. Prefer setting DIRECT_DATABASE_URL explicitly in Vercel Production.",
     );
   }
 
@@ -39,9 +63,16 @@ if (isProduction) {
     env: { ...process.env, DATABASE_URL: migrationUrl },
   });
 } else {
+  const reasons = [];
+  if (!isProduction) {
+    reasons.push(`VERCEL_ENV=${process.env.VERCEL_ENV ?? "unset"}`);
+  }
+  if (!isMainBranch) {
+    reasons.push(`branch=${gitRef}`);
+  }
   console.log(
-    `Skipping prisma migrate deploy: not a production build (VERCEL_ENV=${process.env.VERCEL_ENV ?? "unset"}). ` +
-      "Preview builds must not mutate the shared database schema.",
+    `Skipping prisma migrate deploy (${reasons.join(", ")}). ` +
+      "Only main production builds mutate the shared database schema.",
   );
 }
 
