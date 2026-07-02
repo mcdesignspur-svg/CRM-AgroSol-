@@ -22,8 +22,13 @@ interface LoyverseItemWithCategory {
   deleted_at?: string | null;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const branchId = "gurabo" as const;
+  const { searchParams } = new URL(request.url);
+  const maxPages = Math.min(
+    Math.max(Number(searchParams.get("maxPages") ?? "60"), 1),
+    120,
+  );
 
   try {
     const categories = await loyverseGetAllPages<
@@ -45,14 +50,14 @@ export async function GET() {
     const uncategorizedSamples: string[] = [];
     const categoryCounts = new Map<string, number>();
 
-    do {
+    while (pages < maxPages) {
       const page: { items: LoyverseItemWithCategory[]; nextCursor: string | null } =
         await loyverseGetPage<"items", LoyverseItemWithCategory>(
-        "/items",
-        "items",
-        branchId,
-        { limit: 250, cursor },
-      );
+          "/items",
+          "items",
+          branchId,
+          { limit: 250, cursor },
+        );
 
       pages += 1;
 
@@ -79,7 +84,8 @@ export async function GET() {
       }
 
       cursor = page.nextCursor;
-    } while (cursor);
+      if (!cursor) break;
+    }
 
     const topCategories = [...categoryCounts.entries()]
       .sort((a, b) => b[1] - a[1])
@@ -94,13 +100,18 @@ export async function GET() {
 
     return NextResponse.json({
       branchId,
+      audit: {
+        pagesFetched: pages,
+        maxPages,
+        complete: !cursor,
+      },
       categories: {
         total: categories.length,
         active: activeCategories.length,
         names: activeCategories.map((category) => category.name).sort(),
       },
       items: {
-        total: totalItems,
+        scanned: totalItems,
         deleted: deletedItems,
         active: activeItems,
         withCategory,
@@ -112,7 +123,6 @@ export async function GET() {
       },
       topCategories,
       uncategorizedSamples,
-      pagesFetched: pages,
     });
   } catch (error) {
     if (error instanceof LoyverseApiError) {
