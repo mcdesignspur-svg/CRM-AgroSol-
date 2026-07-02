@@ -79,6 +79,7 @@ Abre [http://localhost:3000](http://localhost:3000).
 |---------|-------------|
 | `npm run lint` | Ejecuta ESLint en el proyecto |
 | `npm run typecheck` | Comprueba tipos con TypeScript (`tsc --noEmit`) |
+| `npm test` | Ejecuta los tests unitarios con Vitest |
 
 ## Producción
 
@@ -102,7 +103,7 @@ Requiere `DATABASE_URL` apuntando a una instancia PostgreSQL accesible.
 
 ### Despliegue automático a producción
 
-Cada **push a `main`** pasa primero por CI (lint, typecheck, build) y, si todo es verde, despliega automáticamente a producción mediante GitHub Actions (`.github/workflows/deploy-production.yml`, disparado al completar CI con éxito).
+Cada **push a `main`** pasa primero por CI (lint, typecheck, tests, build) y, si todo es verde, despliega automáticamente a producción mediante GitHub Actions (`.github/workflows/deploy-production.yml`, disparado al completar CI con éxito).
 
 > Las ramas distintas de `main` siguen generando **preview deployments** en Vercel. El build de `main` en Vercel está desactivado en `vercel.json` para evitar deploys duplicados; producción la gestiona el workflow.
 
