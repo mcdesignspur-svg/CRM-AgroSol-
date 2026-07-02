@@ -5,18 +5,18 @@ const priorityStyles: Record<
   { badge: string; border: string; label: string }
 > = {
   urgente: {
-    badge: "bg-primary text-white",
-    border: "industrial-border bg-white industrial-shadow",
+    badge: "bg-red-50 text-red-700",
+    border: "rounded-lg border border-red-200 bg-red-50/50",
     label: "Urgente",
   },
   sistema: {
-    badge: "text-primary",
-    border: "border-l-4 border-primary bg-surface-container",
+    badge: "bg-blue-50 text-blue-700",
+    border: "rounded-lg border border-outline bg-surface",
     label: "Sistema",
   },
   advertencia: {
-    badge: "text-secondary",
-    border: "border-l-4 border-secondary bg-surface-container",
+    badge: "bg-amber-50 text-amber-700",
+    border: "rounded-lg border border-amber-200 bg-amber-50/50",
     label: "Advertencia",
   },
 };
@@ -31,30 +31,32 @@ export function PingCard({ ping, onDismiss, onCallDriver }: PingCardProps) {
   const styles = priorityStyles[ping.priority];
 
   return (
-    <div className={`p-4 ${styles.border}`}>
-      <div className="flex justify-between items-start mb-2">
+    <div className={`p-3.5 ${styles.border}`}>
+      <div className="flex justify-between items-start mb-1.5">
         <span
-          className={`text-[10px] font-bold uppercase px-2 py-0.5 ${styles.badge}`}
+          className={`text-xs font-medium px-2 py-0.5 rounded-full ${styles.badge}`}
         >
           {styles.label}
         </span>
-        <span className="text-[10px] font-mono opacity-60">{ping.timeAgo}</span>
+        <span className="text-xs font-mono text-on-surface-variant">
+          {ping.timeAgo}
+        </span>
       </div>
-      <p className="text-sm font-bold">{ping.title}</p>
-      <p className="text-xs text-on-surface-variant mt-1">{ping.description}</p>
+      <p className="text-sm font-medium text-on-surface">{ping.title}</p>
+      <p className="text-xs text-on-surface-variant mt-0.5">{ping.description}</p>
       {ping.priority === "urgente" && onDismiss && onCallDriver && (
-        <div className="mt-3 flex gap-2">
+        <div className="mt-2.5 flex gap-2">
           <button
             type="button"
             onClick={() => onDismiss(ping.id)}
-            className="text-[10px] font-bold uppercase border border-black px-3 py-2 min-h-[44px] hover:bg-gray-100 transition-colors"
+            className="text-xs font-medium border border-outline rounded-md px-3 py-1.5 min-h-[36px] hover:bg-surface-container transition-colors"
           >
             Descartar
           </button>
           <button
             type="button"
             onClick={() => onCallDriver(ping)}
-            className="text-[10px] font-bold uppercase bg-black text-white px-3 py-2 min-h-[44px] hover:bg-primary transition-colors"
+            className="text-xs font-medium bg-primary text-white rounded-md px-3 py-1.5 min-h-[36px] hover:bg-primary/90 transition-colors"
           >
             Llamar
           </button>

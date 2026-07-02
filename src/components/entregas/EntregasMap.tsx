@@ -177,7 +177,7 @@ function MapLayers({
             <div className="text-sm space-y-1 min-w-[180px]">
               <p className="font-bold uppercase">{branch.name}</p>
               <p className="text-xs text-gray-600">{branch.address}</p>
-              <p className="text-[10px] font-bold uppercase">
+              <p className="text-xs font-medium">
                 Capacidad: {branch.capacityPercent}%
               </p>
             </div>
@@ -198,7 +198,7 @@ function MapLayers({
               <p className="text-xs text-gray-600">{delivery.destination}</p>
               <p className="text-xs font-mono">ETA: {delivery.eta}</p>
               {delivery.branchId ? (
-                <p className="text-[10px] font-bold uppercase">
+                <p className="text-xs font-medium">
                   {BRANCH_LABELS[delivery.branchId]}
                 </p>
               ) : null}
@@ -241,7 +241,7 @@ export function EntregasMap({
         <button
           type="button"
           onClick={() => mapRef.current?.zoomIn()}
-          className="bg-white p-2 border-2 border-black hover:bg-surface-container active:scale-95 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+          className="bg-white p-2 border border-outline hover:bg-surface-container active:scale-95 shadow-sm"
           aria-label="Acercar mapa"
         >
           <span className="material-symbols-outlined">add</span>
@@ -249,7 +249,7 @@ export function EntregasMap({
         <button
           type="button"
           onClick={() => mapRef.current?.zoomOut()}
-          className="bg-white p-2 border-2 border-black hover:bg-surface-container active:scale-95 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+          className="bg-white p-2 border border-outline hover:bg-surface-container active:scale-95 shadow-sm"
           aria-label="Alejar mapa"
         >
           <span className="material-symbols-outlined">remove</span>
@@ -279,7 +279,7 @@ export function EntregasMap({
               { enableHighAccuracy: true, timeout: 10_000 },
             );
           }}
-          className="bg-white p-2 border-2 border-black hover:bg-surface-container active:scale-95 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+          className="bg-white p-2 border border-outline hover:bg-surface-container active:scale-95 shadow-sm"
           aria-label="Centrar en mi ubicación"
         >
           <span className="material-symbols-outlined text-primary-container">

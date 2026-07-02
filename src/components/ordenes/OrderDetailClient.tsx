@@ -70,13 +70,13 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
           <div>
             <Link
               href="/ordenes"
-              className="inline-flex items-center gap-1 text-xs font-bold uppercase text-primary hover:underline mb-3"
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline mb-3"
             >
               <span className="material-symbols-outlined text-sm">arrow_back</span>
               Volver a Órdenes
             </Link>
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="font-display text-2xl sm:text-3xl font-extrabold uppercase tracking-tight font-mono">
+              <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight font-mono">
                 {order.id}
               </h2>
               <StatusBadge status={order.status} />
@@ -96,7 +96,7 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                     type="button"
                     disabled={updating !== null}
                     onClick={() => handleStatusChange(status)}
-                    className={`btn-primary px-4 py-3 text-xs font-bold uppercase industrial-border min-h-[44px] disabled:opacity-60 ${
+                    className={`btn-primary px-4 py-3 text-xs font-medium industrial-border min-h-[44px] disabled:opacity-60 ${
                       status === "completado" ? "bg-green-600 hover:bg-green-700" : ""
                     }`}
                   >
@@ -111,7 +111,7 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
             {order.fulfillment === "delivery" && order.status === "en-transito" && (
               <Link
                 href={`/entregas?orden=${encodeURIComponent(order.id)}`}
-                className="inline-flex items-center gap-2 btn-secondary px-4 py-3 text-xs font-bold uppercase min-h-[44px] justify-center"
+                className="inline-flex items-center gap-2 btn-secondary px-4 py-3 text-xs font-medium min-h-[44px] justify-center"
               >
                 <span className="material-symbols-outlined text-base">local_shipping</span>
                 Ver en Entregas
@@ -122,22 +122,22 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8 space-y-6">
-            <section className="bg-white border-2 border-black p-6 industrial-shadow">
-              <div className="flex items-center gap-2 mb-6 border-b-2 border-black pb-3">
+            <section className="bg-white rounded-xl border border-outline p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-6 border-b border-outline pb-3">
                 <span className="material-symbols-outlined text-primary font-bold">
                   person
                 </span>
-                <h3 className="font-bold uppercase text-lg">Cliente</h3>
+                <h3 className="text-base font-semibold text-on-surface">Cliente</h3>
               </div>
               <dl className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <dt className="font-bold uppercase text-[10px] text-gray-500">
+                  <dt className="text-xs font-medium text-on-surface-variant text-gray-500">
                     Nombre
                   </dt>
                   <dd className="font-bold mt-1">{order.customerName}</dd>
                 </div>
                 <div>
-                  <dt className="font-bold uppercase text-[10px] text-gray-500">
+                  <dt className="text-xs font-medium text-on-surface-variant text-gray-500">
                     Teléfono
                   </dt>
                   <dd className="font-medium mt-1">
@@ -146,7 +146,7 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                 </div>
                 {order.fulfillment === "delivery" && (
                   <div className="md:col-span-2">
-                    <dt className="font-bold uppercase text-[10px] text-gray-500">
+                    <dt className="text-xs font-medium text-on-surface-variant text-gray-500">
                       Dirección de Entrega
                     </dt>
                     <dd className="font-medium mt-1 whitespace-pre-wrap">
@@ -157,29 +157,29 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
               </dl>
             </section>
 
-            <section className="bg-white border-2 border-black p-6 industrial-shadow">
-              <div className="flex items-center gap-2 mb-6 border-b-2 border-black pb-3">
+            <section className="bg-white rounded-xl border border-outline p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-6 border-b border-outline pb-3">
                 <span className="material-symbols-outlined text-primary font-bold">
                   shopping_bag
                 </span>
-                <h3 className="font-bold uppercase text-lg">
+                <h3 className="text-base font-semibold text-on-surface">
                   Productos ({itemCount})
                 </h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
-                  <thead className="bg-black text-white">
+                  <thead className="table-header">
                     <tr>
-                      <th className="py-3 px-4 font-bold uppercase text-[10px]">
+                      <th className="py-3 px-4 text-xs font-medium text-on-surface-variant">
                         Producto
                       </th>
-                      <th className="py-3 px-4 font-bold uppercase text-[10px] w-24">
+                      <th className="py-3 px-4 text-xs font-medium text-on-surface-variant w-24">
                         Cant.
                       </th>
-                      <th className="py-3 px-4 font-bold uppercase text-[10px] w-32">
+                      <th className="py-3 px-4 text-xs font-medium text-on-surface-variant w-32">
                         Precio Unit.
                       </th>
-                      <th className="py-3 px-4 font-bold uppercase text-[10px] w-32 text-right">
+                      <th className="py-3 px-4 text-xs font-medium text-on-surface-variant w-32 text-right">
                         Total
                       </th>
                     </tr>
@@ -209,9 +209,9 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
           </div>
 
           <div className="lg:col-span-4 space-y-6">
-            <section className="bg-white border-2 border-black industrial-shadow">
-              <div className="p-4 bg-black text-white">
-                <h3 className="font-bold uppercase text-base">Resumen</h3>
+            <section className="bg-white rounded-xl border border-outline shadow-sm">
+              <div className="px-4 py-3 border-b border-outline bg-surface">
+                <h3 className="text-sm font-semibold text-on-surface">Resumen</h3>
               </div>
               <div className="p-4 space-y-2">
                 <div className="flex justify-between font-medium">
@@ -236,8 +236,8 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                       : "GRATIS (PICKUP)"}
                   </span>
                 </div>
-                <div className="pt-2 border-t-2 border-black flex justify-between items-end">
-                  <span className="font-extrabold uppercase text-lg">Total</span>
+                <div className="pt-2 border-t border-outline flex justify-between items-end">
+                  <span className="font-semibold text-lg">Total</span>
                   <span className="font-extrabold text-2xl text-primary">
                     ${order.total.toFixed(2)}
                   </span>
@@ -245,15 +245,15 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
               </div>
             </section>
 
-            <section className="bg-white border-2 border-black p-4 space-y-3 text-sm">
+            <section className="bg-white border border-outline p-4 space-y-3 text-sm">
               <div className="flex justify-between gap-4">
-                <span className="font-bold uppercase text-[10px] text-gray-500">
+                <span className="text-xs font-medium text-on-surface-variant text-gray-500">
                   Sucursal
                 </span>
                 <BranchLabel branchId={order.branchId} />
               </div>
               <div className="flex justify-between gap-4">
-                <span className="font-bold uppercase text-[10px] text-gray-500">
+                <span className="text-xs font-medium text-on-surface-variant text-gray-500">
                   Método
                 </span>
                 <span className="font-bold uppercase text-xs">
@@ -261,7 +261,7 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                 </span>
               </div>
               <div className="flex justify-between gap-4">
-                <span className="font-bold uppercase text-[10px] text-gray-500">
+                <span className="text-xs font-medium text-on-surface-variant text-gray-500">
                   SMS al despachar
                 </span>
                 <span className="font-bold uppercase text-xs">

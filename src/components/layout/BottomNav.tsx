@@ -10,10 +10,10 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t-2 border-black safe-area-bottom"
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-sm border-t border-outline safe-area-bottom"
       aria-label="Navegación principal"
     >
-      <div className="grid grid-cols-6 h-16">
+      <div className="grid grid-cols-6 h-14">
         {NAV_ITEMS.map((item) => {
           const active = isNavActive(pathname, item.href);
           return (
@@ -22,18 +22,18 @@ export function BottomNav() {
               href={item.href}
               className={`flex flex-col items-center justify-center gap-0.5 min-h-[44px] transition-colors ${
                 active
-                  ? "bg-secondary-container text-on-secondary-container"
-                  : "text-on-surface hover:bg-surface-container-low"
+                  ? "text-primary"
+                  : "text-on-surface-variant"
               }`}
             >
               <span
-                className={`material-symbols-outlined text-xl ${
+                className={`material-symbols-outlined text-[22px] ${
                   active ? "text-primary" : ""
                 }`}
               >
                 {item.icon}
               </span>
-              <span className="text-[8px] font-bold uppercase tracking-tighter leading-none text-center px-0.5">
+              <span className="text-[9px] font-medium leading-none text-center px-0.5 truncate max-w-full">
                 {item.label.split(" ")[0]}
               </span>
             </Link>

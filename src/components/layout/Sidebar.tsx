@@ -9,12 +9,12 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="hidden md:flex flex-col w-64 border-r-2 border-on-background bg-surface-container-lowest py-10 h-full shrink-0">
-        <div className="px-6 mb-10">
-          <h1 className="font-display text-2xl font-extrabold text-primary">
+      <aside className="hidden md:flex flex-col w-60 border-r border-outline bg-white py-8 h-full shrink-0">
+        <div className="px-5 mb-8">
+          <h1 className="font-display text-xl font-semibold text-primary tracking-tight">
             {APP_NAME}
           </h1>
-          <p className="text-xs font-bold opacity-70 uppercase tracking-wide">
+          <p className="text-xs text-on-surface-variant mt-0.5">
             {APP_TAGLINE}
           </p>
         </div>

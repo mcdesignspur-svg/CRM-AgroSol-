@@ -35,35 +35,35 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
         aria-label="Cerrar modal"
       />
       <div
-        className="relative bg-white industrial-border industrial-shadow w-full max-w-md animate-[slideIn_0.2s_ease-out]"
+        className="relative bg-white rounded-xl shadow-xl w-full max-w-md animate-[slideIn_0.2s_ease-out] overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
       >
-        <div className="flex justify-between items-center p-4 border-b-2 border-black">
+        <div className="flex justify-between items-center px-5 py-4 border-b border-outline">
           <h2
             id="modal-title"
-            className="font-display text-lg font-extrabold uppercase"
+            className="font-display text-base font-semibold text-on-surface"
           >
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 hover:bg-surface-container transition-colors"
+            className="p-1.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant"
             aria-label="Cerrar"
           >
-            <span className="material-symbols-outlined">close</span>
+            <span className="material-symbols-outlined text-xl">close</span>
           </button>
         </div>
-        <div className="p-4">{children}</div>
+        <div className="p-5">{children}</div>
         {footer && (
-          <div className="p-4 border-t-2 border-black bg-gray-50 flex gap-2 justify-end">
+          <div className="px-5 py-4 border-t border-outline bg-surface flex gap-2 justify-end">
             {footer}
           </div>
         )}

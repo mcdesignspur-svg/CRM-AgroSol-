@@ -5,7 +5,7 @@ function SkeletonBar({
 }) {
   return (
     <div
-      className={`bg-surface-container-high border border-black/10 animate-pulse ${className}`}
+      className={`bg-surface-container animate-pulse rounded-lg ${className}`}
     />
   );
 }
@@ -16,8 +16,8 @@ export function PageLoadingShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-white flex">
-      <div className="hidden md:block w-64 shrink-0 border-r-2 border-black bg-surface-container-low">
+    <div className="min-h-screen bg-background flex">
+      <div className="hidden md:block w-60 shrink-0 border-r border-outline bg-white">
         <div className="p-6 space-y-4">
           <SkeletonBar className="h-8 w-32" />
           {Array.from({ length: 6 }).map((_, i) => (
@@ -26,7 +26,7 @@ export function PageLoadingShell({
         </div>
       </div>
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="h-14 border-b-2 border-black bg-white px-4 flex items-center gap-4">
+        <div className="h-14 border-b border-outline bg-white px-4 flex items-center gap-4">
           <SkeletonBar className="h-6 w-40" />
           <SkeletonBar className="h-8 w-48 ml-auto hidden sm:block" />
         </div>

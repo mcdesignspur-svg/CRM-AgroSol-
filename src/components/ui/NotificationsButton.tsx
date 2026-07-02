@@ -44,29 +44,31 @@ export function NotificationsButton() {
       <button
         type="button"
         onClick={handleToggle}
-        className="material-symbols-outlined p-2 text-on-surface hover:bg-surface-container-high transition-colors relative"
+        className="material-symbols-outlined p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors relative"
         aria-label="Notificaciones"
         aria-expanded={open}
       >
         notifications
         {hasNotifications && (
-          <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-[min(20rem,calc(100vw-2rem))] bg-white industrial-border industrial-shadow z-50 animate-[slideIn_0.15s_ease-out]">
-          <div className="p-3 border-b-2 border-black flex justify-between items-center">
-            <span className="font-bold uppercase text-xs">Notificaciones</span>
+        <div className="absolute right-0 top-full mt-2 w-[min(20rem,calc(100vw-2rem))] bg-white border border-outline rounded-xl shadow-lg z-50 animate-[slideIn_0.15s_ease-out] overflow-hidden">
+          <div className="px-4 py-3 border-b border-outline flex justify-between items-center">
+            <span className="font-medium text-sm text-on-surface">
+              Notificaciones
+            </span>
             {hasNotifications && (
-              <span className="text-[10px] font-mono bg-black text-white px-2 py-0.5">
+              <span className="text-xs font-medium bg-primary-container text-primary px-2 py-0.5 rounded-full">
                 {logs.length}
               </span>
             )}
           </div>
           <div className="max-h-64 overflow-y-auto custom-scrollbar">
             {loading ? (
-              <p className="p-6 text-center text-xs font-bold uppercase opacity-50">
+              <p className="p-6 text-center text-xs text-on-surface-variant">
                 Cargando...
               </p>
             ) : hasNotifications ? (
@@ -75,21 +77,21 @@ export function NotificationsButton() {
                   key={log.id}
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="w-full text-left p-3 border-b border-gray-200 hover:bg-surface-container-low transition-colors"
+                  className="w-full text-left px-4 py-3 border-b border-outline last:border-0 hover:bg-surface transition-colors"
                 >
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-mono font-bold">
+                    <span className="text-xs font-mono text-on-surface-variant">
                       {log.time}
                     </span>
-                    <span className="text-[9px] font-bold uppercase bg-surface-container-high px-1">
+                    <span className="text-xs font-medium bg-surface-container px-2 py-0.5 rounded-full text-on-surface-variant">
                       {log.source}
                     </span>
                   </div>
-                  <p className="text-xs font-medium">{log.message}</p>
+                  <p className="text-sm text-on-surface">{log.message}</p>
                 </button>
               ))
             ) : (
-              <p className="p-6 text-center text-xs font-bold uppercase opacity-50">
+              <p className="p-6 text-center text-xs text-on-surface-variant">
                 Sin notificaciones
               </p>
             )}

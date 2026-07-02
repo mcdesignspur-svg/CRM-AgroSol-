@@ -23,10 +23,10 @@ interface ToastContextValue {
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const toastStyles: Record<ToastType, string> = {
-  success: "bg-green-600 text-white",
-  info: "bg-black text-white",
-  warning: "bg-secondary-container text-black",
-  error: "bg-primary text-white",
+  success: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  info: "bg-white text-on-surface border-outline",
+  warning: "bg-amber-50 text-amber-800 border-amber-200",
+  error: "bg-red-50 text-red-800 border-red-200",
 };
 
 const toastIcons: Record<ToastType, string> = {
@@ -81,7 +81,7 @@ function ToastItem({
 
   return (
     <div
-      className={`pointer-events-auto flex items-center gap-3 px-4 py-3 industrial-border industrial-shadow text-sm font-bold uppercase animate-[slideIn_0.2s_ease-out] ${toastStyles[toast.type]}`}
+      className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg text-sm font-medium animate-[slideIn_0.2s_ease-out] ${toastStyles[toast.type]}`}
       role="status"
     >
       <span className="material-symbols-outlined text-lg">
@@ -91,7 +91,7 @@ function ToastItem({
       <button
         type="button"
         onClick={onDismiss}
-        className="opacity-70 hover:opacity-100 transition-opacity"
+        className="opacity-60 hover:opacity-100 transition-opacity"
         aria-label="Cerrar"
       >
         <span className="material-symbols-outlined text-base">close</span>

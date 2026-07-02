@@ -11,12 +11,12 @@ export default function RootError({
 }) {
   return (
     <div className="min-h-screen bg-surface-container-low flex items-center justify-center p-6">
-      <div className="max-w-lg w-full bg-white border-2 border-black p-8 industrial-shadow space-y-4">
+      <div className="max-w-lg w-full bg-white rounded-xl border border-outline p-8 shadow-sm space-y-4">
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-3xl text-primary-container">
             error
           </span>
-          <h1 className="font-display text-xl font-extrabold uppercase">
+          <h1 className="font-display text-xl font-semibold">
             Error de la Aplicación
           </h1>
         </div>
@@ -39,13 +39,13 @@ export default function RootError({
           <button
             type="button"
             onClick={reset}
-            className="btn-primary px-4 py-3 text-xs font-bold uppercase min-h-[44px]"
+            className="btn-primary px-4 py-3 text-xs font-medium min-h-[44px]"
           >
             Reintentar
           </button>
           <Link
             href="/"
-            className="btn-secondary px-4 py-3 text-xs font-bold uppercase min-h-[44px] text-center"
+            className="btn-secondary px-4 py-3 text-xs font-medium min-h-[44px] text-center"
           >
             Volver al Panel
           </Link>

@@ -15,12 +15,12 @@ export function AppShell({
   fullWidth = false,
 }: AppShellProps) {
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         {topBar}
         <div className="flex flex-1 min-h-0">
-          <main className="flex-1 flex flex-col min-w-0 overflow-hidden pb-16 md:pb-0">
+          <main className="flex-1 flex flex-col min-w-0 overflow-hidden pb-14 md:pb-0">
             {fullWidth ? (
               children
             ) : (

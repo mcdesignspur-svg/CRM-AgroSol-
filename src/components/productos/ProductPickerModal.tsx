@@ -32,14 +32,14 @@ export function ProductPickerModal({
           <button
             type="button"
             onClick={onClose}
-            className="btn-secondary px-4 py-2 text-xs font-bold uppercase min-h-[44px]"
+            className="btn-secondary px-4 py-2 text-xs font-medium min-h-[44px]"
           >
             Cerrar
           </button>
           <button
             type="button"
             onClick={onCreateNew}
-            className="btn-primary px-4 py-2 text-xs font-bold uppercase industrial-border min-h-[44px]"
+            className="btn-primary px-4 py-2 text-xs font-medium industrial-border min-h-[44px]"
           >
             + Nuevo Producto
           </button>
@@ -48,7 +48,7 @@ export function ProductPickerModal({
     >
       {available.length === 0 ? (
         <div className="text-center py-6 space-y-3">
-          <p className="text-sm font-bold uppercase opacity-60">
+          <p className="text-sm font-medium opacity-60">
             {products.length === 0
               ? "El catálogo está vacío"
               : "Todos los productos ya están en la orden"}
@@ -69,7 +69,7 @@ export function ProductPickerModal({
                 onSelect(product);
                 onClose();
               }}
-              className="w-full text-left p-3 border-2 border-black hover:bg-surface-container-low transition-colors"
+              className="w-full text-left p-3 border border-outline hover:bg-surface-container-low transition-colors"
             >
               <p className="font-bold uppercase text-sm">{product.name}</p>
               <div className="flex justify-between items-center mt-1">

@@ -152,26 +152,26 @@ export function OrdenesContent({
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-10">
         <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
           <div>
-            <h2 className="font-display text-2xl sm:text-3xl font-extrabold uppercase tracking-tight">
-              Gestión de Órdenes
+            <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface">
+              Gestión de órdenes
             </h2>
-            <p className="text-lg text-on-surface-variant mt-2">
+            <p className="text-sm text-on-surface-variant mt-1">
               Consulta, filtra y actualiza el estado de las órdenes activas.
             </p>
           </div>
           <Link
             href="/ordenes/nueva"
-            className="btn-primary px-4 sm:px-6 py-3 text-sm font-bold uppercase industrial-border min-h-[44px] inline-flex items-center justify-center"
+            className="btn-primary px-4 py-2.5 text-sm min-h-[40px] inline-flex items-center justify-center"
           >
-            + Nueva Orden
+            + Nueva orden
           </Link>
         </div>
 
-        <section className="industrial-border bg-white overflow-hidden industrial-shadow">
-          <div className="p-4 md:p-6 industrial-divider flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+        <section className="rounded-xl border border-outline bg-white overflow-hidden shadow-sm">
+          <div className="px-4 md:px-5 py-4 border-b border-outline flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
             <form onSubmit={handleSearchSubmit} className="flex gap-2 flex-1 max-w-xl">
               <input
-                className="flex-1 industrial-border px-3 py-2 text-sm font-medium min-h-[44px]"
+                className="flex-1 border border-outline rounded-lg px-3 py-2 text-sm min-h-[40px] bg-surface"
                 type="search"
                 placeholder="Buscar por ID, cliente o teléfono..."
                 value={search}
@@ -179,30 +179,30 @@ export function OrdenesContent({
               />
               <button
                 type="submit"
-                className="btn-secondary px-4 py-2 text-xs font-bold uppercase min-h-[44px]"
+                className="btn-secondary px-4 py-2 text-sm min-h-[40px]"
               >
                 Buscar
               </button>
             </form>
-            <div className="flex gap-2 items-center">
-              <span className="text-xs font-bold uppercase opacity-60">
+            <div className="flex gap-1.5 items-center">
+              <span className="text-xs text-on-surface-variant">
                 {total} órdenes
               </span>
               <button
                 type="button"
                 onClick={cycleFilter}
-                className={`p-2 industrial-border hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] ${
-                  filter !== "all" ? "bg-secondary-container" : ""
+                className={`p-2 rounded-lg border border-outline hover:bg-surface-container transition-colors min-h-[40px] min-w-[40px] ${
+                  filter !== "all" ? "bg-primary-container text-primary border-red-200" : ""
                 }`}
                 aria-label="Filtrar"
               >
-                <span className="material-symbols-outlined">filter_list</span>
+                <span className="material-symbols-outlined text-xl">filter_list</span>
               </button>
               <button
                 type="button"
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="p-2 industrial-border hover:bg-gray-100 transition-colors disabled:opacity-60 min-h-[44px] min-w-[44px]"
+                className="p-2 rounded-lg border border-outline hover:bg-surface-container transition-colors disabled:opacity-60 min-h-[40px] min-w-[40px]"
                 aria-label="Actualizar"
               >
                 <span
@@ -217,70 +217,68 @@ export function OrdenesContent({
           </div>
 
           {filter !== "all" && (
-            <div className="px-4 py-2 bg-secondary-container border-b-2 border-black text-xs font-bold uppercase">
+            <div className="px-4 py-2 bg-primary-container border-b border-red-100 text-xs font-medium text-primary">
               Filtro activo: {filterLabels[filter]}
             </div>
           )}
 
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-black text-white">
+              <thead className="table-header">
                 <tr>
-                  <th className="p-4 text-sm font-bold uppercase">ID</th>
-                  <th className="p-4 text-sm font-bold uppercase">Cliente</th>
-                  <th className="p-4 text-sm font-bold uppercase">Tipo</th>
-                  <th className="p-4 text-sm font-bold uppercase">Sucursal</th>
-                  <th className="p-4 text-sm font-bold uppercase">Estado</th>
-                  <th className="p-4 text-sm font-bold uppercase">Tiempo</th>
-                  <th className="p-4 text-sm font-bold uppercase">Acción</th>
+                  <th className="px-4 py-3 text-xs font-medium">ID</th>
+                  <th className="px-4 py-3 text-xs font-medium">Cliente</th>
+                  <th className="px-4 py-3 text-xs font-medium">Tipo</th>
+                  <th className="px-4 py-3 text-xs font-medium">Sucursal</th>
+                  <th className="px-4 py-3 text-xs font-medium">Estado</th>
+                  <th className="px-4 py-3 text-xs font-medium">Tiempo</th>
+                  <th className="px-4 py-3 text-xs font-medium"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-100">
                 {orders.length === 0 ? (
                   <tr>
                     <td
                       colSpan={7}
-                      className="p-8 text-center text-sm font-bold uppercase opacity-50"
+                      className="px-4 py-10 text-center text-sm text-on-surface-variant"
                     >
                       Sin órdenes registradas
                     </td>
                   </tr>
                 ) : (
-                  orders.map((order, index) => (
+                  orders.map((order) => (
                     <tr
                       key={order.id}
-                      className={`hover:bg-surface-container transition-colors ${
-                        index % 2 === 1 ? "bg-surface-container-low" : ""
-                      }`}
+                      className="hover:bg-surface transition-colors"
                     >
-                      <td className="p-4 font-mono font-bold text-primary">
+                      <td className="px-4 py-3 font-mono text-sm text-primary">
                         {order.id}
                       </td>
-                      <td className="p-4 font-bold">{order.customerName}</td>
-                      <td className="p-4">
+                      <td className="px-4 py-3 text-sm font-medium">{order.customerName}</td>
+                      <td className="px-4 py-3">
                         <TypeBadge type={order.type} />
                       </td>
-                      <td className="p-4">
+                      <td className="px-4 py-3">
                         <BranchLabel branchId={order.branchId} />
                       </td>
-                      <td className="p-4">
+                      <td className="px-4 py-3">
                         <StatusBadge status={order.status} />
                       </td>
                       <td
-                        className={`p-4 font-mono ${
+                        className={`px-4 py-3 text-sm font-mono ${
                           order.status === "atrasado" || order.status === "listo"
-                            ? "text-red-600 font-bold"
-                            : "opacity-80"
+                            ? "text-red-600 font-medium"
+                            : "text-on-surface-variant"
                         }`}
                       >
                         {order.elapsedTime}
                       </td>
-                      <td className="p-4">
+                      <td className="px-4 py-3">
                         <Link
                           href={`/ordenes/${encodeURIComponent(order.id)}`}
-                          className="text-primary hover:underline font-bold text-sm"
+                          className="text-primary hover:text-primary/80 text-sm font-medium"
                         >
-                          GESTIONAR
+                          Ver
                         </Link>
                       </td>
                     </tr>
@@ -290,36 +288,34 @@ export function OrdenesContent({
             </table>
           </div>
 
-          <div className="md:hidden divide-y divide-gray-200">
+          <div className="md:hidden divide-y divide-gray-100">
             {orders.length === 0 ? (
-              <p className="p-8 text-center text-sm font-bold uppercase opacity-50">
+              <p className="px-4 py-10 text-center text-sm text-on-surface-variant">
                 Sin órdenes registradas
               </p>
             ) : (
               orders.map((order) => (
                 <article
                   key={order.id}
-                  className="p-4 space-y-3 hover:bg-surface-container-low transition-colors"
+                  className="px-4 py-3.5 space-y-2 hover:bg-surface transition-colors"
                 >
                   <div className="flex justify-between items-start gap-2">
                     <div>
-                      <p className="font-mono text-xs text-primary font-bold">
-                        {order.id}
-                      </p>
-                      <p className="font-bold text-sm">{order.customerName}</p>
+                      <p className="font-mono text-xs text-primary">{order.id}</p>
+                      <p className="font-medium text-sm">{order.customerName}</p>
                     </div>
                     <StatusBadge status={order.status} />
                   </div>
                   <div className="flex flex-wrap gap-2 items-center text-xs">
                     <TypeBadge type={order.type} />
                     <BranchLabel branchId={order.branchId} />
-                    <span className="font-mono opacity-70">{order.elapsedTime}</span>
+                    <span className="font-mono text-on-surface-variant">{order.elapsedTime}</span>
                   </div>
                   <Link
                     href={`/ordenes/${encodeURIComponent(order.id)}`}
-                    className="inline-flex items-center gap-1 text-primary font-bold text-xs uppercase min-h-[44px]"
+                    className="inline-flex items-center gap-1 text-primary text-sm font-medium min-h-[40px]"
                   >
-                    Gestionar
+                    Ver orden
                     <span className="material-symbols-outlined text-sm">
                       arrow_forward
                     </span>
@@ -329,21 +325,21 @@ export function OrdenesContent({
             )}
           </div>
 
-          <div className="p-4 bg-gray-50 flex justify-center">
+          <div className="px-4 py-3 border-t border-outline flex justify-center">
             {hasMore && (
               <button
                 type="button"
                 onClick={handleLoadMore}
                 disabled={loadingMore}
-                className="text-sm font-bold uppercase tracking-widest hover:text-primary transition-colors disabled:opacity-60 min-h-[44px]"
+                className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors disabled:opacity-60 min-h-[40px]"
               >
-                {loadingMore ? "Cargando..." : "Cargar Más Órdenes"}
+                {loadingMore ? "Cargando..." : "Cargar más órdenes"}
               </button>
             )}
           </div>
         </section>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {(Object.entries(ORDER_STATUS_LABELS) as [OrderStatus, string][]).map(
             ([status, label]) => (
               <button
@@ -353,11 +349,13 @@ export function OrdenesContent({
                   setFilter(status);
                   void loadOrders(status, search, 0, true);
                 }}
-                className={`p-3 border-2 border-black text-left hover:bg-surface-container transition-colors ${
-                  filter === status ? "bg-secondary-container" : "bg-white"
+                className={`p-3 rounded-lg border text-left hover:bg-surface-container transition-colors ${
+                  filter === status
+                    ? "bg-primary-container border-red-200 text-primary"
+                    : "bg-white border-outline"
                 }`}
               >
-                <span className="text-[10px] font-bold uppercase opacity-60">
+                <span className="text-xs font-medium text-on-surface-variant">
                   {label}
                 </span>
               </button>

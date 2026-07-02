@@ -74,7 +74,7 @@ export function ConductorContent({
           type="button"
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex h-10 w-10 items-center justify-center border-2 border-black bg-white hover:bg-surface-container transition-colors disabled:opacity-60"
+          className="flex h-10 w-10 items-center justify-center border border-outline bg-white hover:bg-surface-container transition-colors disabled:opacity-60"
           aria-label="Actualizar entregas"
         >
           <span
@@ -89,7 +89,7 @@ export function ConductorContent({
     >
       <div className="p-4 space-y-4 pb-8">
         <div>
-          <h1 className="font-display text-2xl font-extrabold uppercase tracking-tight">
+          <h1 className="font-display text-2xl font-semibold tracking-tight">
             Mis Entregas
           </h1>
           <p className="mt-1 text-sm text-on-surface-variant">
@@ -104,7 +104,7 @@ export function ConductorContent({
             <span className="material-symbols-outlined text-5xl text-on-surface-variant opacity-40">
               check_circle
             </span>
-            <p className="mt-4 text-sm font-bold uppercase opacity-60">
+            <p className="mt-4 text-sm font-medium opacity-60">
               Sin entregas activas
             </p>
             <p className="mt-2 text-xs text-on-surface-variant">
@@ -118,7 +118,7 @@ export function ConductorContent({
                 key={order.id}
                 className="industrial-border bg-white industrial-shadow overflow-hidden"
               >
-                <div className="border-b-2 border-black bg-black px-4 py-3 text-white">
+                <div className="border-b border-outline bg-black px-4 py-3 text-white">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-mono text-xs font-bold text-secondary-container">
@@ -139,7 +139,7 @@ export function ConductorContent({
                         location_on
                       </span>
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+                        <p className="text-xs font-medium tracking-widest opacity-60">
                           Dirección
                         </p>
                         <p className="text-sm font-medium leading-snug">
@@ -155,7 +155,7 @@ export function ConductorContent({
                         call
                       </span>
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+                        <p className="text-xs font-medium tracking-widest opacity-60">
                           Teléfono
                         </p>
                         <a
@@ -177,7 +177,7 @@ export function ConductorContent({
                     >
                       {order.elapsedTime}
                     </span>
-                    <span className="text-[10px] font-bold uppercase opacity-50">
+                    <span className="text-xs font-medium opacity-50">
                       {ORDER_STATUS_LABELS[order.status]}
                     </span>
                   </div>
@@ -187,7 +187,7 @@ export function ConductorContent({
                       type="button"
                       onClick={() => handleComplete(order.id)}
                       disabled={completingId === order.id}
-                      className="btn-primary w-full py-3 text-sm font-bold uppercase industrial-border min-h-[48px] bg-green-600 hover:bg-green-700 disabled:opacity-60"
+                      className="btn-primary w-full py-3 text-sm font-medium industrial-border min-h-[48px] bg-green-600 hover:bg-green-700 disabled:opacity-60"
                     >
                       {completingId === order.id
                         ? "Completando..."

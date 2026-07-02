@@ -12,7 +12,7 @@ export default function OrdenesLoading() {
       <SkeletonBlock className="h-80 industrial-border" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <SkeletonBlock key={i} className="h-16 border-2 border-black" />
+          <SkeletonBlock key={i} className="h-16 border border-outline" />
         ))}
       </div>
     </PageLoadingShell>
