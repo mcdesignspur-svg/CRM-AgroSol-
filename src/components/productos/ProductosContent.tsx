@@ -10,27 +10,22 @@ import { ProductCategoryFilter } from "@/components/productos/ProductCategoryFil
 import { ProductCategorySections } from "@/components/productos/ProductCategorySections";
 import { ProductSearchBar } from "@/components/productos/ProductSearchBar";
 import {
+  useGroupedCatalog,
   useProductCategories,
   useProductSearch,
 } from "@/hooks/useProductSearch";
 import { groupProductsByCategory } from "@/lib/products/group-by-category";
 import type { LoyverseStatus } from "@/lib/loyverse/types";
-import type {
-  Product,
-  ProductCategoryGroup,
-  ProductCategorySummary,
-} from "@/lib/types";
+import type { Product, ProductCategorySummary } from "@/lib/types";
 
 interface ProductosContentProps {
   loyverseStatus: LoyverseStatus;
   categories: ProductCategorySummary[];
-  groupedCatalog: ProductCategoryGroup[];
 }
 
 export function ProductosContent({
   loyverseStatus,
   categories: initialCategories,
-  groupedCatalog,
 }: ProductosContentProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<
@@ -38,6 +33,11 @@ export function ProductosContent({
   >(undefined);
 
   const { categories } = useProductCategories("gurabo", initialCategories);
+  const {
+    groups: groupedCatalog,
+    loading: catalogLoading,
+    error: catalogError,
+  } = useGroupedCatalog("gurabo");
   const { query, setQuery, results, loading, error } = useProductSearch(
     "gurabo",
     selectedCategoryId,
@@ -78,6 +78,9 @@ export function ProductosContent({
     () => displayGroups.reduce((sum, group) => sum + group.products.length, 0),
     [displayGroups],
   );
+
+  const showLoading = isFiltering ? loading : catalogLoading;
+  const showError = isFiltering ? error : catalogError;
 
   function handleCreated(product: Product) {
     setQuery(product.name);
@@ -140,7 +143,7 @@ export function ProductosContent({
         />
 
         <section className="rounded-xl border border-outline bg-white shadow-sm overflow-hidden">
-          {isFiltering && loading ? (
+          {showLoading ? (
             <div className="px-6 py-16 text-center text-sm text-on-surface-variant">
               <span className="inline-flex items-center gap-2">
                 <span className="material-symbols-outlined animate-spin text-primary">
@@ -149,9 +152,9 @@ export function ProductosContent({
                 Cargando productos...
               </span>
             </div>
-          ) : isFiltering && error ? (
+          ) : showError ? (
             <div className="px-6 py-16 text-center text-sm text-red-600">
-              {error}
+              {showError}
             </div>
           ) : isFiltering && results.length === 0 ? (
             <div className="px-6 py-16 text-center text-sm text-on-surface-variant">
@@ -173,7 +176,7 @@ export function ProductosContent({
           )}
         </section>
 
-        {(!isFiltering || (!loading && totalVisibleProducts > 0)) && (
+        {!showLoading && !showError && totalVisibleProducts > 0 && (
           <p className="text-xs text-on-surface-variant">
             {totalVisibleProducts.toLocaleString("es-PR")} productos
             {displayGroups.length > 1
