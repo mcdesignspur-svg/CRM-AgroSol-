@@ -23,55 +23,51 @@ export function ProductosContent({ initialProducts }: ProductosContentProps) {
 
   return (
     <AppShell topBar={<TopBar title="Productos" showSearch={false} />}>
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 pb-10">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-10">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div>
-            <h2 className="font-display text-2xl sm:text-3xl font-extrabold uppercase tracking-tight">
+            <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface">
               Productos
             </h2>
-            <p className="text-lg text-on-surface-variant mt-2">
+            <p className="text-sm text-on-surface-variant mt-1">
               Administra los artículos disponibles para nuevas órdenes.
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setModalOpen(true)}
-              className="btn-primary px-4 sm:px-6 py-3 text-sm font-bold uppercase industrial-border min-h-[44px]"
+              className="btn-primary px-4 py-2.5 text-sm min-h-[40px]"
             >
-              + Nuevo Producto
+              + Nuevo producto
             </button>
             <Link
               href="/ordenes/nueva"
-              className="btn-secondary px-4 sm:px-6 py-3 text-sm font-bold uppercase inline-flex items-center justify-center min-h-[44px]"
+              className="btn-secondary px-4 py-2.5 text-sm inline-flex items-center justify-center min-h-[40px]"
             >
-              Crear Orden
+              Crear orden
             </Link>
           </div>
         </div>
 
-        <section className="industrial-border bg-white industrial-shadow overflow-hidden">
+        <section className="rounded-xl border border-outline bg-white shadow-sm overflow-hidden">
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-black text-white">
+              <thead className="table-header">
                 <tr>
-                  <th className="px-6 py-3 font-mono text-[11px] uppercase tracking-wider">
-                    Producto
-                  </th>
-                  <th className="px-6 py-3 font-mono text-[11px] uppercase tracking-wider">
-                    SKU
-                  </th>
-                  <th className="px-6 py-3 font-mono text-[11px] uppercase tracking-wider text-right">
+                  <th className="px-4 py-3 text-xs font-medium">Producto</th>
+                  <th className="px-4 py-3 text-xs font-medium">SKU</th>
+                  <th className="px-4 py-3 text-xs font-medium text-right">
                     Precio
                   </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100">
                 {products.length === 0 ? (
                   <tr>
                     <td
                       colSpan={3}
-                      className="px-6 py-16 text-center text-sm font-bold uppercase opacity-50"
+                      className="px-4 py-12 text-center text-sm text-on-surface-variant"
                     >
                       Sin productos — agrega el primero al catálogo
                     </td>
@@ -80,15 +76,15 @@ export function ProductosContent({ initialProducts }: ProductosContentProps) {
                   products.map((product) => (
                     <tr
                       key={product.id}
-                      className="border-b border-black/10 hover:bg-surface-container-low transition-colors"
+                      className="hover:bg-surface transition-colors"
                     >
-                      <td className="px-6 py-4 font-bold uppercase">
+                      <td className="px-4 py-3 text-sm font-medium">
                         {product.name}
                       </td>
-                      <td className="px-6 py-4 font-mono text-sm">
+                      <td className="px-4 py-3 font-mono text-sm text-on-surface-variant">
                         {product.sku}
                       </td>
-                      <td className="px-6 py-4 text-right font-extrabold">
+                      <td className="px-4 py-3 text-right text-sm font-semibold">
                         ${product.unitPrice.toFixed(2)}
                       </td>
                     </tr>
@@ -98,22 +94,22 @@ export function ProductosContent({ initialProducts }: ProductosContentProps) {
             </table>
           </div>
 
-          <div className="sm:hidden p-4 space-y-3">
+          <div className="sm:hidden p-4 space-y-2">
             {products.length === 0 ? (
-              <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
+              <p className="py-12 text-center text-sm text-on-surface-variant">
                 Sin productos — agrega el primero al catálogo
               </p>
             ) : (
               products.map((product) => (
                 <article
                   key={product.id}
-                  className="border-2 border-black p-4 bg-gray-50"
+                  className="rounded-lg border border-outline p-4 bg-surface"
                 >
-                  <p className="font-bold uppercase text-sm">{product.name}</p>
-                  <p className="text-[10px] font-mono text-gray-500 mt-1">
+                  <p className="font-medium text-sm">{product.name}</p>
+                  <p className="text-xs font-mono text-on-surface-variant mt-0.5">
                     SKU: {product.sku}
                   </p>
-                  <p className="text-lg font-extrabold text-primary mt-2">
+                  <p className="text-base font-semibold text-primary mt-1.5">
                     ${product.unitPrice.toFixed(2)}
                   </p>
                 </article>
@@ -122,12 +118,10 @@ export function ProductosContent({ initialProducts }: ProductosContentProps) {
           </div>
         </section>
 
-        <div className="text-center sm:text-left">
-          <p className="text-xs font-bold uppercase opacity-60">
-            {products.length}{" "}
-            {products.length === 1 ? "producto activo" : "productos activos"}
-          </p>
-        </div>
+        <p className="text-xs text-on-surface-variant">
+          {products.length}{" "}
+          {products.length === 1 ? "producto activo" : "productos activos"}
+        </p>
       </div>
 
       <AddProductModal

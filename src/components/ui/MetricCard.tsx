@@ -17,30 +17,39 @@ export function MetricCard({
 
   return (
     <div
-      className={`industrial-border p-4 sm:p-6 flex flex-col justify-between ${
-        isAlert ? "bg-primary text-white" : "bg-white"
+      className={`rounded-xl border p-4 sm:p-5 flex flex-col justify-between transition-shadow hover:shadow-sm ${
+        isAlert
+          ? "bg-primary-container border-red-200"
+          : "bg-white border-outline"
       }`}
     >
       <div className="flex justify-between items-start">
         <span
-          className={`text-sm font-bold uppercase ${
-            isAlert ? "text-white" : "text-on-surface-variant"
+          className={`text-sm font-medium ${
+            isAlert ? "text-primary" : "text-on-surface-variant"
           }`}
         >
           {label}
         </span>
         <span
-          className={`material-symbols-outlined ${
-            isAlert ? "text-white" : "text-primary"
+          className={`material-symbols-outlined text-xl ${
+            isAlert ? "text-primary" : "text-on-surface-variant"
           }`}
-          style={isAlert ? { fontVariationSettings: "'FILL' 1" } : undefined}
         >
           {icon}
         </span>
       </div>
-      <div className="mt-4">
-        <span className="text-2xl sm:text-4xl font-extrabold">{value}</span>
-        {subtitle && <div className="text-xs font-bold mt-1">{subtitle}</div>}
+      <div className="mt-3">
+        <span
+          className={`text-2xl sm:text-3xl font-semibold tracking-tight ${
+            isAlert ? "text-primary" : "text-on-surface"
+          }`}
+        >
+          {value}
+        </span>
+        {subtitle && (
+          <div className="text-xs text-on-surface-variant mt-1">{subtitle}</div>
+        )}
       </div>
     </div>
   );

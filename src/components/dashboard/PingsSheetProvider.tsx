@@ -70,12 +70,12 @@ export function PingsSheetProvider({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="lg:hidden fixed bottom-20 right-4 z-40 btn-primary industrial-border industrial-shadow w-14 h-14 flex items-center justify-center"
+          className="lg:hidden fixed bottom-20 right-4 z-40 btn-primary rounded-full shadow-lg w-12 h-12 flex items-center justify-center"
           aria-label="Ver pings en vivo"
         >
           <span className="relative">
             <span className="material-symbols-outlined text-2xl">bolt</span>
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-black text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[9px] font-medium rounded-full flex items-center justify-center">
               {pings.length}
             </span>
           </span>
@@ -90,21 +90,21 @@ export function PingsSheetProvider({
             onClick={() => setOpen(false)}
             aria-label="Cerrar pings"
           />
-          <div className="absolute inset-x-0 bottom-0 max-h-[75vh] bg-white border-t-2 border-black flex flex-col animate-[slideFromBottom_0.25s_ease-out] safe-area-bottom">
-            <div className="p-4 border-b-2 border-black flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="relative flex h-3 w-3">
+          <div className="absolute inset-x-0 bottom-0 max-h-[75vh] bg-white border-t border-outline rounded-t-2xl flex flex-col animate-[slideFromBottom_0.25s_ease-out] safe-area-bottom shadow-xl">
+            <div className="px-4 py-3 border-b border-outline flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
                 </div>
-                <h3 className="font-display text-sm font-extrabold uppercase">
-                  Pings en Vivo
+                <h3 className="font-display text-sm font-semibold text-on-surface">
+                  Pings en vivo
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="p-2 rounded-lg hover:bg-surface-container min-h-[40px] min-w-[40px] flex items-center justify-center text-on-surface-variant"
                 aria-label="Cerrar"
               >
                 <span className="material-symbols-outlined">close</span>
@@ -113,7 +113,7 @@ export function PingsSheetProvider({
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
               {pings.length === 0 ? (
-                <p className="text-xs font-bold uppercase text-center opacity-50 py-8">
+                <p className="text-xs text-on-surface-variant text-center py-8">
                   Sin pings activos
                 </p>
               ) : (

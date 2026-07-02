@@ -204,9 +204,9 @@ export default function NuevaOrdenClient({
           showSearch={false}
           showBranchSelector={false}
         >
-          <div className="hidden sm:flex items-center gap-2 px-4 py-2 border-2 border-black bg-white">
-            <span className="font-bold uppercase text-[10px]">Activo:</span>
-            <span className="font-bold uppercase text-[10px] text-primary">
+          <div className="hidden sm:flex items-center gap-2 px-4 py-2 border border-outline bg-white">
+            <span className="text-xs font-medium text-on-surface-variant">Activo:</span>
+            <span className="text-xs font-medium text-on-surface-variant text-primary">
               {BRANCH_LABELS[branchId]}
             </span>
           </div>
@@ -217,29 +217,29 @@ export default function NuevaOrdenClient({
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-6">
-              <section className="bg-white border-2 border-black p-6 industrial-shadow">
-                <div className="flex items-center gap-2 mb-6 border-b-2 border-black pb-3">
+              <section className="bg-white rounded-xl border border-outline p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-6 border-b border-outline pb-3">
                   <span className="material-symbols-outlined text-primary font-bold">
                     person
                   </span>
-                  <h2 className="font-bold uppercase text-lg">
+                  <h2 className="text-base font-semibold text-on-surface">
                     Información del Cliente
                   </h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <label className="font-bold uppercase text-[10px]">
+                    <label className="text-xs font-medium text-on-surface-variant">
                       Nombre Completo
                     </label>
                     <input
-                      className="w-full bg-white border-2 border-black px-4 py-2 font-medium"
+                      className="w-full bg-white border border-outline px-4 py-2 font-medium"
                       type="text"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="font-bold uppercase text-[10px]">
+                    <label className="text-xs font-medium text-on-surface-variant">
                       Número de Teléfono
                     </label>
                     <div className="relative">
@@ -247,7 +247,7 @@ export default function NuevaOrdenClient({
                         phone
                       </span>
                       <input
-                        className="w-full bg-white border-2 border-black pl-12 pr-4 py-2 font-medium"
+                        className="w-full bg-white border border-outline pl-12 pr-4 py-2 font-medium"
                         type="tel"
                         value={customerPhone}
                         onChange={(e) => setCustomerPhone(e.target.value)}
@@ -257,7 +257,7 @@ export default function NuevaOrdenClient({
                 </div>
                 <div className="mt-6 flex items-start gap-4 lg:hidden">
                   <input
-                    className="mt-1 w-4 h-4 border-2 border-black"
+                    className="mt-1 w-4 h-4 border border-outline"
                     type="checkbox"
                     id="sms-notify-mobile"
                     checked={smsNotify}
@@ -265,29 +265,29 @@ export default function NuevaOrdenClient({
                   />
                   <label
                     htmlFor="sms-notify-mobile"
-                    className="text-[10px] font-bold uppercase leading-tight"
+                    className="text-xs font-medium leading-tight"
                   >
                     Confirmación por SMS al cliente al despachar desde almacén.
                   </label>
                 </div>
               </section>
 
-              <section className="bg-white border-2 border-black p-6 industrial-shadow">
-                <div className="flex items-center gap-2 mb-6 border-b-2 border-black pb-3">
+              <section className="bg-white rounded-xl border border-outline p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-6 border-b border-outline pb-3">
                   <span className="material-symbols-outlined text-primary font-bold">
                     store
                   </span>
-                  <h2 className="font-bold uppercase text-lg">
+                  <h2 className="text-base font-semibold text-on-surface">
                     Logística y Sucursal
                   </h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <label className="font-bold uppercase text-[10px]">
+                    <label className="text-xs font-medium text-on-surface-variant">
                       Sucursal de Pickup/Entrega
                     </label>
                     <select
-                      className="w-full bg-white border-2 border-black px-4 py-2 font-bold uppercase text-xs cursor-pointer"
+                      className="w-full bg-white border border-outline px-4 py-2 font-bold uppercase text-xs cursor-pointer"
                       value={branchId}
                       onChange={(e) =>
                         setBranchId(e.target.value as BranchId)
@@ -301,10 +301,10 @@ export default function NuevaOrdenClient({
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="font-bold uppercase text-[10px]">
+                    <label className="text-xs font-medium text-on-surface-variant">
                       Método de Entrega
                     </label>
-                    <div className="flex border-2 border-black p-1 h-[50px] gap-1 bg-gray-100">
+                    <div className="flex border border-outline p-1 h-[50px] gap-1 bg-gray-100">
                       <button
                         type="button"
                         className={`flex-1 font-bold uppercase text-xs flex items-center justify-center gap-1 transition-all ${
@@ -338,7 +338,7 @@ export default function NuevaOrdenClient({
                 </div>
 
                 {method === "delivery" && (
-                  <div className="mt-6 p-4 bg-gray-50 border-2 border-black border-dashed">
+                  <div className="mt-6 p-4 bg-gray-50 border border-outline border-dashed">
                     <div className="space-y-1">
                       <label className="font-bold uppercase text-primary text-[10px]">
                         Dirección Detallada de Entrega
@@ -357,7 +357,7 @@ export default function NuevaOrdenClient({
                         }}
                       />
                       {deliveryAddressError && (
-                        <p className="text-[10px] font-bold uppercase text-primary mt-1">
+                        <p className="text-xs font-medium text-primary mt-1">
                           La dirección es obligatoria para entregas
                         </p>
                       )}
@@ -366,27 +366,27 @@ export default function NuevaOrdenClient({
                 )}
               </section>
 
-              <section className="bg-white border-2 border-black p-6 industrial-shadow">
-                <div className="flex items-center justify-between mb-6 border-b-2 border-black pb-3">
+              <section className="bg-white rounded-xl border border-outline p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6 border-b border-outline pb-3">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary font-bold">
                       shopping_bag
                     </span>
-                    <h2 className="font-bold uppercase text-lg">
+                    <h2 className="text-base font-semibold text-on-surface">
                       Lista de Productos
                     </h2>
                   </div>
                   <div className="flex items-center gap-2">
                     <Link
                       href="/productos"
-                      className="text-xs font-bold uppercase px-3 py-2 border-2 border-black hover:bg-surface-container transition-all hidden sm:inline-flex"
+                      className="text-xs font-medium px-3 py-2 border border-outline hover:bg-surface-container transition-all hidden sm:inline-flex"
                     >
                       Productos
                     </Link>
                     <button
                       type="button"
                       onClick={addLineItem}
-                      className="text-xs font-bold uppercase px-4 py-2 border-2 border-black hover:bg-black hover:text-white transition-all"
+                      className="text-xs font-medium px-4 py-2 border border-outline hover:bg-surface-container transition-all"
                     >
                       + AGREGAR ARTÍCULO
                     </button>
@@ -394,7 +394,7 @@ export default function NuevaOrdenClient({
                 </div>
                 <div className="overflow-x-auto hidden sm:block">
                   {lineItems.length === 0 ? (
-                    <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
+                    <p className="py-12 text-center text-sm font-medium opacity-50">
                       Sin productos — usa &quot;Agregar artículo&quot; o{" "}
                       <button
                         type="button"
@@ -406,21 +406,21 @@ export default function NuevaOrdenClient({
                     </p>
                   ) : (
                   <table className="w-full text-left border-collapse">
-                    <thead className="bg-black text-white">
+                    <thead className="table-header">
                       <tr>
-                        <th className="py-3 px-4 font-bold uppercase text-[10px]">
+                        <th className="py-3 px-4 text-xs font-medium text-on-surface-variant">
                           Producto
                         </th>
-                        <th className="py-3 px-4 font-bold uppercase text-[10px] w-24">
+                        <th className="py-3 px-4 text-xs font-medium text-on-surface-variant w-24">
                           Cant.
                         </th>
-                        <th className="py-3 px-4 font-bold uppercase text-[10px] w-32">
+                        <th className="py-3 px-4 text-xs font-medium text-on-surface-variant w-32">
                           Precio Unit.
                         </th>
-                        <th className="py-3 px-4 font-bold uppercase text-[10px] w-32 text-right">
+                        <th className="py-3 px-4 text-xs font-medium text-on-surface-variant w-32 text-right">
                           Total
                         </th>
-                        <th className="py-3 px-4 font-bold uppercase text-[10px] w-16" />
+                        <th className="py-3 px-4 text-xs font-medium text-on-surface-variant w-16" />
                       </tr>
                     </thead>
                     <tbody className="font-medium text-sm">
@@ -439,7 +439,7 @@ export default function NuevaOrdenClient({
                           </td>
                           <td className="py-4 px-4">
                             <input
-                              className="w-16 bg-white border-2 border-black px-2 py-1 font-bold text-center"
+                              className="w-16 bg-white border border-outline px-2 py-1 font-bold text-center"
                               type="number"
                               min={1}
                               value={item.quantity}
@@ -479,14 +479,14 @@ export default function NuevaOrdenClient({
                 {/* Productos — vista móvil */}
                 <div className="sm:hidden space-y-3">
                   {lineItems.length === 0 ? (
-                    <p className="py-12 text-center text-sm font-bold uppercase opacity-50">
+                    <p className="py-12 text-center text-sm font-medium opacity-50">
                       Sin productos en la orden
                     </p>
                   ) : (
                   lineItems.map((item) => (
                     <div
                       key={item.id}
-                      className="border-2 border-black p-4 bg-gray-50"
+                      className="border border-outline p-4 bg-gray-50"
                     >
                       <div className="flex justify-between items-start gap-2">
                         <div>
@@ -508,9 +508,9 @@ export default function NuevaOrdenClient({
                       </div>
                       <div className="flex justify-between items-center mt-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase">Cant.</span>
+                          <span className="text-xs font-medium">Cant.</span>
                           <input
-                            className="w-16 bg-white border-2 border-black px-2 py-2 font-bold text-center min-h-[44px]"
+                            className="w-16 bg-white border border-outline px-2 py-2 font-bold text-center min-h-[44px]"
                             type="number"
                             min={1}
                             value={item.quantity}
@@ -540,9 +540,9 @@ export default function NuevaOrdenClient({
 
             <div className="lg:col-span-4">
               <div className="sticky top-6 space-y-6">
-                <div className="bg-white border-2 border-black industrial-shadow flex flex-col">
-                  <div className="p-4 bg-black text-white">
-                    <h3 className="font-bold uppercase text-base">
+                <div className="bg-white rounded-xl border border-outline shadow-sm flex flex-col">
+                  <div className="px-4 py-3 border-b border-outline bg-surface">
+                    <h3 className="text-sm font-semibold text-on-surface">
                       Resumen de la Orden
                     </h3>
                   </div>
@@ -575,8 +575,8 @@ export default function NuevaOrdenClient({
                           : `$${DELIVERY_FEE.toFixed(2)} (FIJO)`}
                       </span>
                     </div>
-                    <div className="pt-2 border-t-2 border-black flex justify-between items-end">
-                      <span className="font-extrabold uppercase text-lg">
+                    <div className="pt-2 border-t border-outline flex justify-between items-end">
+                      <span className="font-semibold text-lg">
                         Total
                       </span>
                       <span className="font-extrabold text-2xl text-primary">
@@ -584,15 +584,15 @@ export default function NuevaOrdenClient({
                       </span>
                     </div>
                   </div>
-                  <div className="p-4 bg-gray-50 border-t-2 border-black space-y-4 hidden lg:block">
+                  <div className="p-4 bg-gray-50 border-t border-outline space-y-4 hidden lg:block">
                     <div className="flex items-start gap-4">
                       <input
-                        className="mt-1 w-4 h-4 border-2 border-black"
+                        className="mt-1 w-4 h-4 border border-outline"
                         type="checkbox"
                         checked={smsNotify}
                         onChange={(e) => setSmsNotify(e.target.checked)}
                       />
-                      <label className="text-[10px] font-bold uppercase leading-tight">
+                      <label className="text-xs font-medium leading-tight">
                         Confirmación por SMS al cliente al despachar desde
                         almacén.
                       </label>
@@ -601,8 +601,8 @@ export default function NuevaOrdenClient({
                       type="button"
                       disabled={submitting || submitted || lineItems.length === 0}
                       onClick={handleSubmit}
-                      className={`w-full py-4 text-white font-extrabold text-lg industrial-border industrial-shadow active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 disabled:opacity-80 ${
-                        submitted ? "bg-green-600" : "bg-primary hover:bg-black"
+                      className={`w-full py-4 text-white font-extrabold text-lg industrial-border industrial-shadow  transition-all flex items-center justify-center gap-3 disabled:opacity-80 ${
+                        submitted ? "bg-green-600" : "bg-primary hover:bg-primary/90"
                       }`}
                     >
                       {submitting ? (
@@ -638,15 +638,15 @@ export default function NuevaOrdenClient({
                       type="button"
                       onClick={handleSaveDraft}
                       disabled={draftSaved}
-                      className="w-full py-2 border-2 border-black bg-white font-bold uppercase text-xs hover:bg-gray-100 transition-all disabled:opacity-60"
+                      className="w-full py-2 border border-outline bg-white font-bold uppercase text-xs hover:bg-gray-100 transition-all disabled:opacity-60"
                     >
                       {draftSaved ? "BORRADOR GUARDADO" : "GUARDAR COMO BORRADOR"}
                     </button>
                   </div>
                 </div>
 
-                <div className="bg-white border-2 border-black p-4 flex items-center gap-4">
-                  <div className="w-4 h-4 border-2 border-black bg-surface-container shrink-0" />
+                <div className="bg-white border border-outline p-4 flex items-center gap-4">
+                  <div className="w-4 h-4 border border-outline bg-surface-container shrink-0" />
                   <div className="text-[10px]">
                     <div className="font-bold uppercase">Conexión ERP</div>
                     <div className="font-mono opacity-60">No conectado</div>
@@ -659,7 +659,7 @@ export default function NuevaOrdenClient({
       </div>
 
       {/* Footer fijo móvil */}
-      <div className="lg:hidden fixed bottom-16 left-0 right-0 z-40 bg-white border-t-2 border-black px-4 py-3 flex items-center gap-3 safe-area-bottom">
+      <div className="lg:hidden fixed bottom-16 left-0 right-0 z-40 bg-white border-t border-outline px-4 py-3 flex items-center gap-3 safe-area-bottom">
         <div className="shrink-0">
           <p className="text-[9px] font-bold uppercase text-gray-500">Total</p>
           <p className="text-lg font-extrabold text-primary leading-tight">
@@ -670,7 +670,7 @@ export default function NuevaOrdenClient({
           type="button"
           disabled={submitting || submitted || lineItems.length === 0}
           onClick={handleSubmit}
-          className={`flex-1 py-3 text-white font-extrabold text-sm industrial-border industrial-shadow active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-80 min-h-[44px] ${
+          className={`flex-1 py-3 text-white font-extrabold text-sm industrial-border industrial-shadow  transition-all flex items-center justify-center gap-2 disabled:opacity-80 min-h-[44px] ${
             submitted ? "bg-green-600" : "bg-primary"
           }`}
         >
