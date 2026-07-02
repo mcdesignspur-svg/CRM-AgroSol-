@@ -1,3 +1,5 @@
+> **DEPRECATED — do not implement.** This document describes an alternate dark industrial UI that was never shipped. The canonical design system is [`design/minimal_ui/DESIGN.md`](../minimal_ui/DESIGN.md).
+
 ---
 name: Agro-Industrial High-Contrast
 colors:

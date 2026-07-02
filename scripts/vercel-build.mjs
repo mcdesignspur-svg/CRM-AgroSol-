@@ -1,4 +1,10 @@
 import { execSync } from "node:child_process";
+import { loadVercelProductionEnv } from "./load-vercel-env.mjs";
+
+const { loaded, path } = loadVercelProductionEnv();
+if (loaded > 0) {
+  console.log(`Loaded ${loaded} env var(s) from ${path}`);
+}
 
 const isProduction = process.env.VERCEL_ENV === "production";
 
@@ -10,9 +16,11 @@ const migrationUrl =
 if (isProduction) {
   if (!migrationUrl) {
     console.error(
-      "FATAL: DATABASE_URL is required for production builds. " +
-        "Set DATABASE_URL (and ideally DIRECT_DATABASE_URL for migrations) " +
-        "in the Vercel Production environment before deploying.",
+      "FATAL: DATABASE_URL is required for production builds.\n" +
+        "Set DATABASE_URL (and ideally DIRECT_DATABASE_URL) in:\n" +
+        "  1) Vercel → Project → Settings → Environment Variables → Production, or\n" +
+        "  2) GitHub → Repository → Settings → Secrets → DATABASE_URL\n" +
+        "Then re-run the Production Deploy workflow.",
     );
     process.exit(1);
   }
