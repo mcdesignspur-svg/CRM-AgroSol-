@@ -77,7 +77,26 @@ async function sendViaTelegram(
 
 function sendViaConsole(chatId: string, text: string): TelegramSendResult {
   console.info("[Telegram:console]", { chatId, text });
-  return { sent: true, provider: "console" };
+  const isProduction = process.env.VERCEL_ENV === "production";
+  return {
+    sent: !isProduction,
+    provider: "console",
+    error: isProduction
+      ? "TELEGRAM_BOT_TOKEN no configurado en producción"
+      : undefined,
+  };
+}
+
+export function getTelegramConfigStatus() {
+  const token = getBotToken();
+  const username = getBotUsername();
+  const chatId = getNotificationsChatId();
+  return {
+    configured: Boolean(token && username && chatId),
+    hasToken: Boolean(token),
+    hasUsername: Boolean(username),
+    hasNotificationsChatId: Boolean(chatId),
+  };
 }
 
 export async function sendTelegramMessage(

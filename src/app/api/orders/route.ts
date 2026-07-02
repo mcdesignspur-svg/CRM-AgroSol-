@@ -1,10 +1,11 @@
-import { NextResponse, after } from "next/server";
+import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import {
   getActiveDeliveryOrders,
   getRecentOrders,
   getOrdersCount,
   createOrder,
+  getOrderByDisplayId,
   OrderValidationError,
   OrderConflictError,
   type OrderFilters,
@@ -199,13 +200,15 @@ export async function POST(request: Request) {
     });
 
     if (order.fulfillment === "pickup") {
-      after(async () => {
-        try {
-          await sendPickupOrderConfirmationByDisplayId(order.id);
-        } catch (error) {
-          console.error("POST /api/orders telegram confirmation", error);
+      try {
+        await sendPickupOrderConfirmationByDisplayId(order.id);
+        const refreshed = await getOrderByDisplayId(order.id);
+        if (refreshed) {
+          return NextResponse.json(refreshed, { status: 201 });
         }
-      });
+      } catch (error) {
+        console.error("POST /api/orders telegram confirmation", error);
+      }
     }
 
     return NextResponse.json(order, { status: 201 });

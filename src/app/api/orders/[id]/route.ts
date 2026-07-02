@@ -1,4 +1,4 @@
-import { NextResponse, after } from "next/server";
+import { NextResponse } from "next/server";
 import {
   getOrderByDisplayId,
   updateOrderStatus,
@@ -65,13 +65,15 @@ export async function PATCH(
     const order = await updateOrderStatus(decodeURIComponent(id), body.status);
 
     if (order.fulfillment === "pickup" && body.status === "listo") {
-      after(async () => {
-        try {
-          await sendPickupOrderReadyByDisplayId(order.id);
-        } catch (error) {
-          console.error("PATCH /api/orders/[id] telegram ready", error);
+      try {
+        await sendPickupOrderReadyByDisplayId(order.id);
+        const refreshed = await getOrderByDisplayId(order.id);
+        if (refreshed) {
+          return NextResponse.json(refreshed);
         }
-      });
+      } catch (error) {
+        console.error("PATCH /api/orders/[id] telegram ready", error);
+      }
     }
 
     return NextResponse.json(order);
