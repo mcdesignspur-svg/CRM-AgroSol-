@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { BranchId, Product, ProductCategorySummary } from "@/lib/types";
+import type { BranchId, Product, ProductCategoryGroup, ProductCategorySummary } from "@/lib/types";
 
 function categoryParam(categoryId: string | null): string {
   if (categoryId === null) return "__uncategorized__";
@@ -116,4 +116,43 @@ export function useProductCategories(
     categories: hasInitialCategories ? initialCategories : fetchedCategories,
     loading: hasInitialCategories ? false : loading,
   };
+}
+
+export function useGroupedCatalog(branchId: BranchId) {
+  const [groups, setGroups] = useState<ProductCategoryGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void fetch(`/api/products/grouped?branchId=${encodeURIComponent(branchId)}`, {
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error ?? "Error al cargar productos agrupados");
+        }
+        setGroups(Array.isArray(data.groups) ? data.groups : []);
+      })
+      .catch((fetchError) => {
+        if (controller.signal.aborted) return;
+        setGroups([]);
+        setError(
+          fetchError instanceof Error
+            ? fetchError.message
+            : "Error al cargar productos agrupados",
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [branchId]);
+
+  return { groups, loading, error };
 }
