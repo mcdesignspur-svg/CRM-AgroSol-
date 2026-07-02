@@ -4,7 +4,7 @@ import {
   buildOrderReadyMessage,
   type PickupMessageContext,
 } from "@/lib/pickup/messages";
-import { sendTelegramMessage } from "@/lib/telegram/client";
+import { sendTelegramMessage, resolveNotificationChatId } from "@/lib/telegram/client";
 import type { Order, Branch } from "@prisma/client";
 
 type OrderWithBranch = Order & { branch: Branch };
@@ -30,11 +30,12 @@ async function notifyCustomer(
   message: string,
   field: "confirmationNotifiedAt" | "readyNotifiedAt",
 ): Promise<boolean> {
-  if (!order.telegramChatId) {
+  const chatId = resolveNotificationChatId(order.telegramChatId);
+  if (!chatId) {
     return false;
   }
 
-  const result = await sendTelegramMessage(order.telegramChatId, message);
+  const result = await sendTelegramMessage(chatId, message);
   if (!result.sent) {
     console.error(`[pickup-notify] ${order.displayId}:`, result.error);
     return false;

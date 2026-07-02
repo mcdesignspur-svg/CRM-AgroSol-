@@ -4,10 +4,14 @@ import { resolveDisplayStatus } from "@/lib/order-status";
 import { toAppOrderStatus } from "@/lib/db/mappers";
 import {
   buildOrderConfirmationMessage,
+  buildCustomerArrivedStaffMessage,
   buildTelegramWelcomeMessage,
   type PickupMessageContext,
 } from "@/lib/pickup/messages";
-import { sendTelegramMessage } from "@/lib/telegram/client";
+import {
+  sendTelegramMessage,
+  resolveNotificationChatId,
+} from "@/lib/telegram/client";
 import type { BranchId } from "@/lib/types";
 
 export function generatePickupToken(): string {
@@ -91,8 +95,10 @@ export async function linkTelegramChatToPickup(
     data: { telegramChatId: chatId },
   });
 
+  const notifyChatId = resolveNotificationChatId(chatId) ?? chatId;
+
   await sendTelegramMessage(
-    chatId,
+    notifyChatId,
     buildTelegramWelcomeMessage(order.displayId),
   );
 
@@ -108,7 +114,7 @@ export async function linkTelegramChatToPickup(
     };
 
     const result = await sendTelegramMessage(
-      chatId,
+      notifyChatId,
       buildOrderConfirmationMessage(ctx),
     );
 
@@ -172,6 +178,18 @@ export async function markCustomerArrived(token: string) {
 
     return result;
   });
+
+  const staffChatId = resolveNotificationChatId(order.telegramChatId);
+  if (staffChatId) {
+    void sendTelegramMessage(
+      staffChatId,
+      buildCustomerArrivedStaffMessage({
+        displayId: order.displayId,
+        customerName: order.customerName,
+        branchName: order.branch.name,
+      }),
+    );
+  }
 
   return mapPublicPickup(updated)!;
 }

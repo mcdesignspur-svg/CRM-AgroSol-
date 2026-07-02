@@ -32,6 +32,19 @@ export function buildOrderReadyMessage(ctx: PickupMessageContext): string {
   );
 }
 
+export function buildCustomerArrivedStaffMessage(ctx: {
+  displayId: string;
+  customerName: string;
+  branchName: string;
+}): string {
+  return (
+    `🚗 Cliente en camino\n\n` +
+    `Orden: ${ctx.displayId}\n` +
+    `Cliente: ${ctx.customerName}\n` +
+    `Sucursal: ${ctx.branchName}`
+  );
+}
+
 export function buildTelegramWelcomeMessage(displayId: string): string {
   return (
     `¡Listo! Vinculamos este chat con tu orden ${displayId}.\n` +

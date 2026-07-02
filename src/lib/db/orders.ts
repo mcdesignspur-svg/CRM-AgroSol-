@@ -435,7 +435,7 @@ export async function createOrder(input: CreateOrderInput) {
       const order = await createOrderTransaction(orderInput);
       const detail = mapOrderDetail(order);
 
-      if (input.fulfillment === "pickup" && input.telegramChatId?.trim()) {
+      if (input.fulfillment === "pickup") {
         void sendPickupOrderConfirmation(order.id);
       }
 

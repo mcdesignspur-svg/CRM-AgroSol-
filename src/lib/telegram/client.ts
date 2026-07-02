@@ -15,6 +15,17 @@ export function getBotUsername(): string | null {
   return username?.replace(/^@/, "") || null;
 }
 
+export function getNotificationsChatId(): string | null {
+  const chatId = process.env.TELEGRAM_NOTIFICATIONS_CHAT_ID?.trim();
+  return chatId || null;
+}
+
+export function resolveNotificationChatId(
+  orderChatId?: string | null,
+): string | null {
+  return orderChatId?.trim() || getNotificationsChatId();
+}
+
 export function buildTelegramStartLink(pickupToken: string): string | null {
   const username = getBotUsername();
   if (!username) return null;
