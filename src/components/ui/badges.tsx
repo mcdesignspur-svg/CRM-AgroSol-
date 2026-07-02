@@ -1,6 +1,6 @@
-import type { OrderStatus, OrderType } from "@/lib/types";
+import type { OrderStatus, OrderType, BranchId } from "@/lib/types";
 import { BRANCH_LABELS } from "@/lib/constants";
-import type { BranchId } from "@/lib/types";
+import { ORDER_STATUS_LABELS } from "@/lib/order-status";
 
 const statusStyles: Record<OrderStatus, string> = {
   pendiente: "bg-gray-200 text-gray-800",
@@ -8,14 +8,6 @@ const statusStyles: Record<OrderStatus, string> = {
   listo: "bg-green-500 text-white",
   atrasado: "bg-red-600 text-white",
   completado: "bg-green-600 text-white",
-};
-
-const statusLabels: Record<OrderStatus, string> = {
-  pendiente: "Pendiente",
-  "en-transito": "En Tránsito",
-  listo: "Listo",
-  atrasado: "Atrasado",
-  completado: "Completado",
 };
 
 const typeStyles: Record<OrderType, string> = {
@@ -28,7 +20,7 @@ export function StatusBadge({ status }: { status: OrderStatus }) {
     <span
       className={`px-3 py-1 text-xs font-bold uppercase industrial-border ${statusStyles[status]}`}
     >
-      {statusLabels[status]}
+      {ORDER_STATUS_LABELS[status]}
     </span>
   );
 }

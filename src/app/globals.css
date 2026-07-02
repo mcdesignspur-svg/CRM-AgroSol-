@@ -96,6 +96,13 @@ textarea:focus {
   box-shadow: 0 0 0 2px #e31e24;
 }
 
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #e31e24;
+  outline-offset: 2px;
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;

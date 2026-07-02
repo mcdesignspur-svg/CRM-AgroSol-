@@ -17,9 +17,13 @@ Repositorio oficial: [github.com/mcdesignspur-svg/CRM-AgroSol-](https://github.c
 | Ruta | Descripción |
 |------|-------------|
 | `/` | Panel de logística — métricas, órdenes recientes, pings en vivo |
+| `/ordenes` | Listado de órdenes |
+| `/ordenes/[id]` | Detalle de una orden |
 | `/ordenes/nueva` | Registro de nueva orden con retiro/entrega |
+| `/productos` | Catálogo de productos |
 | `/entregas` | Mapa, entregas activas, estado de sucursales |
 | `/sucursales` | Vista de red y capacidad por sucursal |
+| `/conductor` | Vista del conductor |
 
 ## Desarrollo local
 
@@ -37,7 +41,7 @@ Copia las variables de entorno:
 cp .env.example .env
 ```
 
-La URL por defecto es:
+La URL por defecto en `docker-compose` (credenciales **solo para desarrollo local**):
 
 ```
 postgresql://agrosol:agrosol@localhost:5432/agrosol_crm?schema=public
@@ -64,9 +68,17 @@ Abre [http://localhost:3000](http://localhost:3000).
 | Comando | Descripción |
 |---------|-------------|
 | `npm run db:migrate` | Aplica migraciones en desarrollo |
-| `npm run db:seed` | Siembra sucursales iniciales |
+| `npm run db:deploy` | Aplica migraciones en producción (`prisma migrate deploy`) |
+| `npm run db:seed` | Siembra sucursales iniciales y entregas de ejemplo |
 | `npm run db:studio` | Abre Prisma Studio |
 | `npm run db:push` | Sincroniza schema sin migración (prototipado) |
+
+### Calidad de código
+
+| Comando | Descripción |
+|---------|-------------|
+| `npm run lint` | Ejecuta ESLint en el proyecto |
+| `npm run typecheck` | Comprueba tipos con TypeScript (`tsc --noEmit`) |
 
 ## Producción
 
@@ -90,7 +102,7 @@ Requiere `DATABASE_URL` apuntando a una instancia PostgreSQL accesible.
 
 ### Despliegue automático a producción
 
-Cada **push a `main`** despliega automáticamente a producción mediante GitHub Actions (`.github/workflows/deploy-production.yml`).
+Cada **push a `main`** pasa primero por CI (lint, typecheck, build) y, si todo es verde, despliega automáticamente a producción mediante GitHub Actions (`.github/workflows/deploy-production.yml`, disparado al completar CI con éxito).
 
 > Las ramas distintas de `main` siguen generando **preview deployments** en Vercel. El build de `main` en Vercel está desactivado en `vercel.json` para evitar deploys duplicados; producción la gestiona el workflow.
 
@@ -102,7 +114,7 @@ Para que el workflow de GitHub funcione, configura estos secrets en el repositor
 | `VERCEL_ORG_ID` | Vercel → Project Settings → General |
 | `VERCEL_PROJECT_ID` | Vercel → Project Settings → General |
 
-**Flujo recomendado:** mergea tu PR a `main` → el push dispara producción automáticamente. Las ramas `cursor/*` y PRs siguen generando **preview deployments** sin afectar producción.
+**Flujo recomendado:** mergea tu PR a `main` → CI valida el código → si pasa, producción se despliega automáticamente. Las ramas `cursor/*` y PRs siguen generando **preview deployments** sin afectar producción.
 
 ## Estructura
 

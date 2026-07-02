@@ -35,6 +35,23 @@ const filterCycle: FilterMode[] = [
   "retiro",
 ];
 
+function buildQuery(filter: FilterMode, offset = 0) {
+  const params = new URLSearchParams({
+    limit: "20",
+    offset: String(offset),
+  });
+
+  if (filter !== "all") {
+    if (filter === "entrega" || filter === "retiro") {
+      params.set("type", filter);
+    } else {
+      params.set("status", filter);
+    }
+  }
+
+  return params.toString();
+}
+
 export function DashboardOrdersSection({
   initialOrders,
   initialTotal,
@@ -51,26 +68,32 @@ export function DashboardOrdersSection({
 
   const hasMore = orders.length < total;
 
-  const filteredOrders = orders.filter((order) => {
-    if (filter === "all") return true;
-    if (filter === "entrega" || filter === "retiro") return order.type === filter;
-    return order.status === filter;
-  });
+  const loadOrders = useCallback(
+    async (nextFilter: FilterMode, offset = 0, replace = true) => {
+      const res = await fetch(`/api/orders?${buildQuery(nextFilter, offset)}`);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? "Error al cargar órdenes");
+      }
+      setTotal(data.total);
+      setOrders((prev) => (replace ? data.orders : [...prev, ...data.orders]));
+      return data;
+    },
+    [],
+  );
 
   const cycleFilter = useCallback(() => {
     const idx = filterCycle.indexOf(filter);
     const next = filterCycle[(idx + 1) % filterCycle.length];
     setFilter(next);
+    void loadOrders(next, 0, true);
     showToast(`Filtro: ${filterLabels[next]}`, "info");
-  }, [filter, showToast]);
+  }, [filter, loadOrders, showToast]);
 
   async function handleRefresh() {
     setRefreshing(true);
     try {
-      const res = await fetch("/api/orders?limit=20&offset=0");
-      const data = await res.json();
-      setOrders(data.orders);
-      setTotal(data.total);
+      await loadOrders(filter, 0, true);
       showToast("Datos actualizados", "success");
     } catch {
       showToast("Error al actualizar", "error");
@@ -86,10 +109,7 @@ export function DashboardOrdersSection({
     }
     setLoadingMore(true);
     try {
-      const res = await fetch(`/api/orders?limit=20&offset=${orders.length}`);
-      const data = await res.json();
-      setOrders((prev) => [...prev, ...data.orders]);
-      setTotal(data.total);
+      const data = await loadOrders(filter, orders.length, false);
       if (data.orders.length > 0) {
         showToast(`${data.orders.length} órdenes cargadas`, "success");
       }
@@ -141,7 +161,6 @@ export function DashboardOrdersSection({
           </div>
         </div>
 
-        {/* Vista tabla — desktop */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-black text-white">
@@ -157,7 +176,7 @@ export function DashboardOrdersSection({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredOrders.length === 0 ? (
+              {orders.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}
@@ -167,7 +186,7 @@ export function DashboardOrdersSection({
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((order, index) => (
+                orders.map((order, index) => (
                   <tr
                     key={order.id}
                     className={`hover:bg-surface-container transition-colors ${
@@ -208,14 +227,13 @@ export function DashboardOrdersSection({
           </table>
         </div>
 
-        {/* Vista tarjetas — móvil */}
         <div className="md:hidden divide-y divide-gray-200">
-          {filteredOrders.length === 0 ? (
+          {orders.length === 0 ? (
             <p className="p-8 text-center text-sm font-bold uppercase opacity-50">
               Sin órdenes registradas
             </p>
           ) : (
-            filteredOrders.map((order) => (
+            orders.map((order) => (
               <article
                 key={order.id}
                 className="p-4 space-y-3 hover:bg-surface-container-low transition-colors"

@@ -13,6 +13,15 @@ interface ModalProps {
 export function Modal({ open, onClose, title, children, footer }: ModalProps) {
   useEffect(() => {
     if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }

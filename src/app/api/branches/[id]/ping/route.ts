@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendBranchPing } from "@/lib/db";
+import { isBranchId } from "@/lib/branch-definitions";
 
 export async function POST(
   request: Request,
@@ -7,6 +8,14 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+
+    if (!isBranchId(id)) {
+      return NextResponse.json(
+        { error: "Sucursal no encontrada" },
+        { status: 404 },
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
     const branch = await sendBranchPing(id, body.message);
     return NextResponse.json(branch);

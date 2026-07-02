@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -17,6 +17,18 @@ import {
 import type { BranchId, OrderLineItem, Product } from "@/lib/types";
 
 type FulfillmentMethod = "pickup" | "delivery";
+
+const DRAFT_STORAGE_KEY = "agrosol-order-draft";
+
+interface OrderDraft {
+  customerName: string;
+  customerPhone: string;
+  deliveryAddress: string;
+  method: FulfillmentMethod;
+  branchId: BranchId;
+  lineItems: { productId: string; quantity: number }[];
+  smsNotify: boolean;
+}
 
 interface NuevaOrdenClientProps {
   catalogProducts: Product[];
@@ -40,6 +52,41 @@ export default function NuevaOrdenClient({
   const { showToast } = useToast();
   const router = useRouter();
   const [smsNotify, setSmsNotify] = useState(false);
+  const [deliveryAddressError, setDeliveryAddressError] = useState(false);
+
+  // La restauración del borrador debe correr tras la hidratación (localStorage
+  // no existe en SSR), por eso se sincroniza en un efecto y no en el
+  // inicializador de estado.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as OrderDraft;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCustomerName(draft.customerName ?? "");
+      setCustomerPhone(draft.customerPhone ?? "");
+      setDeliveryAddress(draft.deliveryAddress ?? "");
+      setMethod(draft.method ?? "pickup");
+      setBranchId(draft.branchId ?? DEFAULT_BRANCH);
+      setSmsNotify(draft.smsNotify ?? false);
+      const restored = (draft.lineItems ?? [])
+        .map((item) => {
+          const product = initialCatalogProducts.find(
+            (p) => p.id === item.productId,
+          );
+          return product ? { ...product, quantity: item.quantity } : null;
+        })
+        .filter((item): item is OrderLineItem => item !== null);
+      if (restored.length > 0) {
+        setLineItems(restored);
+        showToast("Borrador restaurado", "info");
+      }
+    } catch {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+    }
+    // Restaurar borrador solo al montar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function addLineItem() {
     setPickerOpen(true);
@@ -58,9 +105,25 @@ export default function NuevaOrdenClient({
     showToast(`${product.name} creado y agregado a la orden`, "success");
   }
 
-  async function handleSaveDraft() {
+  function removeLineItem(id: string) {
+    setLineItems((items) => items.filter((item) => item.id !== id));
+  }
+
+  function handleSaveDraft() {
+    const draft: OrderDraft = {
+      customerName,
+      customerPhone,
+      deliveryAddress,
+      method,
+      branchId,
+      smsNotify,
+      lineItems: lineItems.map((item) => ({
+        productId: item.id,
+        quantity: item.quantity,
+      })),
+    };
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
     setDraftSaved(true);
-    await new Promise((r) => setTimeout(r, 500));
     showToast("Borrador guardado localmente", "success");
     setTimeout(() => setDraftSaved(false), 2000);
   }
@@ -92,6 +155,12 @@ export default function NuevaOrdenClient({
       showToast("Ingresa el nombre del cliente", "warning");
       return;
     }
+    if (method === "delivery" && !deliveryAddress.trim()) {
+      setDeliveryAddressError(true);
+      showToast("Ingresa la dirección de entrega", "warning");
+      return;
+    }
+    setDeliveryAddressError(false);
     setSubmitting(true);
     try {
       const res = await fetch("/api/orders", {
@@ -102,25 +171,18 @@ export default function NuevaOrdenClient({
           customerPhone: customerPhone.trim() || undefined,
           deliveryAddress:
             method === "delivery" ? deliveryAddress.trim() : undefined,
-          type: method === "delivery" ? "entrega" : "retiro",
           branchId,
           fulfillment: method,
           smsNotify,
-          subtotal,
-          taxes,
-          deliveryFee: deliveryCost,
-          total,
           lineItems: lineItems.map((item) => ({
             productId: item.id,
-            name: item.name,
-            sku: item.sku,
-            unitPrice: item.unitPrice,
             quantity: item.quantity,
           })),
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Error al crear orden");
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
       setSubmitted(true);
       showToast("Orden confirmada y ping enviado a sucursal", "success");
       router.push(`/ordenes/${encodeURIComponent(data.id)}`);
@@ -145,7 +207,7 @@ export default function NuevaOrdenClient({
           <div className="hidden sm:flex items-center gap-2 px-4 py-2 border-2 border-black bg-white">
             <span className="font-bold uppercase text-[10px]">Activo:</span>
             <span className="font-bold uppercase text-[10px] text-primary">
-              {BRANCH_LABELS[DEFAULT_BRANCH]}
+              {BRANCH_LABELS[branchId]}
             </span>
           </div>
         </TopBar>
@@ -192,6 +254,21 @@ export default function NuevaOrdenClient({
                       />
                     </div>
                   </div>
+                </div>
+                <div className="mt-6 flex items-start gap-4 lg:hidden">
+                  <input
+                    className="mt-1 w-4 h-4 border-2 border-black"
+                    type="checkbox"
+                    id="sms-notify-mobile"
+                    checked={smsNotify}
+                    onChange={(e) => setSmsNotify(e.target.checked)}
+                  />
+                  <label
+                    htmlFor="sms-notify-mobile"
+                    className="text-[10px] font-bold uppercase leading-tight"
+                  >
+                    Confirmación por SMS al cliente al despachar desde almacén.
+                  </label>
                 </div>
               </section>
 
@@ -267,11 +344,23 @@ export default function NuevaOrdenClient({
                         Dirección Detallada de Entrega
                       </label>
                       <textarea
-                        className="w-full bg-white border-2 border-black px-4 py-2 font-medium"
+                        className={`w-full bg-white border-2 px-4 py-2 font-medium ${
+                          deliveryAddressError
+                            ? "border-primary"
+                            : "border-black"
+                        }`}
                         rows={3}
                         value={deliveryAddress}
-                        onChange={(e) => setDeliveryAddress(e.target.value)}
+                        onChange={(e) => {
+                          setDeliveryAddress(e.target.value);
+                          if (deliveryAddressError) setDeliveryAddressError(false);
+                        }}
                       />
+                      {deliveryAddressError && (
+                        <p className="text-[10px] font-bold uppercase text-primary mt-1">
+                          La dirección es obligatoria para entregas
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -331,6 +420,7 @@ export default function NuevaOrdenClient({
                         <th className="py-3 px-4 font-bold uppercase text-[10px] w-32 text-right">
                           Total
                         </th>
+                        <th className="py-3 px-4 font-bold uppercase text-[10px] w-16" />
                       </tr>
                     </thead>
                     <tbody className="font-medium text-sm">
@@ -367,6 +457,18 @@ export default function NuevaOrdenClient({
                           <td className="py-4 px-4 font-extrabold text-right">
                             ${(item.unitPrice * item.quantity).toFixed(2)}
                           </td>
+                          <td className="py-4 px-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => removeLineItem(item.id)}
+                              className="p-1 hover:text-primary transition-colors min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+                              aria-label={`Quitar ${item.name}`}
+                            >
+                              <span className="material-symbols-outlined text-lg">
+                                delete
+                              </span>
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -386,11 +488,23 @@ export default function NuevaOrdenClient({
                       key={item.id}
                       className="border-2 border-black p-4 bg-gray-50"
                     >
-                      <div className="font-bold text-black uppercase text-sm">
-                        {item.name}
-                      </div>
-                      <div className="text-[10px] text-gray-500 font-mono mt-1">
-                        SKU: {item.sku}
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <div className="font-bold text-black uppercase text-sm">
+                            {item.name}
+                          </div>
+                          <div className="text-[10px] text-gray-500 font-mono mt-1">
+                            SKU: {item.sku}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeLineItem(item.id)}
+                          className="p-2 hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
+                          aria-label={`Quitar ${item.name}`}
+                        >
+                          <span className="material-symbols-outlined">delete</span>
+                        </button>
                       </div>
                       <div className="flex justify-between items-center mt-3">
                         <div className="flex items-center gap-2">

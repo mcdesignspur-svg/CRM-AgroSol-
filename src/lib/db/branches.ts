@@ -1,5 +1,6 @@
 import { BRANCH_DEFINITIONS } from "@/lib/branch-definitions";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { mapBranch } from "./mappers";
 
 export async function ensureBranches() {
@@ -34,15 +35,17 @@ export async function getBranchById(id: string) {
   return row ? mapBranch(row) : null;
 }
 
-export async function sendBranchPing(branchId: string, message?: string) {
-  await ensureBranches();
-
-  const branch = await prisma.branch.update({
+export async function sendBranchPingInTx(
+  tx: Prisma.TransactionClient,
+  branchId: string,
+  message?: string,
+) {
+  const branch = await tx.branch.update({
     where: { id: branchId },
     data: { lastPingAt: new Date() },
   });
 
-  await prisma.notificationLog.create({
+  await tx.notificationLog.create({
     data: {
       source: "SISTEMA",
       message:
@@ -53,4 +56,12 @@ export async function sendBranchPing(branchId: string, message?: string) {
   });
 
   return mapBranch(branch);
+}
+
+export async function sendBranchPing(branchId: string, message?: string) {
+  await ensureBranches();
+
+  return prisma.$transaction(async (tx) =>
+    sendBranchPingInTx(tx, branchId, message),
+  );
 }
