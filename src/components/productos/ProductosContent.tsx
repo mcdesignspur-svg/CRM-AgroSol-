@@ -6,10 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
 import { ErpConnectionStatus } from "@/components/integrations/ErpConnectionStatus";
 import { AddProductModal } from "@/components/productos/AddProductModal";
-import {
-  ProductCategoryFilter,
-  ProductCategoryGrid,
-} from "@/components/productos/ProductCategoryFilter";
+import { ProductCategoryFilter } from "@/components/productos/ProductCategoryFilter";
 import { ProductCategorySections } from "@/components/productos/ProductCategorySections";
 import { ProductSearchBar } from "@/components/productos/ProductSearchBar";
 import {
@@ -18,16 +15,22 @@ import {
 } from "@/hooks/useProductSearch";
 import { groupProductsByCategory } from "@/lib/products/group-by-category";
 import type { LoyverseStatus } from "@/lib/loyverse/types";
-import type { Product, ProductCategorySummary } from "@/lib/types";
+import type {
+  Product,
+  ProductCategoryGroup,
+  ProductCategorySummary,
+} from "@/lib/types";
 
 interface ProductosContentProps {
   loyverseStatus: LoyverseStatus;
   categories: ProductCategorySummary[];
+  groupedCatalog: ProductCategoryGroup[];
 }
 
 export function ProductosContent({
   loyverseStatus,
   categories: initialCategories,
+  groupedCatalog,
 }: ProductosContentProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<
@@ -40,18 +43,41 @@ export function ProductosContent({
     selectedCategoryId,
   );
 
-  const groupedResults = useMemo(
-    () => groupProductsByCategory(results),
-    [results],
-  );
-
   const selectedCategory = categories.find(
     (category) => category.id === selectedCategoryId,
   );
   const hasSearch = query.trim().length >= 2;
-  const browsingCategory = selectedCategoryId !== undefined;
-  const showResults = browsingCategory || hasSearch;
-  const showCategoryHeaders = !browsingCategory || hasSearch;
+  const isFiltering = selectedCategoryId !== undefined || hasSearch;
+
+  const displayGroups = useMemo(() => {
+    if (!isFiltering) {
+      return groupedCatalog;
+    }
+
+    if (selectedCategoryId !== undefined && !hasSearch) {
+      return [
+        {
+          categoryId: selectedCategory?.id ?? undefined,
+          categoryName: selectedCategory?.name ?? "Sin categoría",
+          products: results,
+        },
+      ];
+    }
+
+    return groupProductsByCategory(results);
+  }, [
+    groupedCatalog,
+    hasSearch,
+    isFiltering,
+    results,
+    selectedCategory,
+    selectedCategoryId,
+  ]);
+
+  const totalVisibleProducts = useMemo(
+    () => displayGroups.reduce((sum, group) => sum + group.products.length, 0),
+    [displayGroups],
+  );
 
   function handleCreated(product: Product) {
     setQuery(product.name);
@@ -74,8 +100,8 @@ export function ProductosContent({
               Productos
             </h2>
             <p className="text-sm text-on-surface-variant mt-1">
-              Explora por categoría o busca en el cache de Loyverse de Gurabo
-              (Central).
+              Catálogo de Gurabo (Central) agrupado por categoría. Filtra con
+              los chips o busca por nombre, SKU o categoría.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -98,7 +124,7 @@ export function ProductosContent({
         <ProductSearchBar
           value={query}
           onChange={setQuery}
-          helperText={`${(loyverseStatus.cachedProductCount ?? 0).toLocaleString("es-PR")} productos en cache · selecciona una categoría o escribe al menos 2 caracteres`}
+          helperText={`${(loyverseStatus.cachedProductCount ?? 0).toLocaleString("es-PR")} productos en cache · ${categories.length} categorías`}
         />
 
         <ProductCategoryFilter
@@ -114,23 +140,7 @@ export function ProductosContent({
         />
 
         <section className="rounded-xl border border-outline bg-white shadow-sm overflow-hidden">
-          {!showResults ? (
-            <div className="p-4 md:p-6 space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-on-surface">
-                  Explorar por categoría
-                </h3>
-                <p className="text-xs text-on-surface-variant mt-1">
-                  Selecciona una categoría para ver sus productos ordenados
-                  alfabéticamente.
-                </p>
-              </div>
-              <ProductCategoryGrid
-                categories={categories}
-                onSelect={(categoryId) => setSelectedCategoryId(categoryId)}
-              />
-            </div>
-          ) : loading ? (
+          {isFiltering && loading ? (
             <div className="px-6 py-16 text-center text-sm text-on-surface-variant">
               <span className="inline-flex items-center gap-2">
                 <span className="material-symbols-outlined animate-spin text-primary">
@@ -139,42 +149,42 @@ export function ProductosContent({
                 Cargando productos...
               </span>
             </div>
-          ) : error ? (
+          ) : isFiltering && error ? (
             <div className="px-6 py-16 text-center text-sm text-red-600">
               {error}
             </div>
-          ) : results.length === 0 ? (
+          ) : isFiltering && results.length === 0 ? (
             <div className="px-6 py-16 text-center text-sm text-on-surface-variant">
               {hasSearch
                 ? `Sin resultados para "${query.trim()}"`
                 : "Esta categoría no tiene productos visibles"}
             </div>
+          ) : displayGroups.length === 0 ? (
+            <div className="px-6 py-16 text-center text-sm text-on-surface-variant">
+              No hay productos importados todavía. Usa &quot;Importar catálogo
+              completo&quot; para sincronizar desde Loyverse.
+            </div>
           ) : (
             <ProductCategorySections
               products={results}
-              groups={
-                browsingCategory && !hasSearch
-                  ? [
-                      {
-                        categoryId: selectedCategory?.id ?? undefined,
-                        categoryName:
-                          selectedCategory?.name ?? "Sin categoría",
-                        products: results,
-                      },
-                    ]
-                  : groupedResults
-              }
-              showCategoryHeaders={showCategoryHeaders}
+              groups={displayGroups}
+              showCategoryHeaders
             />
           )}
         </section>
 
-        {showResults && !loading && results.length > 0 && (
+        {(!isFiltering || (!loading && totalVisibleProducts > 0)) && (
           <p className="text-xs text-on-surface-variant">
-            {results.length} productos
-            {selectedCategory ? ` en ${selectedCategory.name}` : ""}
+            {totalVisibleProducts.toLocaleString("es-PR")} productos
+            {displayGroups.length > 1
+              ? ` en ${displayGroups.length} categorías`
+              : selectedCategory
+                ? ` en ${selectedCategory.name}`
+                : ""}
             {hasSearch ? ` para "${query.trim()}"` : ""}
-            {results.length >= 100 ? " · mostrando los primeros 100" : ""}
+            {isFiltering && results.length >= 500
+              ? " · mostrando los primeros 500"
+              : ""}
           </p>
         )}
       </div>

@@ -1,5 +1,5 @@
 import { getLoyverseStatus } from "@/lib/loyverse";
-import { listProductCategories } from "@/lib/db";
+import { listAllProductsGroupedByCategory, listProductCategories } from "@/lib/db";
 import { ProductosContent } from "@/components/productos/ProductosContent";
 
 export const metadata = {
@@ -9,15 +9,17 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function ProductosPage() {
-  const [loyverseStatus, categories] = await Promise.all([
+  const [loyverseStatus, categories, groupedCatalog] = await Promise.all([
     getLoyverseStatus("gurabo"),
     listProductCategories("gurabo"),
+    listAllProductsGroupedByCategory("gurabo"),
   ]);
 
   return (
     <ProductosContent
       loyverseStatus={loyverseStatus}
       categories={categories}
+      groupedCatalog={groupedCatalog}
     />
   );
 }

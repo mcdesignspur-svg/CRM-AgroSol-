@@ -33,7 +33,7 @@ export function useProductSearch(
 
       const params = new URLSearchParams({
         branchId,
-        limit: "100",
+        limit: "500",
       });
 
       if (trimmedQuery.length >= 2) {

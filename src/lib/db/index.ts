@@ -19,6 +19,7 @@ export {
   countCatalogProducts,
   createProduct,
   getCatalogProducts,
+  listAllProductsGroupedByCategory,
   searchCatalogProducts,
 } from "./products";
 export { listProductCategories } from "./categories";
