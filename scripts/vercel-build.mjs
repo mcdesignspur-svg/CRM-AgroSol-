@@ -63,10 +63,31 @@ if (shouldRunMigrations) {
   }
 
   console.log("Running prisma migrate deploy...");
-  execSync("npx prisma migrate deploy", {
-    stdio: "inherit",
-    env: { ...process.env, DATABASE_URL: migrationUrl },
-  });
+  const migrateEnv = { ...process.env, DATABASE_URL: migrationUrl };
+  let migrated = false;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      execSync("npx prisma migrate deploy", {
+        stdio: "inherit",
+        env: migrateEnv,
+      });
+      migrated = true;
+      break;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (attempt < 3 && message.includes("P1002")) {
+        console.warn(
+          `migrate deploy timeout (intento ${attempt}/3), reintentando en 5s...`,
+        );
+        execSync("sleep 5");
+        continue;
+      }
+      throw error;
+    }
+  }
+  if (!migrated) {
+    throw new Error("prisma migrate deploy failed after retries");
+  }
 } else {
   const reasons = [];
   if (!isProduction) {
