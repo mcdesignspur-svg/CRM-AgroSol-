@@ -94,12 +94,14 @@ Requiere `DATABASE_URL` apuntando a una instancia PostgreSQL accesible.
 
 1. Conecta el repositorio de GitHub en [vercel.com](https://vercel.com)
 2. Framework preset: **Next.js**
-3. Añade la variable de entorno `DATABASE_URL` (p. ej. Neon, Supabase o Railway)
+3. Añade las variables de entorno en **Production**:
+   - `DATABASE_URL` — URL de la app en runtime (en Neon, la URL **pooled** con `-pooler`)
+   - `DIRECT_DATABASE_URL` — URL **directa** (sin `-pooler`), usada por el build para las migraciones. Las migraciones de Prisma necesitan conexión directa; a través del pooler fallan con timeout (`P1002`).
 4. En **Settings → Environments → Production**, confirma:
    - **Production Branch**: `main`
    - **Auto-assign Custom Production Domains**: activado (cada push a `main` va directo a producción)
 5. Ejecuta migraciones contra la base de producción antes del primer deploy (`npm run db:deploy`)
-6. El build ejecuta migraciones automáticamente **si** `DATABASE_URL` está disponible en el entorno de build
+6. El build de **producción** ejecuta `prisma migrate deploy` automáticamente (y falla si faltan las variables). Los builds de **preview** no ejecutan migraciones.
 
 ### Despliegue automático a producción
 
