@@ -26,7 +26,6 @@ const DRAFT_STORAGE_KEY = "agrosol-order-draft";
 interface OrderDraft {
   customerName: string;
   customerPhone: string;
-  telegramChatId: string;
   deliveryAddress: string;
   method: FulfillmentMethod;
   branchId: BranchId;
@@ -53,7 +52,6 @@ export default function NuevaOrdenClient({
   const [branchId, setBranchId] = useState<BranchId>(DEFAULT_BRANCH);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [telegramChatId, setTelegramChatId] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [lineItems, setLineItems] = useState<OrderLineItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -75,7 +73,6 @@ export default function NuevaOrdenClient({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setCustomerName(draft.customerName ?? "");
       setCustomerPhone(draft.customerPhone ?? "");
-      setTelegramChatId(draft.telegramChatId ?? "");
       setDeliveryAddress(draft.deliveryAddress ?? "");
       setMethod(draft.method ?? "pickup");
       setBranchId(draft.branchId ?? DEFAULT_BRANCH);
@@ -122,7 +119,6 @@ export default function NuevaOrdenClient({
     const draft: OrderDraft = {
       customerName,
       customerPhone,
-      telegramChatId,
       deliveryAddress,
       method,
       branchId,
@@ -186,7 +182,6 @@ export default function NuevaOrdenClient({
         body: JSON.stringify({
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim() || undefined,
-          telegramChatId: telegramChatId.trim() || undefined,
           deliveryAddress:
             method === "delivery" ? deliveryAddress.trim() : undefined,
           branchId,
@@ -202,7 +197,16 @@ export default function NuevaOrdenClient({
       if (!res.ok) throw new Error(data.error ?? "Error al crear orden");
       localStorage.removeItem(DRAFT_STORAGE_KEY);
       setSubmitted(true);
-      showToast("Orden confirmada y ping enviado a sucursal", "success");
+      if (method === "pickup") {
+        showToast(
+          data.confirmationNotifiedAt
+            ? "Orden creada — confirmación enviada por Telegram"
+            : "Orden creada — revisa el panel de pickup en el detalle",
+          "success",
+        );
+      } else {
+        showToast("Orden confirmada y ping enviado a sucursal", "success");
+      }
       router.push(`/ordenes/${encodeURIComponent(data.id)}`);
     } catch (error) {
       showToast(
@@ -276,46 +280,29 @@ export default function NuevaOrdenClient({
                     </div>
                   </div>
                   {method === "pickup" && (
-                    <div className="space-y-1 md:col-span-2">
-                      <label className="text-xs font-medium text-on-surface-variant">
-                        Chat ID de Telegram (pruebas)
-                      </label>
-                      <input
-                        className="w-full bg-white border border-outline px-4 py-2 font-medium"
-                        type="text"
-                        placeholder="Opcional — o comparte el enlace del bot al cliente"
-                        value={telegramChatId}
-                        onChange={(e) => setTelegramChatId(e.target.value)}
-                      />
-                    </div>
-                  )}
-                </div>
-                <div className="mt-6 flex items-start gap-4 lg:hidden">
-                  {method === "delivery" && (
-                    <>
-                      <input
-                        className="mt-1 w-4 h-4 border border-outline"
-                        type="checkbox"
-                        id="sms-notify-mobile"
-                        checked={smsNotify}
-                        onChange={(e) => setSmsNotify(e.target.checked)}
-                      />
-                      <label
-                        htmlFor="sms-notify-mobile"
-                        className="text-xs font-medium leading-tight"
-                      >
-                        Confirmación por SMS al cliente al despachar desde almacén.
-                      </label>
-                    </>
-                  )}
-                  {method === "pickup" && (
-                    <p className="text-xs font-medium leading-tight text-on-surface-variant">
-                      El cliente recibirá confirmación y aviso de orden lista por
-                      Telegram (pruebas). Comparte el enlace del bot desde el detalle
-                      de la orden.
+                    <p className="text-xs font-medium leading-tight text-on-surface-variant md:col-span-2">
+                      Al confirmar, el cliente recibe la confirmación por Telegram.
+                      Luego marca la orden lista y comparte el enlace de retiro.
                     </p>
                   )}
                 </div>
+                {method === "delivery" && (
+                  <div className="mt-6 flex items-start gap-4 lg:hidden">
+                    <input
+                      className="mt-1 w-4 h-4 border border-outline"
+                      type="checkbox"
+                      id="sms-notify-mobile"
+                      checked={smsNotify}
+                      onChange={(e) => setSmsNotify(e.target.checked)}
+                    />
+                    <label
+                      htmlFor="sms-notify-mobile"
+                      className="text-xs font-medium leading-tight"
+                    >
+                      Confirmación por SMS al cliente al despachar desde almacén.
+                    </label>
+                  </div>
+                )}
               </section>
 
               <section className="bg-white rounded-xl border border-outline p-6 shadow-sm">
@@ -646,9 +633,8 @@ export default function NuevaOrdenClient({
                       </div>
                     ) : (
                       <p className="text-xs font-medium leading-tight text-on-surface-variant">
-                        Pickup: el cliente recibe confirmación y aviso de orden
-                        lista por Telegram. Comparte el enlace del bot desde el
-                        detalle de la orden.
+                        Pickup: confirmación y aviso de lista se envían por Telegram
+                        al crear y al marcar lista en el detalle de la orden.
                       </p>
                     )}
                     <button

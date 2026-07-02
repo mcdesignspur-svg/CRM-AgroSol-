@@ -18,6 +18,7 @@ import {
   STATUS_ACTION_LABELS,
 } from "@/lib/order-status";
 import type { OrderDetail, OrderStatus } from "@/lib/types";
+import { PickupTelegramPanel } from "@/components/ordenes/PickupTelegramPanel";
 
 interface OrderDetailClientProps {
   initialOrder: OrderDetail;
@@ -43,10 +44,19 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
         return;
       }
       setOrder(data);
-      showToast(
-        `Orden actualizada: ${ORDER_STATUS_LABELS[nextStatus]}`,
-        "success",
-      );
+      if (order.fulfillment === "pickup" && nextStatus === "listo") {
+        showToast(
+          data.readyNotifiedAt
+            ? "Orden lista — aviso enviado por Telegram"
+            : `Orden actualizada: ${ORDER_STATUS_LABELS[nextStatus]}`,
+          data.readyNotifiedAt ? "success" : "success",
+        );
+      } else {
+        showToast(
+          `Orden actualizada: ${ORDER_STATUS_LABELS[nextStatus]}`,
+          "success",
+        );
+      }
       router.refresh();
     } catch {
       showToast("Error al actualizar la orden", "error");
@@ -213,6 +223,9 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
           </div>
 
           <div className="lg:col-span-4 space-y-6">
+            {order.fulfillment === "pickup" && (
+              <PickupTelegramPanel order={order} />
+            )}
             <section className="bg-white rounded-xl border border-outline shadow-sm">
               <div className="px-4 py-3 border-b border-outline bg-surface">
                 <h3 className="text-sm font-semibold text-on-surface">Resumen</h3>
@@ -266,45 +279,28 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-xs font-medium text-on-surface-variant text-gray-500">
-                  Notificación lista (Telegram)
+                  Confirmación Telegram
+                </span>
+                <span className="font-bold uppercase text-xs">
+                  {order.confirmationNotifiedAt ? "Enviada" : "Pendiente"}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-xs font-medium text-on-surface-variant text-gray-500">
+                  Aviso orden lista
                 </span>
                 <span className="font-bold uppercase text-xs">
                   {order.readyNotifiedAt ? "Enviada" : "Pendiente"}
                 </span>
               </div>
-              {order.fulfillment === "pickup" && order.pickupUrl && (
-                <div className="pt-2 border-t border-outline space-y-2">
-                  <p className="text-xs font-medium text-on-surface-variant">
-                    Enlace de retiro (cliente)
-                  </p>
-                  <a
-                    href={order.pickupUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-primary break-all hover:underline"
-                  >
-                    {order.pickupUrl}
-                  </a>
-                  {order.telegramStartLink && (
-                    <>
-                      <p className="text-xs font-medium text-on-surface-variant pt-1">
-                        Bot de Telegram (confirmaciones)
-                      </p>
-                      <a
-                        href={order.telegramStartLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs text-primary break-all hover:underline"
-                      >
-                        {order.telegramStartLink}
-                      </a>
-                    </>
-                  )}
-                  {order.confirmationNotifiedAt && (
-                    <p className="text-xs text-emerald-700">
-                      Confirmación enviada por Telegram
-                    </p>
-                  )}
+              {order.arrivedAt && (
+                <div className="flex justify-between gap-4">
+                  <span className="text-xs font-medium text-on-surface-variant text-gray-500">
+                    Cliente en camino
+                  </span>
+                  <span className="font-bold uppercase text-xs text-orange-700">
+                    Sí
+                  </span>
                 </div>
               )}
               {order.status === "completado" && (

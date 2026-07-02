@@ -433,13 +433,17 @@ export async function createOrder(input: CreateOrderInput) {
   for (let attempt = 0; attempt < CREATE_ORDER_MAX_RETRIES; attempt++) {
     try {
       const order = await createOrderTransaction(orderInput);
-      const detail = mapOrderDetail(order);
 
       if (input.fulfillment === "pickup") {
-        void sendPickupOrderConfirmation(order.id);
+        await sendPickupOrderConfirmation(order.id);
       }
 
-      return detail;
+      const fresh = await prisma.order.findUniqueOrThrow({
+        where: { id: order.id },
+        include: { lineItems: { orderBy: { name: "asc" } } },
+      });
+
+      return mapOrderDetail(fresh);
     } catch (error) {
       const isDisplayIdConflict =
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -530,10 +534,6 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
           description: `${existing.customerName} puede retirar en sucursal ${existing.branchId}.`,
         },
       });
-
-      if (existing.fulfillment === "pickup") {
-        void sendPickupOrderReady(existing.id);
-      }
     }
 
     if (nextStatus === "completado") {
@@ -553,5 +553,14 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
     return order;
   });
 
-  return mapOrderDetail(updated);
+  if (nextStatus === "listo" && updated.fulfillment === "pickup") {
+    await sendPickupOrderReady(updated.id);
+  }
+
+  const fresh = await prisma.order.findUniqueOrThrow({
+    where: { displayId },
+    include: { lineItems: { orderBy: { name: "asc" } } },
+  });
+
+  return mapOrderDetail(fresh);
 }
