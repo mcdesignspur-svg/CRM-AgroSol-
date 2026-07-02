@@ -1,11 +1,26 @@
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import {
   getOrderByDisplayId,
   updateOrderStatus,
   OrderValidationError,
+  OrderConflictError,
 } from "@/lib/db";
 import type { OrderStatus } from "@/lib/types";
+
+const ORDER_STATUSES: OrderStatus[] = [
+  "pendiente",
+  "en-transito",
+  "listo",
+  "atrasado",
+  "completado",
+];
+
+function isOrderStatus(value: unknown): value is OrderStatus {
+  return (
+    typeof value === "string" &&
+    ORDER_STATUSES.includes(value as OrderStatus)
+  );
+}
 
 export async function GET(
   _request: Request,
@@ -36,26 +51,24 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const status = body.status as OrderStatus;
 
-    if (!status) {
+    if (!isOrderStatus(body.status)) {
       return NextResponse.json(
-        { error: "El estado es obligatorio" },
+        {
+          error: `Estado inválido. Valores permitidos: ${ORDER_STATUSES.join(", ")}`,
+        },
         { status: 400 },
       );
     }
 
-    const order = await updateOrderStatus(decodeURIComponent(id), status);
+    const order = await updateOrderStatus(decodeURIComponent(id), body.status);
     return NextResponse.json(order);
   } catch (error) {
     if (error instanceof OrderValidationError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
-      return NextResponse.json({ error: "Orden no encontrada" }, { status: 404 });
+    if (error instanceof OrderConflictError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
     }
     console.error("PATCH /api/orders/[id]", error);
     return NextResponse.json(

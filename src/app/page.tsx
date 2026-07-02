@@ -18,6 +18,10 @@ import {
   getBranches,
 } from "@/lib/db";
 
+export const metadata = {
+  title: "Panel",
+};
+
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
@@ -35,7 +39,7 @@ export default async function DashboardPage() {
         topBar={<TopBar />}
         rightPanel={
           <div data-pings-panel>
-            <LivePingsPanel initialPings={pings} branches={branches} />
+            <LivePingsPanel branches={branches} />
           </div>
         }
       >

@@ -6,32 +6,18 @@ import {
   useContext,
   useState,
 } from "react";
+import { PingCard } from "@/components/dashboard/PingCard";
 import { useToast } from "@/components/providers/ToastProvider";
 import type { Ping } from "@/lib/types";
 
 interface PingsSheetContextValue {
   openPings: () => void;
+  pings: Ping[];
+  dismissPing: (id: string) => Promise<void>;
+  callDriver: (ping: Ping) => void;
 }
 
 const PingsSheetContext = createContext<PingsSheetContextValue | null>(null);
-
-const priorityStyles: Record<
-  Ping["priority"],
-  { badge: string; border: string }
-> = {
-  urgente: {
-    badge: "bg-primary text-white",
-    border: "industrial-border bg-white industrial-shadow",
-  },
-  sistema: {
-    badge: "text-primary",
-    border: "border-l-4 border-primary bg-surface-container",
-  },
-  advertencia: {
-    badge: "text-secondary",
-    border: "border-l-4 border-secondary bg-surface-container",
-  },
-};
 
 export function PingsSheetProvider({
   initialPings,
@@ -46,22 +32,38 @@ export function PingsSheetProvider({
 
   const openPings = useCallback(() => setOpen(true), []);
 
-  async function dismissPing(id: string) {
-    try {
-      await fetch(`/api/pings/${id}`, { method: "PATCH" });
-      setPings((prev) => prev.filter((p) => p.id !== id));
-      showToast("Ping descartado", "info");
-    } catch {
-      showToast("Error al descartar ping", "error");
-    }
-  }
+  const dismissPing = useCallback(
+    async (id: string) => {
+      try {
+        const res = await fetch(`/api/pings/${id}`, { method: "PATCH" });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          showToast(
+            (data as { error?: string }).error ?? "Error al descartar ping",
+            "error",
+          );
+          return;
+        }
+        setPings((prev) => prev.filter((p) => p.id !== id));
+        showToast("Ping descartado", "info");
+      } catch {
+        showToast("Error al descartar ping", "error");
+      }
+    },
+    [showToast],
+  );
 
-  function callDriver(ping: Ping) {
-    showToast(`Contactando — ${ping.title}`, "info");
-  }
+  const callDriver = useCallback(
+    (ping: Ping) => {
+      showToast(`Contactando — ${ping.title}`, "info");
+    },
+    [showToast],
+  );
 
   return (
-    <PingsSheetContext.Provider value={{ openPings }}>
+    <PingsSheetContext.Provider
+      value={{ openPings, pings, dismissPing, callDriver }}
+    >
       {children}
 
       {pings.length > 0 && (
@@ -80,7 +82,6 @@ export function PingsSheetProvider({
         </button>
       )}
 
-      {/* Bottom sheet */}
       {open && (
         <div className="lg:hidden fixed inset-0 z-[70]">
           <button
@@ -116,49 +117,14 @@ export function PingsSheetProvider({
                   Sin pings activos
                 </p>
               ) : (
-                pings.map((ping) => {
-                  const styles = priorityStyles[ping.priority];
-                  return (
-                    <div key={ping.id} className={`p-4 ${styles.border}`}>
-                      <div className="flex justify-between items-start mb-2">
-                        <span
-                          className={`text-[10px] font-bold uppercase px-2 py-0.5 ${styles.badge}`}
-                        >
-                          {ping.priority === "urgente"
-                            ? "Urgente"
-                            : ping.priority === "sistema"
-                              ? "Sistema"
-                              : "Advertencia"}
-                        </span>
-                        <span className="text-[10px] font-mono opacity-60">
-                          {ping.timeAgo}
-                        </span>
-                      </div>
-                      <p className="text-sm font-bold">{ping.title}</p>
-                      <p className="text-xs text-on-surface-variant mt-1">
-                        {ping.description}
-                      </p>
-                      {ping.priority === "urgente" && (
-                        <div className="mt-3 flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => dismissPing(ping.id)}
-                            className="text-[10px] font-bold uppercase border border-black px-3 py-2 min-h-[44px]"
-                          >
-                            Descartar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => callDriver(ping)}
-                            className="text-[10px] font-bold uppercase bg-black text-white px-3 py-2 min-h-[44px]"
-                          >
-                            Llamar
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
+                pings.map((ping) => (
+                  <PingCard
+                    key={ping.id}
+                    ping={ping}
+                    onDismiss={dismissPing}
+                    onCallDriver={callDriver}
+                  />
+                ))
               )}
             </div>
           </div>

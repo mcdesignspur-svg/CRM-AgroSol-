@@ -2,50 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { PingCard } from "@/components/dashboard/PingCard";
+import { usePingsSheet } from "@/components/dashboard/PingsSheetProvider";
 import { useToast } from "@/components/providers/ToastProvider";
-import type { Branch, Order, Ping } from "@/lib/types";
+import type { Branch, Order } from "@/lib/types";
 
-const priorityStyles: Record<
-  Ping["priority"],
-  { badge: string; border: string }
-> = {
-  urgente: {
-    badge: "bg-primary text-white",
-    border: "industrial-border bg-white industrial-shadow",
-  },
-  sistema: {
-    badge: "text-primary",
-    border: "border-l-4 border-primary bg-surface-container",
-  },
-  advertencia: {
-    badge: "text-secondary",
-    border: "border-l-4 border-secondary bg-surface-container",
-  },
-};
-
-export function LivePingsPanel({
-  initialPings,
-  branches,
-}: {
-  initialPings: Ping[];
-  branches: Branch[];
-}) {
-  const [pings, setPings] = useState(initialPings);
-  const { showToast } = useToast();
-
-  async function dismissPing(id: string) {
-    try {
-      await fetch(`/api/pings/${id}`, { method: "PATCH" });
-      setPings((prev) => prev.filter((p) => p.id !== id));
-      showToast("Ping descartado", "info");
-    } catch {
-      showToast("Error al descartar ping", "error");
-    }
-  }
-
-  function callDriver(ping: Ping) {
-    showToast(`Contactando — ${ping.title}`, "info");
-  }
+export function LivePingsPanel({ branches }: { branches: Branch[] }) {
+  const { pings, dismissPing, callDriver } = usePingsSheet();
 
   return (
     <aside className="hidden lg:flex flex-col w-80 border-l-2 border-on-background bg-surface-container-lowest h-full shrink-0">
@@ -65,49 +28,14 @@ export function LivePingsPanel({
             Sin pings activos
           </p>
         ) : (
-          pings.map((ping) => {
-            const styles = priorityStyles[ping.priority];
-            return (
-              <div key={ping.id} className={`p-4 ${styles.border}`}>
-                <div className="flex justify-between items-start mb-2">
-                  <span
-                    className={`text-[10px] font-bold uppercase px-2 py-0.5 ${styles.badge}`}
-                  >
-                    {ping.priority === "urgente"
-                      ? "Urgente"
-                      : ping.priority === "sistema"
-                        ? "Sistema"
-                        : "Advertencia"}
-                  </span>
-                  <span className="text-[10px] font-mono opacity-60">
-                    {ping.timeAgo}
-                  </span>
-                </div>
-                <p className="text-sm font-bold">{ping.title}</p>
-                <p className="text-xs text-on-surface-variant mt-1">
-                  {ping.description}
-                </p>
-                {ping.priority === "urgente" && (
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => dismissPing(ping.id)}
-                      className="text-[10px] font-bold uppercase border border-black px-2 py-1 hover:bg-gray-100 transition-colors"
-                    >
-                      Descartar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => callDriver(ping)}
-                      className="text-[10px] font-bold uppercase bg-black text-white px-2 py-1 hover:bg-primary transition-colors"
-                    >
-                      Llamar
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })
+          pings.map((ping) => (
+            <PingCard
+              key={ping.id}
+              ping={ping}
+              onDismiss={dismissPing}
+              onCallDriver={callDriver}
+            />
+          ))
         )}
 
         {pings.length > 0 && (
@@ -154,33 +82,56 @@ export function LivePingsPanel({
   );
 }
 
+function csvEscape(value: string): string {
+  if (/[",\n\r]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
 export function DashboardHeader() {
   const { showToast } = useToast();
   const [exporting, setExporting] = useState(false);
 
   async function handleExport() {
     setExporting(true);
-    await new Promise((r) => setTimeout(r, 600));
+    try {
+      const res = await fetch("/api/orders?limit=1000&offset=0");
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? "Error al exportar datos");
+      }
 
-    const res = await fetch("/api/orders?limit=1000&offset=0");
-    const data = await res.json();
-    const header = "ID,Cliente,Tipo,Sucursal,Estado,Tiempo";
-    const rows = data.orders.map(
-      (o: Order) =>
-        `${o.id},${o.customerName},${o.type},${o.branchId},${o.status},${o.elapsedTime}`,
-    );
-    const csv = [header, ...rows].join("\n");
+      const header = "ID,Cliente,Tipo,Sucursal,Estado,Tiempo";
+      const rows = (data.orders as Order[]).map((o) =>
+        [
+          csvEscape(o.id),
+          csvEscape(o.customerName),
+          csvEscape(o.type),
+          csvEscape(o.branchId),
+          csvEscape(o.status),
+          csvEscape(o.elapsedTime),
+        ].join(","),
+      );
+      const csv = [header, ...rows].join("\n");
 
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "agrosol-ordenes.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "agrosol-ordenes.csv";
+      a.click();
+      URL.revokeObjectURL(url);
 
-    setExporting(false);
-    showToast("Datos exportados correctamente", "success");
+      showToast("Datos exportados correctamente", "success");
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Error al exportar datos",
+        "error",
+      );
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (

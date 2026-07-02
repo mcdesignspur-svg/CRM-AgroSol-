@@ -1,6 +1,10 @@
 import { getRecentOrders, getOrdersCount } from "@/lib/db";
 import { OrdenesContent } from "@/components/ordenes/OrdenesContent";
 
+export const metadata = {
+  title: "Órdenes",
+};
+
 export const dynamic = "force-dynamic";
 
 interface OrdenesPageProps {
@@ -18,6 +22,7 @@ export default async function OrdenesPage({ searchParams }: OrdenesPageProps) {
 
   return (
     <OrdenesContent
+      key={q ?? ""}
       initialOrders={orders}
       initialTotal={total}
       initialSearch={q ?? ""}

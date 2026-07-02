@@ -3,11 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/constants";
-
-function isActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
-  return pathname.startsWith(href);
-}
+import { isNavActive } from "./navActive";
 
 interface SidebarNavProps {
   onNavigate?: () => void;
@@ -26,7 +22,7 @@ export function SidebarNav({
     <>
       <nav className="flex-1 space-y-2 px-2">
         {NAV_ITEMS.map((item) => {
-          const active = isActive(pathname, item.href);
+          const active = isNavActive(pathname, item.href);
           return (
             <Link
               key={item.href}

@@ -1,6 +1,10 @@
 import { ConductorContent } from "@/components/conductor/ConductorContent";
 import { getActiveDeliveryOrders, getOrdersCount } from "@/lib/db";
 
+export const metadata = {
+  title: "Conductor",
+};
+
 export const dynamic = "force-dynamic";
 
 export default async function ConductorPage() {

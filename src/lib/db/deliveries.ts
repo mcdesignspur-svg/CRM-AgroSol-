@@ -41,15 +41,13 @@ export function formatDeliveryEta(createdAt: Date): string {
 }
 
 async function getNextDeliveryDisplayId(tx: Prisma.TransactionClient) {
-  const latest = await tx.delivery.findFirst({
-    orderBy: { displayId: "desc" },
-    select: { displayId: true },
-  });
+  const rows = await tx.$queryRaw<{ max: number | null }[]>`
+    SELECT COALESCE(MAX(CAST(SUBSTRING(display_id FROM 5) AS INTEGER)), 8920) AS max
+    FROM deliveries
+    WHERE display_id ~ '^TRK-[0-9]+$'
+  `;
 
-  const latestNumber = latest
-    ? Number.parseInt(latest.displayId.replace(/^TRK-/, ""), 10)
-    : 8920;
-
+  const latestNumber = Number(rows[0]?.max ?? 8920);
   return `TRK-${latestNumber + 1}`;
 }
 

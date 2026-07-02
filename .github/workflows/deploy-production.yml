@@ -1,12 +1,16 @@
 name: Production Deploy
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
     branches:
       - main
 
 concurrency:
-  group: production-${{ github.ref }}
+  group: production-${{ github.event.workflow_run.head_branch }}
   cancel-in-progress: true
 
 env:
@@ -16,10 +20,13 @@ env:
 jobs:
   deploy:
     name: Deploy to Vercel Production
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -31,7 +38,7 @@ jobs:
         run: npm ci
 
       - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+        run: npm install --global vercel@54.18.7
 
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}

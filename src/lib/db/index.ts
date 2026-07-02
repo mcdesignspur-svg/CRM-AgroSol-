@@ -3,11 +3,13 @@ export { getActiveDeliveries, getCompletedDeliveriesCount, getDeliveriesCount } 
 export { getDashboardMetrics } from "./metrics";
 export { clearNotificationLogs, getNotificationLogs } from "./notifications";
 export {
+  buildOrderWhere,
   createOrder,
   getActiveDeliveryOrders,
   getOrderByDisplayId,
   getOrdersCount,
   getRecentOrders,
+  OrderConflictError,
   OrderValidationError,
   updateOrderStatus,
 } from "./orders";

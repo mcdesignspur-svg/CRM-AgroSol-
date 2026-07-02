@@ -6,22 +6,66 @@ import {
   getOrdersCount,
   createOrder,
   OrderValidationError,
+  OrderConflictError,
   type OrderFilters,
 } from "@/lib/db";
 import { isBranchId } from "@/lib/branch-definitions";
 import type { BranchId, OrderStatus, OrderType } from "@/lib/types";
 
+const ORDER_STATUS_FILTERS = new Set<OrderStatus | "all">([
+  "all",
+  "pendiente",
+  "en-transito",
+  "listo",
+  "atrasado",
+  "completado",
+]);
+
+const ORDER_TYPE_FILTERS = new Set<OrderType | "all">([
+  "all",
+  "entrega",
+  "retiro",
+]);
+
+function parseStatus(value: string | null): OrderStatus | "all" {
+  if (value && ORDER_STATUS_FILTERS.has(value as OrderStatus | "all")) {
+    return value === "all" ? "all" : (value as OrderStatus);
+  }
+  return "all";
+}
+
+function parseType(value: string | null): OrderType | "all" {
+  if (value && ORDER_TYPE_FILTERS.has(value as OrderType | "all")) {
+    return value === "all" ? "all" : (value as OrderType);
+  }
+  return "all";
+}
+
+function parseLimit(value: string | null): number {
+  const parsed = Number(value ?? "20");
+  if (!Number.isFinite(parsed)) {
+    return 20;
+  }
+  return Math.min(100, Math.max(1, Math.trunc(parsed)));
+}
+
+function parseOffset(value: string | null): number {
+  const parsed = Number(value ?? "0");
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return 0;
+  }
+  return Math.trunc(parsed);
+}
+
 function parseFilters(searchParams: URLSearchParams): OrderFilters {
-  const status = searchParams.get("status");
-  const type = searchParams.get("type");
   const branchId = searchParams.get("branchId");
   const fulfillment = searchParams.get("fulfillment");
   const activeDelivery = searchParams.get("activeDelivery") === "true";
   const q = searchParams.get("q") ?? undefined;
 
   return {
-    status: (status as OrderStatus | "all" | null) ?? "all",
-    type: (type as OrderType | "all" | null) ?? "all",
+    status: parseStatus(searchParams.get("status")),
+    type: parseType(searchParams.get("type")),
     branchId:
       branchId && isBranchId(branchId) ? (branchId as BranchId) : "all",
     fulfillment:
@@ -33,11 +77,47 @@ function parseFilters(searchParams: URLSearchParams): OrderFilters {
   };
 }
 
+function parseLineItems(
+  raw: unknown,
+): { productId: string; quantity: number }[] | null {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return null;
+  }
+
+  const items: { productId: string; quantity: number }[] = [];
+
+  for (const item of raw) {
+    if (!item || typeof item !== "object") {
+      return null;
+    }
+
+    const productId = (item as { productId?: unknown }).productId;
+    const quantity = (item as { quantity?: unknown }).quantity;
+
+    if (typeof productId !== "string" || !productId.trim()) {
+      return null;
+    }
+
+    if (
+      typeof quantity !== "number" ||
+      !Number.isInteger(quantity) ||
+      quantity <= 0 ||
+      quantity > 10_000
+    ) {
+      return null;
+    }
+
+    items.push({ productId: productId.trim(), quantity });
+  }
+
+  return items;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = Number(searchParams.get("limit") ?? "20");
-    const offset = Number(searchParams.get("offset") ?? "0");
+    const limit = parseLimit(searchParams.get("limit"));
+    const offset = parseOffset(searchParams.get("offset"));
     const filters = parseFilters(searchParams);
 
     if (filters.activeDelivery) {
@@ -84,6 +164,20 @@ export async function POST(request: Request) {
       );
     }
 
+    const fulfillment =
+      body.fulfillment === "delivery" ? "delivery" : "pickup";
+    const lineItems = parseLineItems(body.lineItems);
+
+    if (!lineItems) {
+      return NextResponse.json(
+        {
+          error:
+            "lineItems debe ser un arreglo no vacío con productId (string) y quantity (entero 1–10000)",
+        },
+        { status: 400 },
+      );
+    }
+
     const order = await createOrder({
       customerName: String(body.customerName ?? ""),
       customerPhone: body.customerPhone
@@ -92,20 +186,18 @@ export async function POST(request: Request) {
       deliveryAddress: body.deliveryAddress
         ? String(body.deliveryAddress)
         : undefined,
-      type: body.type ?? "retiro",
       branchId: branchId as BranchId,
-      fulfillment: body.fulfillment ?? "pickup",
+      fulfillment,
       smsNotify: Boolean(body.smsNotify),
-      subtotal: Number(body.subtotal ?? 0),
-      taxes: Number(body.taxes ?? 0),
-      deliveryFee: Number(body.deliveryFee ?? 0),
-      total: Number(body.total ?? 0),
-      lineItems: body.lineItems ?? [],
+      lineItems,
     });
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
     if (error instanceof OrderValidationError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (error instanceof OrderConflictError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
     }
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
