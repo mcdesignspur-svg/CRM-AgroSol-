@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { BRANCH_DEFINITIONS } from "@/lib/branch-definitions";
 import { resolveDisplayStatus } from "@/lib/order-status";
 import { toAppOrderStatus } from "@/lib/db/mappers";
 import {
@@ -38,10 +39,22 @@ const PUBLIC_STATUS_LABELS: Record<string, string> = {
   completado: "Completada",
 };
 
+function resolveBranchPhone(
+  branch: { id: string; phone: string | null },
+): string | null {
+  return (
+    branch.phone ??
+    BRANCH_DEFINITIONS.find((item) => item.id === branch.id)?.phone ??
+    null
+  );
+}
+
 function mapPublicPickup(
   order: Awaited<ReturnType<typeof getPickupOrderRecord>>,
 ): PublicPickupOrder | null {
-  if (!order?.pickupToken || !order.branch.phone) return null;
+  if (!order?.pickupToken) return null;
+  const branchPhone = resolveBranchPhone(order.branch);
+  if (!branchPhone) return null;
 
   const status = resolveDisplayStatus({
     status: toAppOrderStatus(order.status),
@@ -61,7 +74,7 @@ function mapPublicPickup(
     statusLabel: PUBLIC_STATUS_LABELS[status] ?? status,
     branchName: order.branch.name,
     branchAddress: order.branch.address,
-    branchPhone: order.branch.phone,
+    branchPhone,
     total: Number(order.total),
     arrivedAt: order.arrivedAt?.toISOString() ?? null,
     canNotifyArrival,

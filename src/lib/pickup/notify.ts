@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { BRANCH_DEFINITIONS } from "@/lib/branch-definitions";
 import {
   buildOrderConfirmationMessage,
   buildOrderReadyMessage,
@@ -9,8 +10,21 @@ import type { Order, Branch } from "@prisma/client";
 
 type OrderWithBranch = Order & { branch: Branch };
 
+function resolveBranchPhone(branch: Branch): string | null {
+  return (
+    branch.phone ??
+    BRANCH_DEFINITIONS.find((item) => item.id === branch.id)?.phone ??
+    null
+  );
+}
+
 function buildContext(order: OrderWithBranch): PickupMessageContext | null {
-  if (!order.pickupToken || !order.branch.phone) {
+  const branchPhone = resolveBranchPhone(order.branch);
+  if (!order.pickupToken || !branchPhone) {
+    console.error(
+      `[pickup-notify] ${order.displayId}: contexto incompleto`,
+      { pickupToken: Boolean(order.pickupToken), branchPhone: Boolean(branchPhone) },
+    );
     return null;
   }
 
@@ -19,7 +33,7 @@ function buildContext(order: OrderWithBranch): PickupMessageContext | null {
     customerName: order.customerName,
     branchName: order.branch.name,
     branchAddress: order.branch.address,
-    branchPhone: order.branch.phone,
+    branchPhone,
     pickupToken: order.pickupToken,
     total: Number(order.total),
   };
@@ -32,6 +46,9 @@ async function notifyCustomer(
 ): Promise<boolean> {
   const chatId = resolveNotificationChatId(order.telegramChatId);
   if (!chatId) {
+    console.error(
+      `[pickup-notify] ${order.displayId}: sin chat_id (configura TELEGRAM_NOTIFICATIONS_CHAT_ID)`,
+    );
     return false;
   }
 
