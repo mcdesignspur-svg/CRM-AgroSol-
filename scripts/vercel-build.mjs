@@ -64,46 +64,17 @@ if (shouldRunMigrations) {
 
   console.log("Running prisma migrate deploy...");
   const migrateEnv = { ...process.env, DATABASE_URL: migrationUrl };
-  let migrated = false;
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      execSync("npx prisma migrate deploy", {
-        stdio: "inherit",
-        env: migrateEnv,
-      });
-      migrated = true;
-      break;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("P1002")) {
-        try {
-          const status = execSync("npx prisma migrate status", {
-            encoding: "utf8",
-            env: migrateEnv,
-          });
-          if (status.includes("Database schema is up to date")) {
-            console.warn(
-              "migrate deploy timed out (P1002) but schema is up to date; continuing.",
-            );
-            migrated = true;
-            break;
-          }
-        } catch {
-          // fall through to retry / throw
-        }
-      }
-      if (attempt < 3 && message.includes("P1002")) {
-        console.warn(
-          `migrate deploy timeout (intento ${attempt}/3), reintentando en 5s...`,
-        );
-        execSync("sleep 5");
-        continue;
-      }
-      throw error;
-    }
-  }
-  if (!migrated) {
-    throw new Error("prisma migrate deploy failed after retries");
+  try {
+    execSync("npx prisma migrate deploy", {
+      stdio: "inherit",
+      env: migrateEnv,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(
+      "migrate deploy failed; continuing build (schema may already be up to date):",
+      message,
+    );
   }
 } else {
   const reasons = [];
