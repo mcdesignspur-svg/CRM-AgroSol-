@@ -58,10 +58,15 @@ async function notifyCustomer(
     return false;
   }
 
-  await prisma.order.update({
-    where: { id: order.id },
-    data: { [field]: new Date() },
-  });
+  try {
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { [field]: new Date() },
+    });
+  } catch (error) {
+    console.error(`[pickup-notify] ${order.displayId}: db update`, error);
+    return false;
+  }
 
   return true;
 }
@@ -110,4 +115,26 @@ export async function sendPickupOrderReady(orderId: string): Promise<boolean> {
     buildOrderReadyMessage(ctx),
     "readyNotifiedAt",
   );
+}
+
+export async function sendPickupOrderConfirmationByDisplayId(
+  displayId: string,
+): Promise<boolean> {
+  const order = await prisma.order.findUnique({
+    where: { displayId },
+    select: { id: true },
+  });
+  if (!order) return false;
+  return sendPickupOrderConfirmation(order.id);
+}
+
+export async function sendPickupOrderReadyByDisplayId(
+  displayId: string,
+): Promise<boolean> {
+  const order = await prisma.order.findUnique({
+    where: { displayId },
+    select: { id: true },
+  });
+  if (!order) return false;
+  return sendPickupOrderReady(order.id);
 }

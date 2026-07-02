@@ -54,7 +54,7 @@ if (shouldRunMigrations) {
   }
 
   if (
-    process.env.DATABASE_URL?.includes("-pooler.") &&
+    process.env.DATABASE_URL?.includes("-pooler") &&
     !process.env.DIRECT_DATABASE_URL
   ) {
     console.warn(

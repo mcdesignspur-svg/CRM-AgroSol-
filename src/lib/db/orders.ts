@@ -19,10 +19,6 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import type { BranchId, OrderStatus, OrderType } from "@/lib/types";
 import {
-  sendPickupOrderConfirmation,
-  sendPickupOrderReady,
-} from "@/lib/pickup/notify";
-import {
   mapDriverOrder,
   mapOrder,
   mapOrderDetail,
@@ -433,17 +429,7 @@ export async function createOrder(input: CreateOrderInput) {
   for (let attempt = 0; attempt < CREATE_ORDER_MAX_RETRIES; attempt++) {
     try {
       const order = await createOrderTransaction(orderInput);
-
-      if (input.fulfillment === "pickup") {
-        await sendPickupOrderConfirmation(order.id);
-      }
-
-      const fresh = await prisma.order.findUniqueOrThrow({
-        where: { id: order.id },
-        include: { lineItems: { orderBy: { name: "asc" } } },
-      });
-
-      return mapOrderDetail(fresh);
+      return mapOrderDetail(order);
     } catch (error) {
       const isDisplayIdConflict =
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -553,14 +539,5 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
     return order;
   });
 
-  if (nextStatus === "listo" && updated.fulfillment === "pickup") {
-    await sendPickupOrderReady(updated.id);
-  }
-
-  const fresh = await prisma.order.findUniqueOrThrow({
-    where: { displayId },
-    include: { lineItems: { orderBy: { name: "asc" } } },
-  });
-
-  return mapOrderDetail(fresh);
+  return mapOrderDetail(updated);
 }

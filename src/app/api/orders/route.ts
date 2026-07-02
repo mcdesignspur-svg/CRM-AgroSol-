@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { Prisma } from "@prisma/client";
 import {
   getActiveDeliveryOrders,
@@ -10,6 +10,9 @@ import {
   type OrderFilters,
 } from "@/lib/db";
 import { isBranchId } from "@/lib/branch-definitions";
+import {
+  sendPickupOrderConfirmationByDisplayId,
+} from "@/lib/pickup/notify";
 import type { BranchId, OrderStatus, OrderType } from "@/lib/types";
 
 const ORDER_STATUS_FILTERS = new Set<OrderStatus | "all">([
@@ -194,6 +197,17 @@ export async function POST(request: Request) {
       smsNotify: Boolean(body.smsNotify),
       lineItems,
     });
+
+    if (order.fulfillment === "pickup") {
+      after(async () => {
+        try {
+          await sendPickupOrderConfirmationByDisplayId(order.id);
+        } catch (error) {
+          console.error("POST /api/orders telegram confirmation", error);
+        }
+      });
+    }
+
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
     if (error instanceof OrderValidationError) {
