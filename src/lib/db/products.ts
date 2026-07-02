@@ -18,11 +18,15 @@ export async function getCatalogProducts(branchId: BranchId = "gurabo") {
 
 export async function searchCatalogProducts(input: {
   branchId: BranchId;
-  query: string;
+  query?: string;
+  categoryId?: string | null;
   limit?: number;
 }) {
-  const query = input.query.trim();
-  if (query.length < 2) {
+  const query = input.query?.trim() ?? "";
+  const categoryId = input.categoryId?.trim() || undefined;
+  const uncategorized = categoryId === "__uncategorized__";
+
+  if (!categoryId && query.length < 2) {
     return [];
   }
 
@@ -30,15 +34,24 @@ export async function searchCatalogProducts(input: {
     where: {
       branchId: input.branchId,
       active: true,
-      OR: [
-        { name: { contains: query, mode: "insensitive" } },
-        { sku: { contains: query.toUpperCase(), mode: "insensitive" } },
-        { category: { name: { contains: query, mode: "insensitive" } } },
-      ],
+      ...(uncategorized
+        ? { categoryId: null }
+        : categoryId
+          ? { categoryId }
+          : {}),
+      ...(query.length >= 2
+        ? {
+            OR: [
+              { name: { contains: query, mode: "insensitive" } },
+              { sku: { contains: query.toUpperCase(), mode: "insensitive" } },
+              { category: { name: { contains: query, mode: "insensitive" } } },
+            ],
+          }
+        : {}),
     },
     include: productInclude,
-    orderBy: [{ name: "asc" }],
-    take: input.limit ?? 50,
+    orderBy: [{ category: { name: "asc" } }, { name: "asc" }],
+    take: input.limit ?? 100,
   });
 
   return rows.map(mapProduct);

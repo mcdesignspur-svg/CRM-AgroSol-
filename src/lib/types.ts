@@ -97,6 +97,18 @@ export interface Product {
   categoryName?: string;
 }
 
+export interface ProductCategorySummary {
+  id: string | null;
+  name: string;
+  productCount: number;
+}
+
+export interface ProductCategoryGroup {
+  categoryId?: string;
+  categoryName: string;
+  products: Product[];
+}
+
 export interface OrderLineItem extends Product {
   quantity: number;
 }

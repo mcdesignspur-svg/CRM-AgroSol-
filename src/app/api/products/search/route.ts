@@ -8,7 +8,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q") ?? "";
   const branchIdParam = searchParams.get("branchId") ?? "gurabo";
-  const limitParam = Number(searchParams.get("limit") ?? "50");
+  const categoryIdParam = searchParams.get("categoryId");
+  const limitParam = Number(searchParams.get("limit") ?? "100");
 
   if (!isBranchId(branchIdParam)) {
     return NextResponse.json(
@@ -17,10 +18,15 @@ export async function GET(request: Request) {
     );
   }
 
-  if (query.trim().length < 2) {
+  const categoryId =
+    categoryIdParam === "__uncategorized__"
+      ? "__uncategorized__"
+      : categoryIdParam?.trim() || undefined;
+
+  if (!categoryId && query.trim().length < 2) {
     return NextResponse.json({
       products: [],
-      message: "Escribe al menos 2 caracteres para buscar",
+      message: "Selecciona una categoría o escribe al menos 2 caracteres",
     });
   }
 
@@ -28,7 +34,8 @@ export async function GET(request: Request) {
     const products = await searchCatalogProducts({
       branchId: branchIdParam,
       query,
-      limit: Number.isFinite(limitParam) ? Math.min(limitParam, 100) : 50,
+      categoryId,
+      limit: Number.isFinite(limitParam) ? Math.min(limitParam, 200) : 100,
     });
 
     return NextResponse.json({ products, total: products.length });

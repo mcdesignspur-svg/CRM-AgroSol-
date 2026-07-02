@@ -19,3 +19,4 @@ export {
   getCatalogProducts,
   searchCatalogProducts,
 } from "./products";
+export { listProductCategories } from "./categories";
