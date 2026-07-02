@@ -93,6 +93,8 @@ export interface Product {
   name: string;
   sku: string;
   unitPrice: number;
+  categoryId?: string;
+  categoryName?: string;
 }
 
 export interface OrderLineItem extends Product {

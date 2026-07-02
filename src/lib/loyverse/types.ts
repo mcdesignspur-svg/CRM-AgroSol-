@@ -6,6 +6,12 @@ export interface LoyverseMerchant {
   name?: string;
 }
 
+export interface LoyverseCategory {
+  id: string;
+  name: string;
+  deleted_at?: string | null;
+}
+
 export interface LoyverseVariant {
   variant_id: string;
   sku?: string | null;
@@ -20,6 +26,7 @@ export interface LoyverseItem {
   id: string;
   item_name?: string;
   name?: string;
+  category_id?: string | null;
   deleted_at?: string | null;
   updated_at?: string | null;
   variants?: LoyverseVariant[];
@@ -46,6 +53,9 @@ export interface LoyverseSyncResult {
   updated: number;
   skipped: number;
   total: number;
+  categoriesCreated?: number;
+  categoriesUpdated?: number;
+  categoriesSynced?: number;
   hasMore?: boolean;
   nextCursor?: string | null;
   pageItems?: number;

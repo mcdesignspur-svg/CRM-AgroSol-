@@ -70,7 +70,14 @@ export function ErpConnectionStatus({
       }
 
       setSyncMessage(
-        `${data.total.toLocaleString("es-PR")} productos importados (${data.created} nuevos, ${data.updated} actualizados)`,
+        [
+          `${data.total.toLocaleString("es-PR")} productos importados (${data.created} nuevos, ${data.updated} actualizados)`,
+          data.categoriesSynced
+            ? `${data.categoriesSynced.toLocaleString("es-PR")} categorías sincronizadas`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(" · "),
       );
 
       const refreshed = await fetch(

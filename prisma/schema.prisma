@@ -51,14 +51,32 @@ model Branch {
   orders              Order[]
   deliveries          Delivery[]
   products            Product[]
+  productCategories   ProductCategory[]
   loyverseIntegration LoyverseIntegration?
 
   @@map("branches")
 }
 
+model ProductCategory {
+  id        String    @id
+  branchId  String    @map("branch_id")
+  name      String
+  active    Boolean   @default(true)
+  syncedAt  DateTime? @map("synced_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  branch   Branch    @relation(fields: [branchId], references: [id])
+  products Product[]
+
+  @@index([branchId, name])
+  @@index([branchId, active])
+  @@map("product_categories")
+}
+
 model Product {
   id                String    @id @default(cuid())
   branchId          String    @default("gurabo") @map("branch_id")
+  categoryId        String?   @map("category_id")
   name              String
   sku               String
   unitPrice         Decimal   @map("unit_price") @db.Decimal(10, 2)
@@ -68,12 +86,14 @@ model Product {
   syncedAt          DateTime? @map("synced_at")
   createdAt         DateTime  @default(now()) @map("created_at")
 
-  branch     Branch          @relation(fields: [branchId], references: [id])
+  branch     Branch           @relation(fields: [branchId], references: [id])
+  category   ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   orderItems OrderLineItem[]
 
   @@unique([branchId, sku])
   @@index([branchId, name])
   @@index([branchId, active])
+  @@index([branchId, categoryId])
   @@map("products")
 }
 

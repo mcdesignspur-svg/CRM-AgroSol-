@@ -4,6 +4,7 @@ import {
   isLoyverseBranchEnabled,
   isLoyverseConfigured,
 } from "./config";
+import { syncLoyverseCategories } from "./categories";
 import {
   LoyverseApiError,
   loyverseGetAllPages,
@@ -60,6 +61,7 @@ interface NormalizedProductRow {
   unitPrice: number;
   loyverseItemId: string;
   loyverseVariantId: string;
+  categoryId: string | null;
 }
 
 function normalizeLoyverseItems(
@@ -72,6 +74,7 @@ function normalizeLoyverseItems(
     if (item.deleted_at) continue;
 
     const itemName = getItemName(item);
+    const categoryId = item.category_id?.trim() || null;
     const variants = item.variants?.length
       ? item.variants
       : [{ variant_id: item.id, default_price: 0 } satisfies LoyverseVariant];
@@ -86,6 +89,7 @@ function normalizeLoyverseItems(
         unitPrice: getVariantPrice(variant),
         loyverseItemId: item.id,
         loyverseVariantId: variant.variant_id,
+        categoryId,
       });
     }
   }
@@ -96,6 +100,7 @@ function normalizeLoyverseItems(
 async function upsertProductBatch(
   rows: NormalizedProductRow[],
   syncedAt: Date,
+  validCategoryIds?: Set<string>,
 ): Promise<{ created: number; updated: number }> {
   let created = 0;
   let updated = 0;
@@ -105,6 +110,11 @@ async function upsertProductBatch(
 
     await prisma.$transaction(async (tx) => {
       for (const row of batch) {
+        const categoryId =
+          row.categoryId && (!validCategoryIds || validCategoryIds.has(row.categoryId))
+            ? row.categoryId
+            : null;
+
         const existing = await tx.product.findUnique({
           where: {
             branchId_sku: {
@@ -126,6 +136,7 @@ async function upsertProductBatch(
             unitPrice: row.unitPrice,
             loyverseItemId: row.loyverseItemId,
             loyverseVariantId: row.loyverseVariantId,
+            categoryId,
             active: true,
             syncedAt,
           },
@@ -136,6 +147,7 @@ async function upsertProductBatch(
             unitPrice: row.unitPrice,
             loyverseItemId: row.loyverseItemId,
             loyverseVariantId: row.loyverseVariantId,
+            categoryId,
             active: true,
             syncedAt,
           },
@@ -183,6 +195,24 @@ export async function syncLoyverseProducts(input: {
     where: { branchId },
   });
 
+  let categoriesCreated = 0;
+  let categoriesUpdated = 0;
+  let categoriesSynced = 0;
+  let validCategoryIds: Set<string> | undefined;
+
+  if (!input.cursor) {
+    const categoryResult = await syncLoyverseCategories(branchId);
+    categoriesCreated = categoryResult.created;
+    categoriesUpdated = categoryResult.updated;
+    categoriesSynced = categoryResult.total;
+
+    const categoryRows = await prisma.productCategory.findMany({
+      where: { branchId },
+      select: { id: true },
+    });
+    validCategoryIds = new Set(categoryRows.map((category) => category.id));
+  }
+
   const query: Record<string, string | undefined> = {};
   if (
     mode === "incremental" &&
@@ -218,7 +248,11 @@ export async function syncLoyverseProducts(input: {
 
   const rows = normalizeLoyverseItems(items, branchId);
   const syncedAt = new Date();
-  const { created, updated } = await upsertProductBatch(rows, syncedAt);
+  const { created, updated } = await upsertProductBatch(
+    rows,
+    syncedAt,
+    validCategoryIds,
+  );
   const hasMore = singlePage && Boolean(nextCursor);
   const productCount = await prisma.product.count({
     where: { branchId, active: true },
@@ -267,6 +301,9 @@ export async function syncLoyverseProducts(input: {
     updated,
     skipped: Math.max(0, items.length - rows.length),
     total: created + updated,
+    categoriesCreated,
+    categoriesUpdated,
+    categoriesSynced,
     hasMore,
     nextCursor: hasMore ? nextCursor : null,
     pageItems: items.length,

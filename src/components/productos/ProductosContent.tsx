@@ -75,6 +75,9 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
                   <th className="px-6 py-3 font-mono text-[11px] uppercase tracking-wider">
                     SKU
                   </th>
+                  <th className="px-6 py-3 font-mono text-[11px] uppercase tracking-wider">
+                    Categoría
+                  </th>
                   <th className="px-6 py-3 font-mono text-[11px] uppercase tracking-wider text-right">
                     Precio
                   </th>
@@ -84,7 +87,7 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
                 {query.trim().length < 2 ? (
                   <tr>
                     <td
-                      colSpan={3}
+                      colSpan={4}
                       className="px-6 py-16 text-center text-sm font-bold uppercase opacity-50"
                     >
                       Usa la barra de búsqueda para encontrar productos
@@ -93,7 +96,7 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
                 ) : loading ? (
                   <tr>
                     <td
-                      colSpan={3}
+                      colSpan={4}
                       className="px-6 py-16 text-center text-sm font-bold uppercase opacity-50"
                     >
                       <span className="inline-flex items-center gap-2">
@@ -107,7 +110,7 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
                 ) : error ? (
                   <tr>
                     <td
-                      colSpan={3}
+                      colSpan={4}
                       className="px-6 py-16 text-center text-sm font-bold uppercase text-red-600"
                     >
                       {error}
@@ -116,7 +119,7 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
                 ) : results.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={3}
+                      colSpan={4}
                       className="px-6 py-16 text-center text-sm font-bold uppercase opacity-50"
                     >
                       Sin resultados para &quot;{query.trim()}&quot;
@@ -133,6 +136,9 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
                       </td>
                       <td className="px-6 py-4 font-mono text-sm">
                         {product.sku}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-bold uppercase opacity-70">
+                        {product.categoryName ?? "—"}
                       </td>
                       <td className="px-6 py-4 text-right font-extrabold">
                         ${product.unitPrice.toFixed(2)}
@@ -170,6 +176,9 @@ export function ProductosContent({ loyverseStatus }: ProductosContentProps) {
                   <p className="font-bold uppercase text-sm">{product.name}</p>
                   <p className="text-[10px] font-mono text-gray-500 mt-1">
                     SKU: {product.sku}
+                  </p>
+                  <p className="text-[10px] font-bold uppercase text-gray-500 mt-1">
+                    Categoría: {product.categoryName ?? "Sin categoría"}
                   </p>
                   <p className="text-lg font-extrabold text-primary mt-2">
                     ${product.unitPrice.toFixed(2)}

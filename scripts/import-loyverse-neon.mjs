@@ -44,7 +44,7 @@ async function main() {
   const started = Date.now();
   let cursor = null;
   let page = 0;
-  let totals = { created: 0, updated: 0, rows: 0 };
+  let totals = { created: 0, updated: 0, rows: 0, categoriesSynced: 0 };
 
   do {
     page += 1;
@@ -53,9 +53,15 @@ async function main() {
     totals.created += result.created ?? 0;
     totals.updated += result.updated ?? 0;
     totals.rows += result.pageItems ?? result.total ?? 0;
+    if (result.categoriesSynced) {
+      totals.categoriesSynced = result.categoriesSynced;
+    }
 
     console.log(
       `Página ${page}: +${result.created} creados, ~${result.updated} actualizados` +
+        (result.categoriesSynced
+          ? `, ${result.categoriesSynced} categorías`
+          : "") +
         (result.hasMore ? " (continúa…)" : " (fin)"),
     );
 

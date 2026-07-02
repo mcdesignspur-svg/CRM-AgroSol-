@@ -95,11 +95,18 @@ export function ProductPickerModal({
                 className="w-full text-left p-3 border-2 border-black hover:bg-surface-container-low transition-colors"
               >
                 <p className="font-bold uppercase text-sm">{product.name}</p>
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-[10px] font-mono text-gray-500">
-                    SKU: {product.sku}
-                  </span>
-                  <span className="font-extrabold text-primary">
+                <div className="flex justify-between items-center mt-1 gap-2">
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-mono text-gray-500 block">
+                      SKU: {product.sku}
+                    </span>
+                    {product.categoryName && (
+                      <span className="text-[10px] font-bold uppercase text-gray-500 block truncate">
+                        {product.categoryName}
+                      </span>
+                    )}
+                  </div>
+                  <span className="font-extrabold text-primary shrink-0">
                     ${product.unitPrice.toFixed(2)}
                   </span>
                 </div>

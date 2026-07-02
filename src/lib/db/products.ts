@@ -2,9 +2,14 @@ import { prisma } from "@/lib/prisma";
 import { mapProduct } from "./mappers";
 import type { BranchId } from "@/lib/types";
 
+const productInclude = {
+  category: true,
+} as const;
+
 export async function getCatalogProducts(branchId: BranchId = "gurabo") {
   const rows = await prisma.product.findMany({
     where: { branchId, active: true },
+    include: productInclude,
     orderBy: { name: "asc" },
     take: 100,
   });
@@ -28,8 +33,10 @@ export async function searchCatalogProducts(input: {
       OR: [
         { name: { contains: query, mode: "insensitive" } },
         { sku: { contains: query.toUpperCase(), mode: "insensitive" } },
+        { category: { name: { contains: query, mode: "insensitive" } } },
       ],
     },
+    include: productInclude,
     orderBy: [{ name: "asc" }],
     take: input.limit ?? 50,
   });
@@ -59,6 +66,7 @@ export async function createProduct(input: CreateProductInput) {
       unitPrice: input.unitPrice,
       active: true,
     },
+    include: productInclude,
   });
   return mapProduct(row);
 }
