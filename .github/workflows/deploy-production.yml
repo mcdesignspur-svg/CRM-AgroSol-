@@ -54,11 +54,19 @@ jobs:
           else
             echo "No .vercel/.env.production.local file found after vercel pull."
           fi
-          if [ -z "${DATABASE_URL:-}" ]; then
-            echo "::error::DATABASE_URL is missing. Add it to Vercel Production environment variables and/or the GitHub secret DATABASE_URL, then re-run this workflow."
+          if [ -z "${DATABASE_URL:-}" ] && [ -z "${DIRECT_DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL or DIRECT_DATABASE_URL is missing. Add at least one to Vercel Production environment variables and/or GitHub repository secrets, then re-run this workflow."
             exit 1
           fi
-          echo "DATABASE_URL is set."
+          if [ -z "${DATABASE_URL:-}" ] && [ -n "${DIRECT_DATABASE_URL:-}" ]; then
+            export DATABASE_URL="${DIRECT_DATABASE_URL}"
+            echo "DATABASE_URL unset; using DIRECT_DATABASE_URL for the build."
+          else
+            echo "DATABASE_URL is set."
+          fi
+          if [ -n "${DIRECT_DATABASE_URL:-}" ]; then
+            echo "DIRECT_DATABASE_URL is set."
+          fi
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
