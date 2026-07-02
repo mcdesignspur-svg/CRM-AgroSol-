@@ -7,7 +7,12 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    await dismissPing(id);
+    const dismissed = await dismissPing(id);
+
+    if (!dismissed) {
+      return NextResponse.json({ error: "Ping no encontrado" }, { status: 404 });
+    }
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("PATCH /api/pings/[id]", error);

@@ -46,49 +46,49 @@ function BranchCard({
 }) {
   return (
     <div
-      className={`bg-white border-2 border-black p-4 industrial-shadow transition-all group ${
+      className={`bg-white border border-outline rounded-lg p-4 shadow-sm transition-all ${
         highlighted
-          ? "bg-secondary-container/10 border-l-8 border-l-primary-container"
-          : "hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
+          ? "ring-2 ring-primary/30 bg-primary-container/30"
+          : "hover:shadow-md"
       }`}
     >
       <div className="flex justify-between items-start mb-2">
         <div>
-          <h4 className="font-display text-lg font-bold leading-none uppercase">
+          <h4 className="font-display text-base font-semibold leading-tight text-on-surface">
             {branch.name}
           </h4>
-          <p className="text-[10px] font-bold text-on-surface-variant mt-1">
+          <p className="text-xs text-on-surface-variant mt-0.5">
             {branch.address}
           </p>
         </div>
         <span
-          className={`px-2 py-1 text-[9px] font-bold uppercase ${
+          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
             branch.capacityPercent >= 90
-              ? "bg-black text-white"
-              : "bg-white border border-black text-black"
+              ? "bg-red-50 text-red-700"
+              : "bg-surface-container text-on-surface-variant"
           }`}
         >
-          {branch.capacityPercent}% CAP
+          {branch.capacityPercent}%
         </span>
       </div>
-      <div className="flex items-center justify-between mt-4">
+      <div className="flex items-center justify-between mt-3">
         <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">
-            Vol. Actual
+          <span className="text-xs text-on-surface-variant">
+            Volumen actual
           </span>
-          <span className="text-xl font-extrabold text-black">
-            {branch.currentVolume} Unidades
+          <span className="text-lg font-semibold text-on-surface">
+            {branch.currentVolume} unidades
           </span>
         </div>
         {branch.lastPingSent ? (
-          <div className="flex items-center gap-2 text-black">
+          <div className="flex items-center gap-1.5 text-emerald-700">
             <span
               className="material-symbols-outlined text-base"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
               check_circle
             </span>
-            <span className="text-[10px] font-extrabold uppercase">
+            <span className="text-xs font-medium">
               {branch.lastPingSent}
             </span>
           </div>
@@ -97,7 +97,7 @@ function BranchCard({
             type="button"
             onClick={() => onPing(branch.id)}
             disabled={sending === branch.id}
-            className="bg-primary-container text-white font-bold py-2 px-4 text-[10px] active:scale-95 transition-all border-2 border-black flex items-center gap-2 uppercase disabled:opacity-60"
+            className="btn-primary py-2 px-3 text-xs flex items-center gap-1.5 disabled:opacity-60"
           >
             <span
               className={`material-symbols-outlined text-sm ${
@@ -261,7 +261,7 @@ function EntregasContent({
       fullWidth
       topBar={
         <>
-          <header className="flex justify-between items-center px-3 sm:px-4 md:px-6 py-2 border-b-2 border-black bg-white z-40 shrink-0 gap-2">
+          <header className="flex justify-between items-center px-3 sm:px-4 md:px-6 py-2 border-b border-outline bg-white z-40 shrink-0 gap-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <h2 className="font-display text-base sm:text-lg font-extrabold text-primary-container uppercase truncate md:hidden">
                 Entregas
@@ -300,7 +300,7 @@ function EntregasContent({
               </button>
               <form
                 onSubmit={handleSearch}
-                className="relative hidden sm:flex items-center bg-surface-container-low border-2 border-black px-4 py-1"
+                className="relative hidden sm:flex items-center bg-surface-container-low border border-outline px-4 py-1"
               >
                 <span className="material-symbols-outlined text-black text-lg mr-2">
                   search
@@ -317,7 +317,7 @@ function EntregasContent({
                 <button
                   type="button"
                   onClick={() => setBranchOpen((value) => !value)}
-                  className="flex items-center gap-2 px-3 py-1.5 border-2 border-black text-[10px] font-bold uppercase hover:bg-surface-container transition-all min-h-[44px]"
+                  className="flex items-center gap-2 px-3 py-1.5 border border-outline text-xs font-medium hover:bg-surface-container transition-all min-h-[44px]"
                   aria-expanded={branchOpen}
                 >
                   <span className="material-symbols-outlined text-base">hub</span>
@@ -368,7 +368,7 @@ function EntregasContent({
                 handleSearch(e);
                 setSearchOpen(false);
               }}
-              className="sm:hidden px-4 py-2 bg-surface-container-low border-b-2 border-black"
+              className="sm:hidden px-4 py-2 bg-surface-container-low border-b border-outline"
             >
               <input
                 autoFocus
@@ -382,7 +382,7 @@ function EntregasContent({
           )}
 
           {/* Tabs móvil */}
-          <div className="xl:hidden flex border-b-2 border-black bg-white shrink-0">
+          <div className="xl:hidden flex border-b border-outline bg-white shrink-0">
             {(
               [
                 { id: "mapa" as const, label: "Mapa", icon: "map" },
@@ -394,7 +394,7 @@ function EntregasContent({
                 key={tab.id}
                 type="button"
                 onClick={() => setMobileTab(tab.id)}
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[48px] text-[10px] font-bold uppercase transition-colors ${
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[48px] text-xs font-medium transition-colors ${
                   mobileTab === tab.id
                     ? "bg-secondary-container text-on-secondary-container border-b-2 border-primary -mb-[2px]"
                     : "text-on-surface-variant"
@@ -407,14 +407,14 @@ function EntregasContent({
           </div>
 
           {ordenId && (
-            <div className="bg-secondary-container border-b-2 border-black px-6 py-2 flex items-center justify-between">
-              <span className="text-xs font-bold uppercase">
+            <div className="bg-secondary-container border-b border-outline px-6 py-2 flex items-center justify-between">
+              <span className="text-xs font-medium">
                 Gestionando orden{" "}
                 <span className="font-mono text-primary">{ordenId}</span>
               </span>
               <Link
                 href={activeBranchId ? `/entregas?branch=${activeBranchId}` : "/entregas"}
-                className="text-[10px] font-bold uppercase hover:underline"
+                className="text-xs font-medium hover:underline"
               >
                 Cerrar
               </Link>
@@ -422,15 +422,15 @@ function EntregasContent({
           )}
 
           {hasActiveFilters && !ordenId && (
-            <div className="bg-surface-container-low border-b-2 border-black px-4 sm:px-6 py-2 flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-bold uppercase text-on-surface-variant">
+            <div className="bg-surface-container-low border-b border-outline px-4 sm:px-6 py-2 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-on-surface-variant">
                 Filtros activos:
               </span>
               {activeBranchId && (
                 <button
                   type="button"
                   onClick={() => selectBranchFilter(null)}
-                  className="inline-flex items-center gap-1 bg-white border border-black px-2 py-1 text-[10px] font-bold uppercase"
+                  className="inline-flex items-center gap-1 bg-white border border-black px-2 py-1 text-xs font-medium"
                 >
                   {BRANCH_LABELS[activeBranchId]}
                   <span className="material-symbols-outlined text-sm">close</span>
@@ -440,7 +440,7 @@ function EntregasContent({
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="inline-flex items-center gap-1 bg-white border border-black px-2 py-1 text-[10px] font-bold uppercase"
+                  className="inline-flex items-center gap-1 bg-white border border-black px-2 py-1 text-xs font-medium"
                 >
                   &quot;{searchQuery.trim()}&quot;
                   <span className="material-symbols-outlined text-sm">close</span>
@@ -464,7 +464,7 @@ function EntregasContent({
           <div
             className={`${
               mobileTab === "mapa" ? "flex-1" : "h-48 sm:h-64 xl:h-1/2"
-            } w-full bg-surface-container relative border-b-2 border-black overflow-hidden shrink-0 ${
+            } w-full bg-surface-container relative border-b border-outline overflow-hidden shrink-0 ${
               mobileTab !== "mapa" ? "hidden xl:block" : ""
             }`}
           >
@@ -475,7 +475,7 @@ function EntregasContent({
               ordenId={ordenId}
               onLocateError={(message) => showToast(message, "info")}
             />
-            <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 bg-white p-3 sm:p-4 border-2 border-black industrial-shadow flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 z-[400] pointer-events-none max-w-[calc(100%-1.5rem)]">
+            <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 bg-white p-3 sm:p-4 border border-outline industrial-shadow flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 z-[400] pointer-events-none max-w-[calc(100%-1.5rem)]">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-3 h-3 border border-black bg-primary-container animate-pulse shrink-0" />
                 <span className="font-mono font-bold text-black uppercase text-[10px] sm:text-xs">
@@ -496,7 +496,7 @@ function EntregasContent({
               mobileTab !== "entregas" ? "hidden xl:flex" : ""
             }`}
           >
-            <div className="p-4 sm:p-6 border-b-2 border-black flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-surface-container-lowest">
+            <div className="p-4 sm:p-6 border-b border-outline flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-surface-container-lowest">
               <h3 className="font-display text-lg sm:text-xl text-black flex items-center gap-2 uppercase">
                 <span className="material-symbols-outlined text-primary-container">
                   local_shipping
@@ -510,10 +510,10 @@ function EntregasContent({
                 <button
                   type="button"
                   onClick={() => setViewMode("list")}
-                  className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 font-mono text-[10px] font-bold uppercase transition-all min-h-[44px] ${
+                  className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 font-mono text-xs font-medium transition-all min-h-[44px] ${
                     viewMode === "list"
-                      ? "bg-black text-white"
-                      : "bg-white border-2 border-black text-black hover:bg-surface-container"
+                      ? "bg-primary text-white rounded-lg"
+                      : "bg-white border border-outline text-black hover:bg-surface-container"
                   }`}
                 >
                   Lista
@@ -521,10 +521,10 @@ function EntregasContent({
                 <button
                   type="button"
                   onClick={() => setViewMode("grid")}
-                  className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 font-mono text-[10px] font-bold uppercase transition-all min-h-[44px] ${
+                  className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 font-mono text-xs font-medium transition-all min-h-[44px] ${
                     viewMode === "grid"
-                      ? "bg-black text-white"
-                      : "bg-white border-2 border-black text-black hover:bg-surface-container"
+                      ? "bg-primary text-white rounded-lg"
+                      : "bg-white border border-outline text-black hover:bg-surface-container"
                   }`}
                 >
                   Cuadrícula
@@ -537,7 +537,7 @@ function EntregasContent({
                 {/* Lista móvil — tarjetas */}
                 <div className="md:hidden flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
                   {filteredDeliveries.length === 0 ? (
-                    <p className="text-center text-sm font-bold uppercase opacity-50 py-12">
+                    <p className="text-center text-sm font-medium opacity-50 py-12">
                       {hasActiveFilters
                         ? "Sin entregas con estos filtros"
                         : "Sin entregas activas"}
@@ -546,7 +546,7 @@ function EntregasContent({
                     filteredDeliveries.map((delivery) => (
                     <div
                       key={delivery.id}
-                      className={`border-2 border-black p-4 industrial-shadow ${
+                      className={`border border-outline p-4 industrial-shadow ${
                         isDeliveryHighlighted(delivery, ordenId)
                           ? "bg-secondary-container/30"
                           : ""
@@ -596,7 +596,7 @@ function EntregasContent({
                 {/* Lista desktop — tabla */}
                 <div className="hidden md:block flex-1 overflow-y-auto custom-scrollbar">
                 <table className="w-full text-left border-collapse">
-                  <thead className="sticky top-0 bg-black text-white z-10">
+                  <thead className="sticky top-0 table-header z-10">
                     <tr>
                       <th className="px-6 py-3 font-mono text-[11px] uppercase tracking-wider">
                         ID
@@ -620,7 +620,7 @@ function EntregasContent({
                       <tr>
                         <td
                           colSpan={5}
-                          className="px-6 py-12 text-center text-sm font-bold uppercase opacity-50"
+                          className="px-6 py-12 text-center text-sm font-medium opacity-50"
                         >
                           {hasActiveFilters
                             ? "Sin entregas con estos filtros"
@@ -663,7 +663,7 @@ function EntregasContent({
                         <td className="px-6 py-4 font-medium">
                           <div>{delivery.destination}</div>
                           {delivery.branchId && (
-                            <span className="text-[10px] font-bold uppercase text-on-surface-variant">
+                            <span className="text-xs font-medium text-on-surface-variant">
                               {BRANCH_LABELS[delivery.branchId]}
                             </span>
                           )}
@@ -673,7 +673,7 @@ function EntregasContent({
                         </td>
                         <td className="px-6 py-4 text-right pr-6">
                           <span
-                            className={`px-3 py-1 text-[10px] font-bold uppercase industrial-border ${
+                            className={`px-3 py-1 text-xs font-medium industrial-border ${
                               delivery.status === "recogida"
                                 ? "bg-primary-container text-white"
                                 : "bg-secondary-container text-black"
@@ -694,7 +694,7 @@ function EntregasContent({
             ) : (
               <div className="flex-1 overflow-y-auto custom-scrollbar p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {filteredDeliveries.length === 0 ? (
-                  <p className="col-span-full text-center text-sm font-bold uppercase opacity-50 py-12">
+                  <p className="col-span-full text-center text-sm font-medium opacity-50 py-12">
                     {hasActiveFilters
                       ? "Sin entregas con estos filtros"
                       : "Sin entregas activas"}
@@ -703,7 +703,7 @@ function EntregasContent({
                   filteredDeliveries.map((delivery) => (
                   <div
                     key={delivery.id}
-                    className={`border-2 border-black p-4 industrial-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all ${
+                    className={`border border-outline p-4 industrial-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all ${
                       isDeliveryHighlighted(delivery, ordenId)
                         ? "bg-secondary-container/30"
                         : ""
@@ -758,7 +758,7 @@ function EntregasContent({
             mobileTab !== "sucursales" ? "hidden xl:flex" : ""
           }`}
         >
-          <section className="p-6 border-b-2 border-black bg-white">
+          <section className="p-6 border-b border-outline bg-white">
             <h3 className="font-mono text-black font-extrabold mb-6 uppercase tracking-widest text-xs flex justify-between items-center">
               Estado de Sucursales ({branches.length})
               <span className="material-symbols-outlined text-base">info</span>
@@ -778,7 +778,7 @@ function EntregasContent({
 
           <section className="flex-1 flex flex-col p-6 overflow-hidden">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-mono text-black font-extrabold uppercase tracking-widest text-xs">
+              <h3 className="font-mono text-black font-semibold tracking-widest text-xs">
                 Registro de Notificaciones
               </h3>
               <button
@@ -792,14 +792,14 @@ function EntregasContent({
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
               {logs.length === 0 ? (
-                <p className="text-xs font-bold uppercase opacity-40 text-center py-8">
+                <p className="text-xs font-medium opacity-40 text-center py-8">
                   Sin notificaciones
                 </p>
               ) : (
                 logs.map((log) => (
                   <div
                     key={log.id}
-                    className={`bg-white p-3 border-y border-r border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
+                    className={`bg-white p-3 border-y border-r border-black shadow-sm ${
                       log.accent === "primary"
                         ? "border-l-4 border-l-primary-container"
                         : "border-l-4 border-l-black"
@@ -812,7 +812,7 @@ function EntregasContent({
                       <span
                         className={`text-[10px] px-1 font-bold uppercase ${
                           log.source === "SISTEMA" || log.source === "Propietario"
-                            ? "bg-black text-white"
+                            ? "bg-primary text-white rounded-lg"
                             : "bg-surface-container-high text-black"
                         }`}
                       >

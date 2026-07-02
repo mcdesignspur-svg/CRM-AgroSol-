@@ -85,7 +85,7 @@ export function AddProductModal({
           <button
             type="button"
             onClick={handleClose}
-            className="btn-secondary px-4 py-2 text-xs font-bold uppercase min-h-[44px]"
+            className="btn-secondary px-4 py-2 text-xs font-medium min-h-[44px]"
           >
             Cancelar
           </button>
@@ -93,7 +93,7 @@ export function AddProductModal({
             type="button"
             onClick={handleSubmit}
             disabled={submitting}
-            className="btn-primary px-4 py-2 text-xs font-bold uppercase industrial-border disabled:opacity-60 min-h-[44px]"
+            className="btn-primary px-4 py-2 text-xs font-medium industrial-border disabled:opacity-60 min-h-[44px]"
           >
             {submitting ? "Guardando..." : "Guardar Producto"}
           </button>
@@ -102,7 +102,7 @@ export function AddProductModal({
     >
       <div className="space-y-4">
         <div className="space-y-1">
-          <label className="font-bold uppercase text-[10px]">
+          <label className="text-xs font-medium text-on-surface-variant">
             Nombre del Producto
           </label>
           <input
@@ -114,7 +114,7 @@ export function AddProductModal({
           />
         </div>
         <div className="space-y-1">
-          <label className="font-bold uppercase text-[10px]">SKU</label>
+          <label className="text-xs font-medium text-on-surface-variant">SKU</label>
           <input
             className="w-full industrial-border px-3 py-2 text-sm font-mono min-h-[44px]"
             type="text"
@@ -124,7 +124,7 @@ export function AddProductModal({
           />
         </div>
         <div className="space-y-1">
-          <label className="font-bold uppercase text-[10px]">
+          <label className="text-xs font-medium text-on-surface-variant">
             Precio Unitario ($)
           </label>
           <input

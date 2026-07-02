@@ -134,6 +134,8 @@ model Order {
 
   @@index([createdAt(sort: Desc)])
   @@index([status])
+  @@index([branchId])
+  @@index([fulfillment])
   @@map("orders")
 }
 
@@ -149,6 +151,7 @@ model OrderLineItem {
   order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
+  @@index([orderId])
   @@map("order_line_items")
 }
 

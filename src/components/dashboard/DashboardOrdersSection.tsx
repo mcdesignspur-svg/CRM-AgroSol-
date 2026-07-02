@@ -35,6 +35,23 @@ const filterCycle: FilterMode[] = [
   "retiro",
 ];
 
+function buildQuery(filter: FilterMode, offset = 0) {
+  const params = new URLSearchParams({
+    limit: "20",
+    offset: String(offset),
+  });
+
+  if (filter !== "all") {
+    if (filter === "entrega" || filter === "retiro") {
+      params.set("type", filter);
+    } else {
+      params.set("status", filter);
+    }
+  }
+
+  return params.toString();
+}
+
 export function DashboardOrdersSection({
   initialOrders,
   initialTotal,
@@ -51,26 +68,32 @@ export function DashboardOrdersSection({
 
   const hasMore = orders.length < total;
 
-  const filteredOrders = orders.filter((order) => {
-    if (filter === "all") return true;
-    if (filter === "entrega" || filter === "retiro") return order.type === filter;
-    return order.status === filter;
-  });
+  const loadOrders = useCallback(
+    async (nextFilter: FilterMode, offset = 0, replace = true) => {
+      const res = await fetch(`/api/orders?${buildQuery(nextFilter, offset)}`);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? "Error al cargar órdenes");
+      }
+      setTotal(data.total);
+      setOrders((prev) => (replace ? data.orders : [...prev, ...data.orders]));
+      return data;
+    },
+    [],
+  );
 
   const cycleFilter = useCallback(() => {
     const idx = filterCycle.indexOf(filter);
     const next = filterCycle[(idx + 1) % filterCycle.length];
     setFilter(next);
+    void loadOrders(next, 0, true);
     showToast(`Filtro: ${filterLabels[next]}`, "info");
-  }, [filter, showToast]);
+  }, [filter, loadOrders, showToast]);
 
   async function handleRefresh() {
     setRefreshing(true);
     try {
-      const res = await fetch("/api/orders?limit=20&offset=0");
-      const data = await res.json();
-      setOrders(data.orders);
-      setTotal(data.total);
+      await loadOrders(filter, 0, true);
       showToast("Datos actualizados", "success");
     } catch {
       showToast("Error al actualizar", "error");
@@ -86,10 +109,7 @@ export function DashboardOrdersSection({
     }
     setLoadingMore(true);
     try {
-      const res = await fetch(`/api/orders?limit=20&offset=${orders.length}`);
-      const data = await res.json();
-      setOrders((prev) => [...prev, ...data.orders]);
-      setTotal(data.total);
+      const data = await loadOrders(filter, orders.length, false);
       if (data.orders.length > 0) {
         showToast(`${data.orders.length} órdenes cargadas`, "success");
       }
@@ -102,32 +122,32 @@ export function DashboardOrdersSection({
 
   return (
     <>
-      <section className="industrial-border bg-white overflow-hidden">
-        <div className="p-6 industrial-divider flex justify-between items-center">
-          <h3 className="font-display text-2xl font-bold uppercase">
-            Órdenes Recientes
+      <section className="rounded-xl border border-outline bg-white overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-outline flex justify-between items-center">
+          <h3 className="font-display text-lg font-semibold text-on-surface">
+            Órdenes recientes
             {filter !== "all" && (
-              <span className="ml-2 text-sm text-primary font-mono">
-                [{filterLabels[filter]}]
+              <span className="ml-2 text-sm text-primary font-normal">
+                · {filterLabels[filter]}
               </span>
             )}
           </h3>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <button
               type="button"
               onClick={cycleFilter}
-              className={`p-2 industrial-border hover:bg-gray-100 transition-colors ${
-                filter !== "all" ? "bg-secondary-container" : ""
+              className={`p-2 rounded-lg border border-outline hover:bg-surface-container transition-colors ${
+                filter !== "all" ? "bg-primary-container text-primary border-red-200" : ""
               }`}
               aria-label="Filtrar"
             >
-              <span className="material-symbols-outlined">filter_list</span>
+              <span className="material-symbols-outlined text-xl">filter_list</span>
             </button>
             <button
               type="button"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="p-2 industrial-border hover:bg-gray-100 transition-colors disabled:opacity-60"
+              className="p-2 rounded-lg border border-outline hover:bg-surface-container transition-colors disabled:opacity-60"
               aria-label="Actualizar"
             >
               <span
@@ -141,64 +161,59 @@ export function DashboardOrdersSection({
           </div>
         </div>
 
-        {/* Vista tabla — desktop */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-black text-white">
+            <thead className="table-header">
               <tr>
-                <th className="p-4 text-sm font-bold uppercase">Cliente</th>
-                <th className="p-4 text-sm font-bold uppercase">Tipo</th>
-                <th className="p-4 text-sm font-bold uppercase">Sucursal</th>
-                <th className="p-4 text-sm font-bold uppercase">Estado</th>
-                <th className="p-4 text-sm font-bold uppercase">
-                  Tiempo Transcurrido
-                </th>
-                <th className="p-4 text-sm font-bold uppercase">Acción</th>
+                <th className="px-4 py-3 text-xs font-medium">Cliente</th>
+                <th className="px-4 py-3 text-xs font-medium">Tipo</th>
+                <th className="px-4 py-3 text-xs font-medium">Sucursal</th>
+                <th className="px-4 py-3 text-xs font-medium">Estado</th>
+                <th className="px-4 py-3 text-xs font-medium">Tiempo</th>
+                <th className="px-4 py-3 text-xs font-medium"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredOrders.length === 0 ? (
+            <tbody className="divide-y divide-gray-100">
+              {orders.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}
-                    className="p-8 text-center text-sm font-bold uppercase opacity-50"
+                    className="px-4 py-10 text-center text-sm text-on-surface-variant"
                   >
                     Sin órdenes registradas
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((order, index) => (
+                orders.map((order) => (
                   <tr
                     key={order.id}
-                    className={`hover:bg-surface-container transition-colors ${
-                      index % 2 === 1 ? "bg-surface-container-low" : ""
-                    }`}
+                    className="hover:bg-surface transition-colors"
                   >
-                    <td className="p-4 font-bold">{order.customerName}</td>
-                    <td className="p-4">
+                    <td className="px-4 py-3 text-sm font-medium">{order.customerName}</td>
+                    <td className="px-4 py-3">
                       <TypeBadge type={order.type} />
                     </td>
-                    <td className="p-4">
+                    <td className="px-4 py-3">
                       <BranchLabel branchId={order.branchId} />
                     </td>
-                    <td className="p-4">
+                    <td className="px-4 py-3">
                       <StatusBadge status={order.status} />
                     </td>
                     <td
-                      className={`p-4 font-mono ${
+                      className={`px-4 py-3 text-sm font-mono ${
                         order.status === "atrasado" || order.status === "listo"
-                          ? "text-red-600 font-bold"
-                          : "opacity-80"
+                          ? "text-red-600 font-medium"
+                          : "text-on-surface-variant"
                       }`}
                     >
                       {order.elapsedTime}
                     </td>
-                    <td className="p-4">
+                    <td className="px-4 py-3">
                       <Link
                         href={`/ordenes/${encodeURIComponent(order.id)}`}
-                        className="text-primary hover:underline font-bold text-sm"
+                        className="text-primary hover:text-primary/80 text-sm font-medium"
                       >
-                        GESTIONAR
+                        Ver
                       </Link>
                     </td>
                   </tr>
@@ -208,20 +223,19 @@ export function DashboardOrdersSection({
           </table>
         </div>
 
-        {/* Vista tarjetas — móvil */}
-        <div className="md:hidden divide-y divide-gray-200">
-          {filteredOrders.length === 0 ? (
-            <p className="p-8 text-center text-sm font-bold uppercase opacity-50">
+        <div className="md:hidden divide-y divide-gray-100">
+          {orders.length === 0 ? (
+            <p className="px-4 py-10 text-center text-sm text-on-surface-variant">
               Sin órdenes registradas
             </p>
           ) : (
-            filteredOrders.map((order) => (
+            orders.map((order) => (
               <article
                 key={order.id}
-                className="p-4 space-y-3 hover:bg-surface-container-low transition-colors"
+                className="px-4 py-3.5 space-y-2 hover:bg-surface transition-colors"
               >
                 <div className="flex justify-between items-start gap-2">
-                  <p className="font-bold text-sm">{order.customerName}</p>
+                  <p className="font-medium text-sm">{order.customerName}</p>
                   <StatusBadge status={order.status} />
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
@@ -230,8 +244,8 @@ export function DashboardOrdersSection({
                   <span
                     className={`text-xs font-mono ${
                       order.status === "atrasado" || order.status === "listo"
-                        ? "text-red-600 font-bold"
-                        : "opacity-70"
+                        ? "text-red-600 font-medium"
+                        : "text-on-surface-variant"
                     }`}
                   >
                     {order.elapsedTime}
@@ -239,9 +253,9 @@ export function DashboardOrdersSection({
                 </div>
                 <Link
                   href={`/ordenes/${encodeURIComponent(order.id)}`}
-                  className="inline-flex items-center gap-1 text-primary font-bold text-xs uppercase min-h-[44px]"
+                  className="inline-flex items-center gap-1 text-primary text-sm font-medium min-h-[40px]"
                 >
-                  Gestionar
+                  Ver orden
                   <span className="material-symbols-outlined text-sm">
                     arrow_forward
                   </span>
@@ -251,15 +265,15 @@ export function DashboardOrdersSection({
           )}
         </div>
 
-        <div className="p-4 bg-gray-50 flex justify-center">
+        <div className="px-4 py-3 border-t border-outline flex justify-center">
           {hasMore && (
             <button
               type="button"
               onClick={handleLoadMore}
               disabled={loadingMore}
-              className="text-sm font-bold uppercase tracking-widest hover:text-primary transition-colors disabled:opacity-60"
+              className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors disabled:opacity-60"
             >
-              {loadingMore ? "Cargando..." : "Cargar Más Órdenes"}
+              {loadingMore ? "Cargando..." : "Cargar más órdenes"}
             </button>
           )}
         </div>
@@ -287,7 +301,7 @@ export function CriticalAlertsLink() {
     <button
       type="button"
       onClick={handleClick}
-      className="text-white opacity-90 uppercase underline cursor-pointer hover:opacity-100 transition-opacity"
+      className="text-primary text-xs underline cursor-pointer hover:text-primary/80 transition-colors"
     >
       Ver Críticas
     </button>

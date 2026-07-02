@@ -60,25 +60,31 @@ export function TopBar({
       <button
         type="button"
         onClick={() => setBranchOpen((v) => !v)}
-        className="flex items-center gap-1 sm:gap-2 btn-secondary px-2 sm:px-4 py-2 text-xs sm:text-sm font-bold max-w-[140px] sm:max-w-none"
+        className="flex items-center gap-1.5 btn-secondary px-3 py-2 text-sm max-w-[140px] sm:max-w-none"
         aria-expanded={branchOpen}
       >
-        <span className="material-symbols-outlined text-base">location_on</span>
-        <span className="truncate">{BRANCH_LABELS[branchId].split(" ")[0]}</span>
-        <span className="material-symbols-outlined text-sm hidden sm:inline">
+        <span className="material-symbols-outlined text-base text-on-surface-variant">
+          location_on
+        </span>
+        <span className="truncate text-on-surface">
+          {BRANCH_LABELS[branchId].split(" ")[0]}
+        </span>
+        <span className="material-symbols-outlined text-sm text-on-surface-variant hidden sm:inline">
           expand_more
         </span>
       </button>
       {branchOpen && (
-        <div className="absolute right-0 top-full mt-1 w-56 bg-white industrial-border industrial-shadow z-50">
+        <div className="absolute right-0 top-full mt-1.5 w-56 bg-white border border-outline rounded-lg shadow-lg z-50 overflow-hidden">
           {(Object.entries(BRANCH_LABELS) as [BranchId, string][]).map(
             ([id, label]) => (
               <button
                 key={id}
                 type="button"
                 onClick={() => selectBranch(id)}
-                className={`w-full text-left px-4 py-3 text-sm font-bold hover:bg-surface-container transition-colors min-h-[44px] ${
-                  branchId === id ? "bg-secondary-container" : ""
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors min-h-[44px] ${
+                  branchId === id
+                    ? "bg-primary-container text-primary font-medium"
+                    : "text-on-surface hover:bg-surface-container"
                 }`}
               >
                 {label}
@@ -92,15 +98,15 @@ export function TopBar({
 
   return (
     <>
-      <header className="flex justify-between items-center w-full px-4 md:px-8 py-3 md:py-4 bg-surface-container-lowest border-b-2 border-on-background shrink-0 gap-2">
+      <header className="flex justify-between items-center w-full px-4 md:px-8 py-3 bg-white border-b border-outline shrink-0 gap-2 sticky top-0 z-40">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {title ? (
-            <h1 className="font-display text-lg sm:text-xl md:text-2xl font-extrabold uppercase tracking-tight truncate">
+            <h1 className="font-display text-lg sm:text-xl font-semibold tracking-tight truncate text-on-surface">
               {title}
             </h1>
           ) : (
             <>
-              <div className="md:hidden font-display text-lg font-extrabold text-primary shrink-0">
+              <div className="md:hidden font-display text-lg font-semibold text-primary shrink-0">
                 AgroSol
               </div>
               {showSearch && (
@@ -108,13 +114,13 @@ export function TopBar({
                   onSubmit={handleSearch}
                   className="relative hidden sm:block flex-1 max-w-md"
                 >
-                  <span className="absolute inset-y-0 left-3 flex items-center text-gray-500">
+                  <span className="absolute inset-y-0 left-3 flex items-center text-on-surface-variant">
                     <span className="material-symbols-outlined text-xl">
                       search
                     </span>
                   </span>
                   <input
-                    className="pl-10 industrial-border bg-surface-container-low text-sm font-bold focus:ring-2 focus:ring-primary w-full py-2"
+                    className="pl-10 border border-outline bg-surface rounded-lg text-sm w-full py-2 text-on-surface placeholder:text-on-surface-variant"
                     placeholder="Buscar órdenes..."
                     type="search"
                     value={searchQuery}
@@ -132,7 +138,7 @@ export function TopBar({
             <button
               type="button"
               onClick={() => setSearchOpen((v) => !v)}
-              className="sm:hidden p-2 hover:bg-surface-container min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="sm:hidden p-2 rounded-lg hover:bg-surface-container min-h-[44px] min-w-[44px] flex items-center justify-center text-on-surface-variant"
               aria-label="Buscar"
             >
               <span className="material-symbols-outlined">search</span>
@@ -140,8 +146,10 @@ export function TopBar({
           )}
           {branchSelector}
           <NotificationsButton />
-          <div className="hidden sm:flex w-10 h-10 industrial-border bg-gray-200 overflow-hidden items-center justify-center">
-            <span className="material-symbols-outlined text-gray-600">person</span>
+          <div className="hidden sm:flex w-9 h-9 rounded-full bg-surface-container overflow-hidden items-center justify-center">
+            <span className="material-symbols-outlined text-on-surface-variant text-xl">
+              person
+            </span>
           </div>
         </div>
       </header>
@@ -149,15 +157,15 @@ export function TopBar({
       {searchOpen && !title && showSearch && (
         <form
           onSubmit={handleSearch}
-          className="sm:hidden px-4 py-2 bg-surface-container-low border-b-2 border-on-background"
+          className="sm:hidden px-4 py-2 bg-white border-b border-outline"
         >
           <div className="relative">
-            <span className="absolute inset-y-0 left-3 flex items-center text-gray-500">
+            <span className="absolute inset-y-0 left-3 flex items-center text-on-surface-variant">
               <span className="material-symbols-outlined">search</span>
             </span>
             <input
               autoFocus
-              className="w-full pl-10 industrial-border bg-white text-sm font-bold py-2.5"
+              className="w-full pl-10 border border-outline bg-surface rounded-lg text-sm py-2.5"
               placeholder="Buscar órdenes..."
               type="search"
               value={searchQuery}

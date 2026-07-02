@@ -17,9 +17,13 @@ Repositorio oficial: [github.com/mcdesignspur-svg/CRM-AgroSol-](https://github.c
 | Ruta | Descripción |
 |------|-------------|
 | `/` | Panel de logística — métricas, órdenes recientes, pings en vivo |
+| `/ordenes` | Listado de órdenes |
+| `/ordenes/[id]` | Detalle de una orden |
 | `/ordenes/nueva` | Registro de nueva orden con retiro/entrega |
+| `/productos` | Catálogo de productos |
 | `/entregas` | Mapa, entregas activas, estado de sucursales |
 | `/sucursales` | Vista de red y capacidad por sucursal |
+| `/conductor` | Vista del conductor |
 
 ## Desarrollo local
 
@@ -37,7 +41,7 @@ Copia las variables de entorno:
 cp .env.example .env
 ```
 
-La URL por defecto es:
+La URL por defecto en `docker-compose` (credenciales **solo para desarrollo local**):
 
 ```
 postgresql://agrosol:agrosol@localhost:5432/agrosol_crm?schema=public
@@ -83,9 +87,18 @@ La app verifica la conexión contra la API de Loyverse y guarda el catálogo en 
 | Comando | Descripción |
 |---------|-------------|
 | `npm run db:migrate` | Aplica migraciones en desarrollo |
-| `npm run db:seed` | Siembra sucursales iniciales |
+| `npm run db:deploy` | Aplica migraciones en producción (`prisma migrate deploy`) |
+| `npm run db:seed` | Siembra sucursales iniciales y entregas de ejemplo |
 | `npm run db:studio` | Abre Prisma Studio |
 | `npm run db:push` | Sincroniza schema sin migración (prototipado) |
+
+### Calidad de código
+
+| Comando | Descripción |
+|---------|-------------|
+| `npm run lint` | Ejecuta ESLint en el proyecto |
+| `npm run typecheck` | Comprueba tipos con TypeScript (`tsc --noEmit`) |
+| `npm test` | Ejecuta los tests unitarios con Vitest |
 
 ## Producción
 
@@ -100,16 +113,18 @@ Requiere `DATABASE_URL` apuntando a una instancia PostgreSQL accesible.
 
 1. Conecta el repositorio de GitHub en [vercel.com](https://vercel.com)
 2. Framework preset: **Next.js**
-3. Añade la variable de entorno `DATABASE_URL` (p. ej. Neon, Supabase o Railway)
+3. Añade las variables de entorno en **Production**:
+   - `DATABASE_URL` — URL de la app en runtime (en Neon, la URL **pooled** con `-pooler`)
+   - `DIRECT_DATABASE_URL` — URL **directa** (sin `-pooler`), usada por el build para las migraciones. Las migraciones de Prisma necesitan conexión directa; a través del pooler fallan con timeout (`P1002`).
 4. En **Settings → Environments → Production**, confirma:
    - **Production Branch**: `main`
    - **Auto-assign Custom Production Domains**: activado (cada push a `main` va directo a producción)
 5. Ejecuta migraciones contra la base de producción antes del primer deploy (`npm run db:deploy`)
-6. El build ejecuta migraciones automáticamente **si** `DATABASE_URL` está disponible en el entorno de build
+6. El build de **producción** ejecuta `prisma migrate deploy` automáticamente (y falla si faltan las variables). Los builds de **preview** no ejecutan migraciones.
 
 ### Despliegue automático a producción
 
-Cada **push a `main`** despliega automáticamente a producción mediante GitHub Actions (`.github/workflows/deploy-production.yml`).
+Cada **push a `main`** pasa primero por CI (lint, typecheck, tests, build) y, si todo es verde, despliega automáticamente a producción mediante GitHub Actions (`.github/workflows/deploy-production.yml`, disparado al completar CI con éxito).
 
 > Las ramas distintas de `main` siguen generando **preview deployments** en Vercel. El build de `main` en Vercel está desactivado en `vercel.json` para evitar deploys duplicados; producción la gestiona el workflow.
 
@@ -120,8 +135,12 @@ Para que el workflow de GitHub funcione, configura estos secrets en el repositor
 | `VERCEL_TOKEN` | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
 | `VERCEL_ORG_ID` | Vercel → Project Settings → General |
 | `VERCEL_PROJECT_ID` | Vercel → Project Settings → General |
+| `DATABASE_URL` | Misma URL que en Vercel Production (respaldo si `vercel pull` no la inyecta en CI) |
+| `DIRECT_DATABASE_URL` | URL directa de Neon (opcional pero recomendada para migraciones) |
 
-**Flujo recomendado:** mergea tu PR a `main` → el push dispara producción automáticamente. Las ramas `cursor/*` y PRs siguen generando **preview deployments** sin afectar producción.
+**Si producción muestra un UI antiguo:** el código en `main` puede estar actualizado pero el deploy falló. Revisa [Actions → Production Deploy](https://github.com/mcdesignspur-svg/CRM-AgroSol-/actions/workflows/deploy-production.yml). El error más común es `DATABASE_URL is required for production builds` — configura la variable en Vercel Production **y** el secret `DATABASE_URL` en GitHub, luego re-ejecuta el workflow fallido.
+
+**Flujo recomendado:** mergea tu PR a `main` → CI valida el código → si pasa, producción se despliega automáticamente. Las ramas `cursor/*` y PRs siguen generando **preview deployments** sin afectar producción.
 
 ## Estructura
 

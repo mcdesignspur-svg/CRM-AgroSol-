@@ -22,7 +22,7 @@ export function useSidebarModals() {
               setConfigOpen(false);
               showToast("Preferencias guardadas", "success");
             }}
-            className="btn-primary px-4 py-2 text-xs font-bold uppercase industrial-border min-h-[44px]"
+            className="btn-primary px-4 py-2 text-xs font-medium industrial-border min-h-[44px]"
           >
             Guardar
           </button>
@@ -55,7 +55,7 @@ export function useSidebarModals() {
               setSupportOpen(false);
               showToast("Solicitud de soporte registrada", "success");
             }}
-            className="w-full btn-secondary py-3 text-xs font-bold uppercase min-h-[44px]"
+            className="w-full btn-secondary py-3 text-xs font-medium min-h-[44px]"
           >
             Abrir Ticket
           </button>

@@ -28,5 +28,17 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: UI token guard
+        run: node scripts/check-ui-tokens.mjs
+
       - name: Build
         run: npm run build

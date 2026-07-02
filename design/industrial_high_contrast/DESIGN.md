@@ -1,3 +1,5 @@
+> **DEPRECATED — do not implement.** This document describes the old industrial high-contrast UI that was replaced in PR #32. The canonical design system is [`design/minimal_ui/DESIGN.md`](../minimal_ui/DESIGN.md).
+
 ---
 name: Industrial High-Contrast
 colors:

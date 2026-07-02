@@ -4,13 +4,18 @@ import {
   createDeliveryForOrder,
 } from "@/lib/db/deliveries";
 import { isBranchId } from "@/lib/branch-definitions";
-import { DELIVERY_SLA_HOURS, PICKUP_SLA_HOURS } from "@/lib/constants";
+import {
+  DELIVERY_FEE,
+  DELIVERY_SLA_HOURS,
+  PICKUP_SLA_HOURS,
+  TAX_RATE,
+} from "@/lib/constants";
 import {
   getAllowedStatusTransitions,
   resolveDisplayStatus,
 } from "@/lib/order-status";
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import type { BranchId, OrderStatus, OrderType } from "@/lib/types";
 import {
   mapDriverOrder,
@@ -19,6 +24,9 @@ import {
   toAppOrderStatus,
   toPrismaOrderStatus,
 } from "./mappers";
+
+const MAX_LINE_ITEM_QUANTITY = 10_000;
+const CREATE_ORDER_MAX_RETRIES = 3;
 
 export interface OrderFilters {
   status?: OrderStatus | "all";
@@ -29,7 +37,7 @@ export interface OrderFilters {
   q?: string;
 }
 
-function buildOrderWhere(filters: OrderFilters = {}): Prisma.OrderWhereInput {
+export function buildOrderWhere(filters: OrderFilters = {}): Prisma.OrderWhereInput {
   const and: Prisma.OrderWhereInput[] = [];
 
   if (filters.branchId && filters.branchId !== "all") {
@@ -112,6 +120,10 @@ function buildOrderWhere(filters: OrderFilters = {}): Prisma.OrderWhereInput {
   return and.length > 0 ? { AND: and } : {};
 }
 
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 export async function getRecentOrders(
   limit = 20,
   offset = 0,
@@ -149,37 +161,29 @@ export async function getOrderByDisplayId(displayId: string) {
 }
 
 async function getNextDisplayId(tx: Prisma.TransactionClient) {
-  const latest = await tx.order.findFirst({
-    orderBy: { displayId: "desc" },
-    select: { displayId: true },
-  });
+  const rows = await tx.$queryRaw<{ max: number | null }[]>`
+    SELECT COALESCE(MAX(CAST(SUBSTRING(display_id FROM 5) AS INTEGER)), 99000) AS max
+    FROM orders
+    WHERE display_id ~ '^ORD-[0-9]+$'
+  `;
 
-  const latestNumber = latest
-    ? Number.parseInt(latest.displayId.replace(/^ORD-/, ""), 10)
-    : 99000;
+  const latestNumber = Number(rows[0]?.max ?? 99000);
+  return `ORD-${latestNumber + 1}`;
+}
 
-  return `ORD-${String(latestNumber + 1)}`;
+interface CreateOrderLineItemInput {
+  productId: string;
+  quantity: number;
 }
 
 interface CreateOrderInput {
   customerName: string;
   customerPhone?: string;
   deliveryAddress?: string;
-  type: OrderType;
   branchId: BranchId;
   fulfillment: "pickup" | "delivery";
   smsNotify: boolean;
-  subtotal: number;
-  taxes: number;
-  deliveryFee: number;
-  total: number;
-  lineItems: {
-    productId?: string;
-    name: string;
-    sku: string;
-    unitPrice: number;
-    quantity: number;
-  }[];
+  lineItems: CreateOrderLineItemInput[];
 }
 
 export class OrderValidationError extends Error {
@@ -189,28 +193,115 @@ export class OrderValidationError extends Error {
   }
 }
 
-export async function createOrder(input: CreateOrderInput) {
-  if (!input.customerName.trim()) {
-    throw new OrderValidationError("El nombre del cliente es obligatorio");
+export class OrderConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "OrderConflictError";
   }
-  if (!isBranchId(input.branchId)) {
-    throw new OrderValidationError("La sucursal seleccionada no es válida");
-  }
-  if (input.lineItems.length === 0) {
+}
+
+function validateLineItems(lineItems: CreateOrderLineItemInput[]) {
+  if (lineItems.length === 0) {
     throw new OrderValidationError("Agrega al menos un producto a la orden");
   }
-  if (input.fulfillment === "delivery" && !input.deliveryAddress?.trim()) {
-    throw new OrderValidationError(
-      "La dirección de entrega es obligatoria para entregas",
-    );
+
+  for (const item of lineItems) {
+    if (typeof item.productId !== "string" || !item.productId.trim()) {
+      throw new OrderValidationError(
+        "Cada producto debe tener un identificador válido",
+      );
+    }
+
+    if (
+      !Number.isInteger(item.quantity) ||
+      item.quantity <= 0 ||
+      item.quantity > MAX_LINE_ITEM_QUANTITY
+    ) {
+      throw new OrderValidationError(
+        `La cantidad debe ser un entero entre 1 y ${MAX_LINE_ITEM_QUANTITY}`,
+      );
+    }
+  }
+}
+
+async function resolveLineItems(lineItems: CreateOrderLineItemInput[]) {
+  const productIds = [...new Set(lineItems.map((item) => item.productId.trim()))];
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+  });
+  const productById = new Map(products.map((product) => [product.id, product]));
+
+  const resolvedItems: {
+    productId: string;
+    name: string;
+    sku: string;
+    unitPrice: number;
+    quantity: number;
+  }[] = [];
+
+  for (const item of lineItems) {
+    const productId = item.productId.trim();
+    const product = productById.get(productId);
+
+    if (!product) {
+      throw new OrderValidationError("Uno o más productos no existen");
+    }
+
+    if (!product.active) {
+      throw new OrderValidationError(
+        `El producto "${product.name}" no está disponible`,
+      );
+    }
+
+    resolvedItems.push({
+      productId,
+      name: product.name,
+      sku: product.sku,
+      unitPrice: Number(product.unitPrice),
+      quantity: item.quantity,
+    });
   }
 
-  await ensureBranches();
+  return resolvedItems;
+}
 
-  const status: OrderStatus =
-    input.fulfillment === "delivery" ? "en-transito" : "pendiente";
+function computeOrderTotals(
+  lineItems: { unitPrice: number; quantity: number }[],
+  fulfillment: "pickup" | "delivery",
+) {
+  const subtotal = roundMoney(
+    lineItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+  );
+  const taxes = roundMoney(subtotal * TAX_RATE);
+  const deliveryFee =
+    fulfillment === "delivery" ? roundMoney(DELIVERY_FEE) : 0;
+  const total = roundMoney(subtotal + taxes + deliveryFee);
 
-  const order = await prisma.$transaction(async (tx) => {
+  return { subtotal, taxes, deliveryFee, total };
+}
+
+async function createOrderTransaction(input: {
+  customerName: string;
+  customerPhone?: string;
+  deliveryAddress?: string;
+  branchId: BranchId;
+  fulfillment: "pickup" | "delivery";
+  smsNotify: boolean;
+  type: OrderType;
+  status: OrderStatus;
+  subtotal: number;
+  taxes: number;
+  deliveryFee: number;
+  total: number;
+  lineItems: {
+    productId: string;
+    name: string;
+    sku: string;
+    unitPrice: number;
+    quantity: number;
+  }[];
+}) {
+  return prisma.$transaction(async (tx) => {
     const displayId = await getNextDisplayId(tx);
 
     const created = await tx.order.create({
@@ -221,7 +312,7 @@ export async function createOrder(input: CreateOrderInput) {
         deliveryAddress: input.deliveryAddress?.trim() || null,
         type: input.type,
         branchId: input.branchId,
-        status: toPrismaOrderStatus(status),
+        status: toPrismaOrderStatus(input.status),
         fulfillment: input.fulfillment,
         smsNotify: input.smsNotify,
         subtotal: input.subtotal,
@@ -230,7 +321,7 @@ export async function createOrder(input: CreateOrderInput) {
         total: input.total,
         lineItems: {
           create: input.lineItems.map((item) => ({
-            productId: item.productId || null,
+            productId: item.productId,
             name: item.name,
             sku: item.sku,
             unitPrice: item.unitPrice,
@@ -276,43 +367,119 @@ export async function createOrder(input: CreateOrderInput) {
 
     return created;
   });
-
-  return mapOrderDetail(order);
 }
 
-export async function updateOrderStatus(displayId: string, nextStatus: OrderStatus) {
-  const existing = await prisma.order.findUnique({
-    where: { displayId },
-    include: { lineItems: true },
-  });
-
-  if (!existing) {
-    throw new OrderValidationError("Orden no encontrada");
+export async function createOrder(input: CreateOrderInput) {
+  if (!input.customerName.trim()) {
+    throw new OrderValidationError("El nombre del cliente es obligatorio");
   }
-
-  const currentStatus = resolveDisplayStatus({
-    status: toAppOrderStatus(existing.status),
-    fulfillment: existing.fulfillment,
-    createdAt: existing.createdAt,
-  });
-
-  const allowed = getAllowedStatusTransitions({
-    type: existing.type,
-    status: currentStatus,
-    fulfillment: existing.fulfillment,
-    createdAt: existing.createdAt,
-  });
-
-  if (!allowed.includes(nextStatus)) {
+  if (!isBranchId(input.branchId)) {
+    throw new OrderValidationError("La sucursal seleccionada no es válida");
+  }
+  if (input.fulfillment === "delivery" && !input.deliveryAddress?.trim()) {
     throw new OrderValidationError(
-      `No se puede cambiar de "${currentStatus}" a "${nextStatus}"`,
+      "La dirección de entrega es obligatoria para entregas",
     );
   }
 
+  validateLineItems(input.lineItems);
+  const resolvedLineItems = await resolveLineItems(input.lineItems);
+  const { subtotal, taxes, deliveryFee, total } = computeOrderTotals(
+    resolvedLineItems,
+    input.fulfillment,
+  );
+
+  const type: OrderType =
+    input.fulfillment === "delivery" ? "entrega" : "retiro";
+  const status: OrderStatus =
+    input.fulfillment === "delivery" ? "en-transito" : "pendiente";
+
+  await ensureBranches();
+
+  const orderInput = {
+    customerName: input.customerName,
+    customerPhone: input.customerPhone,
+    deliveryAddress: input.deliveryAddress,
+    branchId: input.branchId,
+    fulfillment: input.fulfillment,
+    smsNotify: input.smsNotify,
+    type,
+    status,
+    subtotal,
+    taxes,
+    deliveryFee,
+    total,
+    lineItems: resolvedLineItems,
+  };
+
+  for (let attempt = 0; attempt < CREATE_ORDER_MAX_RETRIES; attempt++) {
+    try {
+      const order = await createOrderTransaction(orderInput);
+      return mapOrderDetail(order);
+    } catch (error) {
+      const isDisplayIdConflict =
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002";
+
+      if (isDisplayIdConflict && attempt < CREATE_ORDER_MAX_RETRIES - 1) {
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw new OrderConflictError(
+    "Conflicto al generar el número de orden. Intenta de nuevo.",
+  );
+}
+
+export async function updateOrderStatus(displayId: string, nextStatus: OrderStatus) {
   const updated = await prisma.$transaction(async (tx) => {
-    const order = await tx.order.update({
+    const existing = await tx.order.findUnique({
       where: { displayId },
+      include: { lineItems: true },
+    });
+
+    if (!existing) {
+      throw new OrderValidationError("Orden no encontrada");
+    }
+
+    const currentStatus = resolveDisplayStatus({
+      status: toAppOrderStatus(existing.status),
+      fulfillment: existing.fulfillment,
+      createdAt: existing.createdAt,
+    });
+
+    const allowed = getAllowedStatusTransitions({
+      type: existing.type,
+      status: currentStatus,
+      fulfillment: existing.fulfillment,
+      createdAt: existing.createdAt,
+    });
+
+    if (!allowed.includes(nextStatus)) {
+      throw new OrderValidationError(
+        `No se puede cambiar de "${currentStatus}" a "${nextStatus}"`,
+      );
+    }
+
+    const updateResult = await tx.order.updateMany({
+      where: {
+        displayId,
+        status: existing.status,
+      },
       data: { status: toPrismaOrderStatus(nextStatus) },
+    });
+
+    if (updateResult.count === 0) {
+      throw new OrderConflictError(
+        "La orden fue modificada por otro proceso. Intenta de nuevo.",
+      );
+    }
+
+    const order = await tx.order.findUniqueOrThrow({
+      where: { displayId },
       include: { lineItems: { orderBy: { name: "asc" } } },
     });
 

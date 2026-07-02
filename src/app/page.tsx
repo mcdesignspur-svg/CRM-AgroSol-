@@ -18,6 +18,10 @@ import {
   getBranches,
 } from "@/lib/db";
 
+export const metadata = {
+  title: "Panel",
+};
+
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
@@ -35,7 +39,7 @@ export default async function DashboardPage() {
         topBar={<TopBar />}
         rightPanel={
           <div data-pings-panel>
-            <LivePingsPanel initialPings={pings} branches={branches} />
+            <LivePingsPanel branches={branches} />
           </div>
         }
       >
@@ -56,7 +60,7 @@ export default async function DashboardPage() {
                     {metrics.totalOrdersChange}
                   </span>
                 ) : (
-                  <span className="text-gray-500 uppercase">Sin datos</span>
+                  <span className="text-gray-500">Sin datos</span>
                 )
               }
             />
@@ -65,7 +69,7 @@ export default async function DashboardPage() {
               value={metrics.pendingDeliveries}
               icon="local_shipping"
               subtitle={
-                <span className="text-gray-500 uppercase">En Tránsito</span>
+                <span className="text-gray-500">En tránsito</span>
               }
             />
             <MetricCard
@@ -74,11 +78,11 @@ export default async function DashboardPage() {
               icon="hail"
               subtitle={
                 metrics.activePickupsLocation ? (
-                  <span className="text-secondary uppercase">
+                  <span className="text-secondary">
                     {metrics.activePickupsLocation}
                   </span>
                 ) : (
-                  <span className="text-gray-500 uppercase">Sin pickups</span>
+                  <span className="text-gray-500">Sin pickups</span>
                 )
               }
             />
@@ -91,7 +95,7 @@ export default async function DashboardPage() {
                 metrics.systemAlerts > 0 ? (
                   <CriticalAlertsLink />
                 ) : (
-                  <span className="text-white opacity-90 uppercase">
+                  <span className="text-primary text-xs">
                     Sin alertas
                   </span>
                 )

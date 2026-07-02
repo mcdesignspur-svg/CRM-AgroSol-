@@ -1,8 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import type { DashboardMetrics } from "@/lib/types";
+import { buildOrderWhere } from "./orders";
 import { getSystemAlertsCount } from "./pings";
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
+  const pickupActiveWhere = {
+    OR: [
+      buildOrderWhere({ status: "pendiente", fulfillment: "pickup" }),
+      { status: "listo" as const, fulfillment: "pickup" },
+    ],
+  };
+
   const [
     totalOrders,
     pendingDeliveries,
@@ -12,10 +20,10 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     pickupBranch,
   ] = await Promise.all([
     prisma.order.count(),
-    prisma.order.count({ where: { status: "en_transito" } }),
     prisma.order.count({
-      where: { status: { in: ["pendiente", "listo"] }, fulfillment: "pickup" },
+      where: buildOrderWhere({ status: "en-transito" }),
     }),
+    prisma.order.count({ where: pickupActiveWhere }),
     getSystemAlertsCount(),
     prisma.order.count({
       where: {
@@ -25,7 +33,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
       },
     }),
     prisma.order.findFirst({
-      where: { fulfillment: "pickup", status: { in: ["pendiente", "listo"] } },
+      where: pickupActiveWhere,
       orderBy: { createdAt: "desc" },
       include: { branch: true },
     }),

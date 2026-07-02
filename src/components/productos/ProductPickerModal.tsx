@@ -36,14 +36,14 @@ export function ProductPickerModal({
           <button
             type="button"
             onClick={onClose}
-            className="btn-secondary px-4 py-2 text-xs font-bold uppercase min-h-[44px]"
+            className="btn-secondary px-4 py-2 text-xs font-medium min-h-[44px]"
           >
             Cerrar
           </button>
           <button
             type="button"
             onClick={onCreateNew}
-            className="btn-primary px-4 py-2 text-xs font-bold uppercase industrial-border min-h-[44px]"
+            className="btn-primary px-4 py-2 text-xs font-medium industrial-border min-h-[44px]"
           >
             + Nuevo Producto
           </button>
@@ -54,29 +54,29 @@ export function ProductPickerModal({
         <ProductSearchBar
           value={query}
           onChange={setQuery}
-          placeholder="Nombre o SKU..."
+          placeholder="Nombre, SKU o categoría..."
           helperText={`Buscando en ${BRANCH_LABELS[branchId]}`}
           autoFocus
         />
 
         {query.trim().length < 2 ? (
-          <p className="text-sm font-bold uppercase opacity-60 text-center py-8">
-            Escribe para buscar productos
+          <p className="text-sm font-medium opacity-60 text-center py-8">
+            Escribe al menos 2 caracteres para buscar productos
           </p>
         ) : loading ? (
           <div className="flex items-center justify-center py-8 gap-2">
             <span className="material-symbols-outlined animate-spin text-primary">
               sync
             </span>
-            <span className="text-xs font-bold uppercase">Buscando...</span>
+            <span className="text-xs font-medium">Buscando...</span>
           </div>
         ) : error ? (
-          <p className="text-sm font-bold uppercase text-red-600 text-center py-8">
+          <p className="text-sm font-medium text-red-600 text-center py-8">
             {error}
           </p>
         ) : available.length === 0 ? (
           <div className="text-center py-8 space-y-3">
-            <p className="text-sm font-bold uppercase opacity-60">
+            <p className="text-sm font-medium opacity-60">
               {results.length === 0
                 ? "Sin resultados — importa el catálogo Loyverse o crea un producto"
                 : "Todos los productos encontrados ya están en la orden"}
@@ -92,21 +92,21 @@ export function ProductPickerModal({
                   onSelect(product);
                   onClose();
                 }}
-                className="w-full text-left p-3 border-2 border-black hover:bg-surface-container-low transition-colors"
+                className="w-full text-left p-3 border border-outline hover:bg-surface-container-low transition-colors"
               >
-                <p className="font-bold uppercase text-sm">{product.name}</p>
+                <p className="font-medium text-sm">{product.name}</p>
                 <div className="flex justify-between items-center mt-1 gap-2">
                   <div className="min-w-0">
-                    <span className="text-[10px] font-mono text-gray-500 block">
+                    <span className="text-[10px] font-mono text-on-surface-variant block">
                       SKU: {product.sku}
                     </span>
                     {product.categoryName && (
-                      <span className="text-[10px] font-bold uppercase text-gray-500 block truncate">
+                      <span className="text-[10px] font-medium text-on-surface-variant block truncate">
                         {product.categoryName}
                       </span>
                     )}
                   </div>
-                  <span className="font-extrabold text-primary shrink-0">
+                  <span className="font-semibold text-primary shrink-0">
                     ${product.unitPrice.toFixed(2)}
                   </span>
                 </div>
