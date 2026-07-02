@@ -43,17 +43,23 @@ body {
   font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
 }
 
-/* Card & border utilities */
-.industrial-border {
+/* Card & border utilities
+ * CANONICAL UI: minimalist (see design/minimal_ui/DESIGN.md).
+ * `.industrial-*` names are legacy aliases — keep subtle borders/shadows only.
+ */
+.industrial-border,
+.ui-border {
   border: 1px solid #e5e7eb;
   border-radius: var(--radius-lg);
 }
 
-.industrial-shadow {
+.industrial-shadow,
+.ui-shadow {
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
 }
 
-.industrial-divider {
+.industrial-divider,
+.ui-divider {
   border-bottom: 1px solid #f3f4f6;
 }
 

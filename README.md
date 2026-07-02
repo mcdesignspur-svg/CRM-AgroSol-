@@ -116,6 +116,10 @@ Para que el workflow de GitHub funcione, configura estos secrets en el repositor
 | `VERCEL_TOKEN` | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
 | `VERCEL_ORG_ID` | Vercel → Project Settings → General |
 | `VERCEL_PROJECT_ID` | Vercel → Project Settings → General |
+| `DATABASE_URL` | Misma URL que en Vercel Production (respaldo si `vercel pull` no la inyecta en CI) |
+| `DIRECT_DATABASE_URL` | URL directa de Neon (opcional pero recomendada para migraciones) |
+
+**Si producción muestra un UI antiguo:** el código en `main` puede estar actualizado pero el deploy falló. Revisa [Actions → Production Deploy](https://github.com/mcdesignspur-svg/CRM-AgroSol-/actions/workflows/deploy-production.yml). El error más común es `DATABASE_URL is required for production builds` — configura la variable en Vercel Production **y** el secret `DATABASE_URL` en GitHub, luego re-ejecuta el workflow fallido.
 
 **Flujo recomendado:** mergea tu PR a `main` → CI valida el código → si pasa, producción se despliega automáticamente. Las ramas `cursor/*` y PRs siguen generando **preview deployments** sin afectar producción.
 
