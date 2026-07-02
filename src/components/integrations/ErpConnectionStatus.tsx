@@ -35,7 +35,6 @@ export function ErpConnectionStatus({
 
   useEffect(() => {
     if (initialStatus) {
-      setStatus(initialStatus);
       return;
     }
 

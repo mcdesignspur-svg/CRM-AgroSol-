@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { BranchId, Product, ProductCategorySummary } from "@/lib/types";
 
 function categoryParam(categoryId: string | null): string {
@@ -17,14 +17,12 @@ export function useProductSearch(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const trimmed = query.trim();
-    const hasCategory = selectedCategoryId !== undefined;
+  const trimmedQuery = query.trim();
+  const hasCategory = selectedCategoryId !== undefined;
+  const isActive = hasCategory || trimmedQuery.length >= 2;
 
-    if (!hasCategory && trimmed.length < 2) {
-      setResults([]);
-      setError(null);
-      setLoading(false);
+  useEffect(() => {
+    if (!isActive) {
       return;
     }
 
@@ -38,8 +36,8 @@ export function useProductSearch(
         limit: "100",
       });
 
-      if (trimmed.length >= 2) {
-        params.set("q", trimmed);
+      if (trimmedQuery.length >= 2) {
+        params.set("q", trimmedQuery);
       }
 
       if (hasCategory && selectedCategoryId !== undefined) {
@@ -76,34 +74,46 @@ export function useProductSearch(
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [query, branchId, selectedCategoryId]);
+  }, [branchId, hasCategory, isActive, selectedCategoryId, trimmedQuery]);
 
-  return { query, setQuery, results, loading, error };
+  return useMemo(
+    () => ({
+      query,
+      setQuery,
+      results: isActive ? results : [],
+      loading: isActive ? loading : false,
+      error: isActive ? error : null,
+    }),
+    [error, isActive, loading, query, results],
+  );
 }
 
 export function useProductCategories(
   branchId: BranchId,
   initialCategories: ProductCategorySummary[] = [],
 ) {
-  const [categories, setCategories] =
-    useState<ProductCategorySummary[]>(initialCategories);
+  const [fetchedCategories, setFetchedCategories] = useState<
+    ProductCategorySummary[]
+  >([]);
   const [loading, setLoading] = useState(initialCategories.length === 0);
+  const hasInitialCategories = initialCategories.length > 0;
 
   useEffect(() => {
-    if (initialCategories.length > 0) {
-      setCategories(initialCategories);
-      setLoading(false);
+    if (hasInitialCategories) {
       return;
     }
 
     void fetch(`/api/products/categories?branchId=${encodeURIComponent(branchId)}`)
       .then((res) => res.json())
       .then((data: { categories?: ProductCategorySummary[] }) => {
-        setCategories(Array.isArray(data.categories) ? data.categories : []);
+        setFetchedCategories(Array.isArray(data.categories) ? data.categories : []);
       })
-      .catch(() => setCategories([]))
+      .catch(() => setFetchedCategories([]))
       .finally(() => setLoading(false));
-  }, [branchId, initialCategories]);
+  }, [branchId, hasInitialCategories]);
 
-  return { categories, loading };
+  return {
+    categories: hasInitialCategories ? initialCategories : fetchedCategories,
+    loading: hasInitialCategories ? false : loading,
+  };
 }
