@@ -91,7 +91,7 @@ function csvEscape(value: string): string {
 
 export function DashboardHeader() {
   const { showToast } = useToast();
-  const { lastUpdatedAt, isPolling } = useDashboardLive();
+  const { lastUpdatedAt, isPolling, isConnected } = useDashboardLive();
   const [exporting, setExporting] = useState(false);
 
   async function handleExport() {
@@ -147,10 +147,15 @@ export function DashboardHeader() {
             <span className="ml-2 inline-flex items-center gap-1 text-xs">
               <span
                 className={`inline-block h-1.5 w-1.5 rounded-full ${
-                  isPolling ? "bg-primary animate-pulse" : "bg-emerald-500"
+                  isConnected
+                    ? "bg-emerald-500"
+                    : isPolling
+                      ? "bg-primary animate-pulse"
+                      : "bg-amber-500"
                 }`}
               />
-              Actualizado{" "}
+              {isConnected ? "En vivo" : "Sincronizando"}
+              {" · "}
               {new Date(lastUpdatedAt).toLocaleTimeString("es-PR", {
                 hour: "2-digit",
                 minute: "2-digit",

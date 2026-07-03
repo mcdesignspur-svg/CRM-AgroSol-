@@ -14,6 +14,7 @@ import { isBranchId } from "@/lib/branch-definitions";
 import {
   sendPickupOrderConfirmationByDisplayId,
 } from "@/lib/pickup/notify";
+import { emitOrderRealtimeUpdates } from "@/lib/realtime/emit";
 import type { BranchId, OrderStatus, OrderType } from "@/lib/types";
 
 const ORDER_STATUS_FILTERS = new Set<OrderStatus | "all">([
@@ -204,6 +205,7 @@ export async function POST(request: Request) {
         await sendPickupOrderConfirmationByDisplayId(order.id);
         const refreshed = await getOrderByDisplayId(order.id);
         if (refreshed) {
+          void emitOrderRealtimeUpdates(refreshed.pickupToken);
           return NextResponse.json(refreshed, { status: 201 });
         }
       } catch (error) {
@@ -211,6 +213,7 @@ export async function POST(request: Request) {
       }
     }
 
+    void emitOrderRealtimeUpdates(order.pickupToken);
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
     if (error instanceof OrderValidationError) {

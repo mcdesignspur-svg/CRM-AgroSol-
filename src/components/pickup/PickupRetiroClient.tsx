@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRealtime } from "@/hooks/useRealtime";
+import type { RealtimeServerMessage } from "@/lib/realtime/messages";
+import {
+  areAlertSoundsUnlocked,
+  playAlertSound,
+  unlockAlertSounds,
+} from "@/lib/sounds/alert";
 
 interface PickupData {
   displayId: string;
@@ -19,25 +26,51 @@ interface PickupRetiroClientProps {
   token: string;
 }
 
+const FALLBACK_POLL_MS = 15_000;
+
 export function PickupRetiroClient({ token }: PickupRetiroClientProps) {
   const [pickup, setPickup] = useState<PickupData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notifying, setNotifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notified, setNotified] = useState(false);
+  const previousStatus = useRef<string | null>(null);
+
+  const applyPickup = useCallback((data: PickupData, notifyReady = false) => {
+    if (
+      notifyReady &&
+      previousStatus.current &&
+      previousStatus.current !== "listo" &&
+      data.status === "listo" &&
+      areAlertSoundsUnlocked()
+    ) {
+      playAlertSound("ready");
+    }
+
+    previousStatus.current = data.status;
+    setPickup(data);
+    setNotified(Boolean(data.arrivedAt));
+  }, []);
+
+  const loadPickup = useCallback(
+    async (notifyReady = false) => {
+      const res = await fetch(`/api/pickup/${encodeURIComponent(token)}`);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? "Orden no encontrada");
+      }
+      applyPickup(data as PickupData, notifyReady);
+      return data as PickupData;
+    },
+    [applyPickup, token],
+  );
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       try {
-        const res = await fetch(`/api/pickup/${encodeURIComponent(token)}`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Orden no encontrada");
-        if (!cancelled) {
-          setPickup(data);
-          setNotified(Boolean(data.arrivedAt));
-        }
+        await loadPickup(false);
       } catch (err) {
         if (!cancelled) {
           setError(
@@ -45,7 +78,9 @@ export function PickupRetiroClient({ token }: PickupRetiroClientProps) {
           );
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
@@ -53,7 +88,46 @@ export function PickupRetiroClient({ token }: PickupRetiroClientProps) {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [loadPickup]);
+
+  const handleRealtimeMessage = useCallback(
+    (message: RealtimeServerMessage) => {
+      if (message.type !== "pickup:update") {
+        return;
+      }
+      applyPickup(message.data, true);
+      setError(null);
+      setLoading(false);
+    },
+    [applyPickup],
+  );
+
+  const { connected } = useRealtime({
+    channel: "pickup",
+    token,
+    onMessage: handleRealtimeMessage,
+  });
+
+  useEffect(() => {
+    if (connected) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      void loadPickup(true).catch(() => undefined);
+    }, FALLBACK_POLL_MS);
+
+    return () => window.clearInterval(timer);
+  }, [connected, loadPickup]);
+
+  useEffect(() => {
+    function enableSounds() {
+      unlockAlertSounds();
+    }
+
+    window.addEventListener("pointerdown", enableSounds, { once: true });
+    return () => window.removeEventListener("pointerdown", enableSounds);
+  }, []);
 
   async function handleArrive() {
     setNotifying(true);
@@ -64,7 +138,7 @@ export function PickupRetiroClient({ token }: PickupRetiroClientProps) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Error al avisar llegada");
-      setPickup(data);
+      applyPickup(data as PickupData, false);
       setNotified(true);
     } catch (err) {
       setError(
@@ -103,13 +177,31 @@ export function PickupRetiroClient({ token }: PickupRetiroClientProps) {
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-white border-b border-outline px-4 py-5">
-        <p className="text-xs font-medium text-primary">Agrocentro Solá</p>
-        <h1 className="font-display text-2xl font-semibold mt-1">
-          Retiro de orden
-        </h1>
-        <p className="font-mono text-sm text-on-surface-variant mt-1">
-          {pickup.displayId}
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium text-primary">Agrocentro Solá</p>
+            <h1 className="font-display text-2xl font-semibold mt-1">
+              Retiro de orden
+            </h1>
+            <p className="font-mono text-sm text-on-surface-variant mt-1">
+              {pickup.displayId}
+            </p>
+          </div>
+          <span
+            className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border ${
+              connected
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-outline bg-surface text-on-surface-variant"
+            }`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                connected ? "bg-emerald-500 animate-pulse" : "bg-gray-400"
+              }`}
+            />
+            {connected ? "En vivo" : "Sincronizando"}
+          </span>
+        </div>
       </header>
 
       <main className="max-w-lg mx-auto p-4 space-y-4">

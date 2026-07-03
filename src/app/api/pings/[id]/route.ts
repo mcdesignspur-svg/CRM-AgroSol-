@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { dismissPing } from "@/lib/db";
+import { emitDashboardRefresh } from "@/lib/realtime/emit";
 
 export async function PATCH(
   _request: Request,
@@ -13,6 +14,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Ping no encontrado" }, { status: 404 });
     }
 
+    void emitDashboardRefresh();
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("PATCH /api/pings/[id]", error);

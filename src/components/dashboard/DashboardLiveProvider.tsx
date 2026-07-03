@@ -10,6 +10,13 @@ import {
 } from "react";
 import { PingCard } from "@/components/dashboard/PingCard";
 import { useToast } from "@/components/providers/ToastProvider";
+import { useRealtime } from "@/hooks/useRealtime";
+import type { RealtimeServerMessage } from "@/lib/realtime/messages";
+import {
+  areAlertSoundsUnlocked,
+  playAlertSound,
+  unlockAlertSounds,
+} from "@/lib/sounds/alert";
 import type {
   DashboardMetrics,
   DashboardUpdates,
@@ -18,7 +25,7 @@ import type {
   Ping,
 } from "@/lib/types";
 
-const POLL_INTERVAL_MS = 15_000;
+const FALLBACK_POLL_MS = 30_000;
 
 interface DashboardLiveContextValue {
   pings: Ping[];
@@ -27,7 +34,10 @@ interface DashboardLiveContextValue {
   orders: Order[];
   ordersTotal: number;
   lastUpdatedAt: string | null;
+  isConnected: boolean;
   isPolling: boolean;
+  soundsEnabled: boolean;
+  enableSounds: () => void;
   dismissPing: (id: string) => Promise<void>;
   callDriver: (ping: Ping) => void;
   openPings: () => void;
@@ -64,12 +74,13 @@ export function DashboardLiveProvider({
   const [ordersTotal, setOrdersTotal] = useState(initialOrdersTotal);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [soundsEnabled, setSoundsEnabled] = useState(false);
 
   const seenPingIds = useRef(new Set(initialPings.map((ping) => ping.id)));
   const seenNotificationIds = useRef(
     new Set(initialNotifications.map((log) => log.id)),
   );
-  const isFirstPoll = useRef(true);
+  const isFirstUpdate = useRef(true);
 
   const applyUpdates = useCallback(
     (data: DashboardUpdates, notify: boolean) => {
@@ -96,8 +107,14 @@ export function DashboardLiveProvider({
 
         if (ping.priority === "urgente") {
           showToast(ping.title, "warning");
+          if (areAlertSoundsUnlocked()) {
+            playAlertSound("urgent");
+          }
         } else if (ping.priority === "sistema") {
           showToast(ping.title, "info");
+          if (areAlertSoundsUnlocked()) {
+            playAlertSound("info");
+          }
         }
       }
 
@@ -109,6 +126,9 @@ export function DashboardLiveProvider({
 
         if (log.source === "PICKUP") {
           showToast(log.message, "warning");
+          if (areAlertSoundsUnlocked()) {
+            playAlertSound("urgent");
+          }
         }
       }
     },
@@ -123,8 +143,8 @@ export function DashboardLiveProvider({
       if (!res.ok) {
         throw new Error(data.error ?? "Error al actualizar el panel");
       }
-      applyUpdates(data, !isFirstPoll.current);
-      isFirstPoll.current = false;
+      applyUpdates(data, !isFirstUpdate.current);
+      isFirstUpdate.current = false;
     } catch (error) {
       console.error("Dashboard live refresh failed", error);
     } finally {
@@ -132,13 +152,64 @@ export function DashboardLiveProvider({
     }
   }, [applyUpdates]);
 
+  const silentRefresh = useCallback(async () => {
+    try {
+      const res = await fetch("/api/dashboard/updates");
+      const data = (await res.json()) as DashboardUpdates & { error?: string };
+      if (!res.ok) {
+        throw new Error(data.error ?? "Error al actualizar el panel");
+      }
+      applyUpdates(data, !isFirstUpdate.current);
+      isFirstUpdate.current = false;
+    } catch (error) {
+      console.error("Dashboard live refresh failed", error);
+    }
+  }, [applyUpdates]);
+
+  const handleRealtimeMessage = useCallback(
+    (message: RealtimeServerMessage) => {
+      if (message.type !== "dashboard:update") {
+        return;
+      }
+      applyUpdates(message.data, !isFirstUpdate.current);
+      isFirstUpdate.current = false;
+    },
+    [applyUpdates],
+  );
+
+  const { connected } = useRealtime({
+    channel: "dashboard",
+    onMessage: handleRealtimeMessage,
+  });
+
   useEffect(() => {
+    if (connected) {
+      return;
+    }
+
+    void silentRefresh();
     const timer = window.setInterval(() => {
-      void refresh();
-    }, POLL_INTERVAL_MS);
+      void silentRefresh();
+    }, FALLBACK_POLL_MS);
 
     return () => window.clearInterval(timer);
-  }, [refresh]);
+  }, [connected, silentRefresh]);
+
+  useEffect(() => {
+    function enableSounds() {
+      unlockAlertSounds();
+      setSoundsEnabled(true);
+    }
+
+    window.addEventListener("pointerdown", enableSounds, { once: true });
+    return () => window.removeEventListener("pointerdown", enableSounds);
+  }, []);
+
+  const enableSounds = useCallback(() => {
+    unlockAlertSounds();
+    setSoundsEnabled(true);
+    playAlertSound("info");
+  }, []);
 
   const dismissPing = useCallback(
     async (id: string) => {
@@ -179,7 +250,10 @@ export function DashboardLiveProvider({
         orders,
         ordersTotal,
         lastUpdatedAt,
+        isConnected: connected,
         isPolling,
+        soundsEnabled,
+        enableSounds,
         dismissPing,
         callDriver,
         openPings,
@@ -187,6 +261,16 @@ export function DashboardLiveProvider({
       }}
     >
       {children}
+
+      {!soundsEnabled && (
+        <button
+          type="button"
+          onClick={enableSounds}
+          className="fixed bottom-4 left-4 z-40 btn-secondary px-3 py-2 text-xs shadow-sm"
+        >
+          Activar sonidos
+        </button>
+      )}
 
       {pings.length > 0 && (
         <button
@@ -270,7 +354,6 @@ export function useDashboardLiveOptional() {
   return useContext(DashboardLiveContext);
 }
 
-// Backward-compatible alias used by existing dashboard components.
 export function usePingsSheet() {
   return useDashboardLive();
 }
