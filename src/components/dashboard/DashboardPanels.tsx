@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { PingCard } from "@/components/dashboard/PingCard";
-import { usePingsSheet } from "@/components/dashboard/PingsSheetProvider";
+import { useDashboardLive } from "@/components/dashboard/DashboardLiveProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import type { Branch, Order } from "@/lib/types";
 
 export function LivePingsPanel({ branches }: { branches: Branch[] }) {
-  const { pings, dismissPing, callDriver } = usePingsSheet();
+  const { pings, dismissPing, callDriver } = useDashboardLive();
 
   return (
     <aside className="hidden lg:flex flex-col w-72 border-l border-outline bg-white h-full shrink-0">
@@ -91,6 +91,7 @@ function csvEscape(value: string): string {
 
 export function DashboardHeader() {
   const { showToast } = useToast();
+  const { lastUpdatedAt, isPolling, isConnected } = useDashboardLive();
   const [exporting, setExporting] = useState(false);
 
   async function handleExport() {
@@ -142,6 +143,25 @@ export function DashboardHeader() {
         </h2>
         <p className="text-sm text-on-surface-variant mt-1">
           Supervisión en tiempo real de la red Agrocentro Solá.
+          {lastUpdatedAt && (
+            <span className="ml-2 inline-flex items-center gap-1 text-xs">
+              <span
+                className={`inline-block h-1.5 w-1.5 rounded-full ${
+                  isConnected
+                    ? "bg-emerald-500"
+                    : isPolling
+                      ? "bg-primary animate-pulse"
+                      : "bg-amber-500"
+                }`}
+              />
+              {isConnected ? "En vivo" : "Sincronizando"}
+              {" · "}
+              {new Date(lastUpdatedAt).toLocaleTimeString("es-PR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          )}
         </p>
       </div>
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">

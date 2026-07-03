@@ -6,6 +6,7 @@ import {
   OrderConflictError,
 } from "@/lib/db";
 import { sendPickupOrderReadyByDisplayId } from "@/lib/pickup/notify";
+import { emitOrderRealtimeUpdates } from "@/lib/realtime/emit";
 import type { OrderStatus } from "@/lib/types";
 
 const ORDER_STATUSES: OrderStatus[] = [
@@ -69,6 +70,7 @@ export async function PATCH(
         await sendPickupOrderReadyByDisplayId(order.id);
         const refreshed = await getOrderByDisplayId(order.id);
         if (refreshed) {
+          void emitOrderRealtimeUpdates(refreshed.pickupToken);
           return NextResponse.json(refreshed);
         }
       } catch (error) {
@@ -76,6 +78,7 @@ export async function PATCH(
       }
     }
 
+    void emitOrderRealtimeUpdates(order.pickupToken);
     return NextResponse.json(order);
   } catch (error) {
     if (error instanceof OrderValidationError) {

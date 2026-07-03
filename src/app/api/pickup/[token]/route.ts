@@ -4,6 +4,7 @@ import {
   markCustomerArrived,
   PickupArrivalError,
 } from "@/lib/db/pickup";
+import { emitOrderRealtimeUpdates } from "@/lib/realtime/emit";
 
 interface RouteContext {
   params: Promise<{ token: string }>;
@@ -32,6 +33,7 @@ export async function POST(_request: Request, context: RouteContext) {
   try {
     const { token } = await context.params;
     const pickup = await markCustomerArrived(token);
+    void emitOrderRealtimeUpdates(token);
     return NextResponse.json(pickup);
   } catch (error) {
     if (error instanceof PickupArrivalError) {

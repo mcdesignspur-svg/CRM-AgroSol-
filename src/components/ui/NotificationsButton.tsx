@@ -1,20 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useDashboardLiveOptional } from "@/components/dashboard/DashboardLiveProvider";
 import type { NotificationLog } from "@/lib/types";
 
 export function NotificationsButton() {
+  const live = useDashboardLiveOptional();
   const [open, setOpen] = useState(false);
-  const [logs, setLogs] = useState<NotificationLog[]>([]);
+  const [localLogs, setLocalLogs] = useState<NotificationLog[]>([]);
   const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const logs = live ? live.notifications : localLogs;
   const hasNotifications = logs.length > 0;
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/notifications");
-      if (res.ok) setLogs(await res.json());
+      if (res.ok) setLocalLogs(await res.json());
     } finally {
       setLoading(false);
     }
@@ -23,7 +26,7 @@ export function NotificationsButton() {
   async function handleToggle() {
     const nextOpen = !open;
     setOpen(nextOpen);
-    if (nextOpen) {
+    if (nextOpen && !live) {
       await fetchLogs();
     }
   }
@@ -83,7 +86,13 @@ export function NotificationsButton() {
                     <span className="text-xs font-mono text-on-surface-variant">
                       {log.time}
                     </span>
-                    <span className="text-xs font-medium bg-surface-container px-2 py-0.5 rounded-full text-on-surface-variant">
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        log.source === "PICKUP"
+                          ? "bg-orange-50 text-orange-700"
+                          : "bg-surface-container text-on-surface-variant"
+                      }`}
+                    >
                       {log.source}
                     </span>
                   </div>

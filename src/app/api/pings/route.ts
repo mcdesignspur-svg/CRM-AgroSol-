@@ -3,6 +3,7 @@ import { getLivePings } from "@/lib/db";
 import { createQuickPingInTx } from "@/lib/db/pings";
 import { sendBranchPingInTx } from "@/lib/db/branches";
 import { isBranchId } from "@/lib/branch-definitions";
+import { emitDashboardRefresh } from "@/lib/realtime/emit";
 import { prisma } from "@/lib/prisma";
 import type { PingPriority } from "@/lib/types";
 
@@ -67,6 +68,7 @@ export async function POST(request: Request) {
       return createQuickPingInTx(tx, branchId, message, priority);
     });
 
+    void emitDashboardRefresh();
     return NextResponse.json(ping, { status: 201 });
   } catch (error) {
     console.error("POST /api/pings", error);

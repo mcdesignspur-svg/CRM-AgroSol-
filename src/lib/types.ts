@@ -30,7 +30,10 @@ export interface Order {
   status: OrderStatus;
   elapsedTime: string;
   createdAt: string;
+  fulfillment?: "pickup" | "delivery";
   arrivedAt?: string;
+  confirmationNotifiedAt?: string;
+  readyNotifiedAt?: string;
 }
 
 export interface DriverOrder extends Order {
@@ -86,6 +89,7 @@ export interface Ping {
   title: string;
   description: string;
   timeAgo: string;
+  orderId?: string;
 }
 
 export interface NotificationLog {
@@ -128,4 +132,13 @@ export interface DashboardMetrics {
   activePickups: number;
   activePickupsLocation: string;
   systemAlerts: number;
+}
+
+export interface DashboardUpdates {
+  pings: Ping[];
+  notifications: NotificationLog[];
+  metrics: DashboardMetrics;
+  orders: Order[];
+  ordersTotal: number;
+  updatedAt: string;
 }

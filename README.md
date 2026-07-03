@@ -164,7 +164,7 @@ design/               # Mockups originales de Stitch (referencia)
 
 - [x] Conectar base de datos PostgreSQL
 - [ ] Autenticación de operadores
-- [ ] WebSockets / actualizaciones en tiempo real
+- [x] WebSockets / actualizaciones en tiempo real (`server.ts` + `/api/ws`; polling de respaldo en serverless)
 - [ ] Integración ERP (Loyverse Gurabo: cache + búsqueda; otras sucursales y órdenes pendiente)
 - [ ] Notificaciones SMS / push
 
