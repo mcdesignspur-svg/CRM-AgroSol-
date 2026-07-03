@@ -2,13 +2,16 @@
 
 import Link from "next/link";
 import { useCallback, useState } from "react";
+import { useDashboardLiveOptional } from "@/components/dashboard/DashboardLiveProvider";
 import { useToast } from "@/components/providers/ToastProvider";
-import { usePingsSheet } from "@/components/dashboard/PingsSheetProvider";
 import {
+  ArrivedBadge,
   BranchLabel,
   StatusBadge,
   TypeBadge,
 } from "@/components/ui/badges";
+import { PickupFlowProgress } from "@/components/pickup/PickupFlowProgress";
+import { isPickupOrder } from "@/lib/pickup/flow";
 import type { Order, OrderStatus, OrderType } from "@/lib/types";
 
 type FilterMode = "all" | OrderType | OrderStatus;
@@ -59,13 +62,16 @@ export function DashboardOrdersSection({
   initialOrders: Order[];
   initialTotal: number;
 }) {
+  const live = useDashboardLiveOptional();
   const { showToast } = useToast();
-  const [orders, setOrders] = useState(initialOrders);
-  const [total, setTotal] = useState(initialTotal);
+  const [localOrders, setLocalOrders] = useState(initialOrders);
+  const [localTotal, setLocalTotal] = useState(initialTotal);
   const [filter, setFilter] = useState<FilterMode>("all");
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  const orders = filter === "all" && live ? live.orders : localOrders;
+  const total = filter === "all" && live ? live.ordersTotal : localTotal;
   const hasMore = orders.length < total;
 
   const loadOrders = useCallback(
@@ -75,8 +81,10 @@ export function DashboardOrdersSection({
       if (!res.ok) {
         throw new Error(data.error ?? "Error al cargar órdenes");
       }
-      setTotal(data.total);
-      setOrders((prev) => (replace ? data.orders : [...prev, ...data.orders]));
+      setLocalTotal(data.total);
+      setLocalOrders((prev) =>
+        replace ? data.orders : [...prev, ...data.orders],
+      );
       return data;
     },
     [],
@@ -93,8 +101,13 @@ export function DashboardOrdersSection({
   async function handleRefresh() {
     setRefreshing(true);
     try {
-      await loadOrders(filter, 0, true);
-      showToast("Datos actualizados", "success");
+      if (filter === "all" && live) {
+        await live.refresh();
+        showToast("Datos actualizados", "success");
+      } else {
+        await loadOrders(filter, 0, true);
+        showToast("Datos actualizados", "success");
+      }
     } catch {
       showToast("Error al actualizar", "error");
     } finally {
@@ -118,6 +131,34 @@ export function DashboardOrdersSection({
     } finally {
       setLoadingMore(false);
     }
+  }
+
+  function renderOrderStatus(order: Order) {
+    const pickup = isPickupOrder({
+      type: order.type,
+      fulfillment: order.fulfillment,
+      status: order.status,
+    });
+
+    return (
+      <div className="space-y-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <StatusBadge status={order.status} />
+          {pickup && order.arrivedAt && <ArrivedBadge />}
+        </div>
+        {pickup && (
+          <PickupFlowProgress
+            compact
+            type={order.type}
+            fulfillment={order.fulfillment}
+            status={order.status}
+            confirmationNotifiedAt={order.confirmationNotifiedAt}
+            readyNotifiedAt={order.readyNotifiedAt}
+            arrivedAt={order.arrivedAt}
+          />
+        )}
+      </div>
+    );
   }
 
   return (
@@ -146,13 +187,13 @@ export function DashboardOrdersSection({
             <button
               type="button"
               onClick={handleRefresh}
-              disabled={refreshing}
+              disabled={refreshing || live?.isPolling}
               className="p-2 rounded-lg border border-outline hover:bg-surface-container transition-colors disabled:opacity-60"
               aria-label="Actualizar"
             >
               <span
                 className={`material-symbols-outlined ${
-                  refreshing ? "animate-spin" : ""
+                  refreshing || live?.isPolling ? "animate-spin" : ""
                 }`}
               >
                 refresh
@@ -196,9 +237,7 @@ export function DashboardOrdersSection({
                     <td className="px-4 py-3">
                       <BranchLabel branchId={order.branchId} />
                     </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={order.status} />
-                    </td>
+                    <td className="px-4 py-3">{renderOrderStatus(order)}</td>
                     <td
                       className={`px-4 py-3 text-sm font-mono ${
                         order.status === "atrasado" || order.status === "listo"
@@ -241,6 +280,7 @@ export function DashboardOrdersSection({
                 <div className="flex flex-wrap gap-2 items-center">
                   <TypeBadge type={order.type} />
                   <BranchLabel branchId={order.branchId} />
+                  {order.arrivedAt && <ArrivedBadge />}
                   <span
                     className={`text-xs font-mono ${
                       order.status === "atrasado" || order.status === "listo"
@@ -251,6 +291,21 @@ export function DashboardOrdersSection({
                     {order.elapsedTime}
                   </span>
                 </div>
+                {isPickupOrder({
+                  type: order.type,
+                  fulfillment: order.fulfillment,
+                  status: order.status,
+                }) && (
+                  <PickupFlowProgress
+                    compact
+                    type={order.type}
+                    fulfillment={order.fulfillment}
+                    status={order.status}
+                    confirmationNotifiedAt={order.confirmationNotifiedAt}
+                    readyNotifiedAt={order.readyNotifiedAt}
+                    arrivedAt={order.arrivedAt}
+                  />
+                )}
                 <Link
                   href={`/ordenes/${encodeURIComponent(order.id)}`}
                   className="inline-flex items-center gap-1 text-primary text-sm font-medium min-h-[40px]"
@@ -284,7 +339,7 @@ export function DashboardOrdersSection({
 
 export function CriticalAlertsLink() {
   const { showToast } = useToast();
-  const { openPings } = usePingsSheet();
+  const live = useDashboardLiveOptional();
 
   function handleClick() {
     showToast("Mostrando alertas críticas del sistema", "warning");
@@ -293,7 +348,7 @@ export function CriticalAlertsLink() {
         .querySelector("[data-pings-panel]")
         ?.scrollIntoView({ behavior: "smooth" });
     } else {
-      openPings();
+      live?.openPings();
     }
   }
 

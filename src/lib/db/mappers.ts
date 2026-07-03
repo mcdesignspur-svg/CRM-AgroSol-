@@ -98,17 +98,27 @@ function resolveOrderStatus(order: PrismaOrder): OrderStatus {
   });
 }
 
+function extractOrderIdFromText(text: string): string | undefined {
+  const match = text.match(/ORD-\d+/);
+  return match?.[0];
+}
+
 export function mapOrder(order: PrismaOrder): Order {
   const status = resolveOrderStatus(order);
+  const fulfillment = order.fulfillment as "pickup" | "delivery";
+
   return {
     id: order.displayId,
     customerName: order.customerName,
     type: order.type,
     branchId: order.branchId as BranchId,
     status,
+    fulfillment,
     elapsedTime: formatElapsedTime(order.createdAt),
     createdAt: order.createdAt.toISOString(),
     arrivedAt: order.arrivedAt?.toISOString(),
+    confirmationNotifiedAt: order.confirmationNotifiedAt?.toISOString(),
+    readyNotifiedAt: order.readyNotifiedAt?.toISOString(),
   };
 }
 
@@ -202,12 +212,17 @@ export function mapDelivery(
 }
 
 export function mapPing(ping: PrismaPing): Ping {
+  const orderId =
+    extractOrderIdFromText(ping.title) ??
+    extractOrderIdFromText(ping.description);
+
   return {
     id: ping.id,
     priority: ping.priority,
     title: ping.title,
     description: ping.description,
     timeAgo: formatTimeAgo(ping.createdAt),
+    orderId,
   };
 }
 

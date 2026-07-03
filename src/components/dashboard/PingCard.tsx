@@ -1,3 +1,6 @@
+"use client";
+
+import Link from "next/link";
 import type { Ping } from "@/lib/types";
 
 const priorityStyles: Record<
@@ -44,24 +47,34 @@ export function PingCard({ ping, onDismiss, onCallDriver }: PingCardProps) {
       </div>
       <p className="text-sm font-medium text-on-surface">{ping.title}</p>
       <p className="text-xs text-on-surface-variant mt-0.5">{ping.description}</p>
-      {ping.priority === "urgente" && onDismiss && onCallDriver && (
-        <div className="mt-2.5 flex gap-2">
-          <button
-            type="button"
-            onClick={() => onDismiss(ping.id)}
-            className="text-xs font-medium border border-outline rounded-md px-3 py-1.5 min-h-[36px] hover:bg-surface-container transition-colors"
+      <div className="mt-2.5 flex flex-wrap gap-2">
+        {ping.orderId && (
+          <Link
+            href={`/ordenes/${encodeURIComponent(ping.orderId)}`}
+            className="text-xs font-medium text-primary hover:text-primary/80 min-h-[36px] inline-flex items-center"
           >
-            Descartar
-          </button>
-          <button
-            type="button"
-            onClick={() => onCallDriver(ping)}
-            className="text-xs font-medium bg-primary text-white rounded-md px-3 py-1.5 min-h-[36px] hover:bg-primary/90 transition-colors"
-          >
-            Llamar
-          </button>
-        </div>
-      )}
+            Ver orden
+          </Link>
+        )}
+        {ping.priority === "urgente" && onDismiss && onCallDriver && (
+          <>
+            <button
+              type="button"
+              onClick={() => onDismiss(ping.id)}
+              className="text-xs font-medium border border-outline rounded-md px-3 py-1.5 min-h-[36px] hover:bg-surface-container transition-colors"
+            >
+              Descartar
+            </button>
+            <button
+              type="button"
+              onClick={() => onCallDriver(ping)}
+              className="text-xs font-medium bg-primary text-white rounded-md px-3 py-1.5 min-h-[36px] hover:bg-primary/90 transition-colors"
+            >
+              Llamar
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
