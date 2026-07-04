@@ -7,9 +7,12 @@ import { useToast } from "@/components/providers/ToastProvider";
 import {
   ArrivedBadge,
   BranchLabel,
-  StatusBadge,
   TypeBadge,
 } from "@/components/ui/badges";
+import {
+  OrderElapsedTimer,
+  OrderLiveStatusBadge,
+} from "@/components/ordenes/OrderElapsedTimer";
 import { PickupFlowProgress } from "@/components/pickup/PickupFlowProgress";
 import { isPickupOrder } from "@/lib/pickup/flow";
 import type { Order, OrderStatus, OrderType } from "@/lib/types";
@@ -143,7 +146,11 @@ export function DashboardOrdersSection({
     return (
       <div className="space-y-1.5">
         <div className="flex flex-wrap items-center gap-1.5">
-          <StatusBadge status={order.status} />
+          <OrderLiveStatusBadge
+            createdAt={order.createdAt}
+            status={order.status}
+            fulfillment={order.fulfillment}
+          />
           {pickup && order.arrivedAt && <ArrivedBadge />}
         </div>
         {pickup && (
@@ -238,14 +245,12 @@ export function DashboardOrdersSection({
                       <BranchLabel branchId={order.branchId} />
                     </td>
                     <td className="px-4 py-3">{renderOrderStatus(order)}</td>
-                    <td
-                      className={`px-4 py-3 text-sm font-mono ${
-                        order.status === "atrasado" || order.status === "listo"
-                          ? "text-red-600 font-medium"
-                          : "text-on-surface-variant"
-                      }`}
-                    >
-                      {order.elapsedTime}
+                    <td className="px-4 py-3 text-sm">
+                      <OrderElapsedTimer
+                        createdAt={order.createdAt}
+                        status={order.status}
+                        fulfillment={order.fulfillment}
+                      />
                     </td>
                     <td className="px-4 py-3">
                       <Link
@@ -275,21 +280,22 @@ export function DashboardOrdersSection({
               >
                 <div className="flex justify-between items-start gap-2">
                   <p className="font-medium text-sm">{order.customerName}</p>
-                  <StatusBadge status={order.status} />
+                  <OrderLiveStatusBadge
+                    createdAt={order.createdAt}
+                    status={order.status}
+                    fulfillment={order.fulfillment}
+                  />
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
                   <TypeBadge type={order.type} />
                   <BranchLabel branchId={order.branchId} />
                   {order.arrivedAt && <ArrivedBadge />}
-                  <span
-                    className={`text-xs font-mono ${
-                      order.status === "atrasado" || order.status === "listo"
-                        ? "text-red-600 font-medium"
-                        : "text-on-surface-variant"
-                    }`}
-                  >
-                    {order.elapsedTime}
-                  </span>
+                  <OrderElapsedTimer
+                    createdAt={order.createdAt}
+                    status={order.status}
+                    fulfillment={order.fulfillment}
+                    className="text-xs"
+                  />
                 </div>
                 {isPickupOrder({
                   type: order.type,

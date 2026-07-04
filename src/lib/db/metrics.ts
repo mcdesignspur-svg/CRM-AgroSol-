@@ -21,7 +21,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   ] = await Promise.all([
     prisma.order.count(),
     prisma.order.count({
-      where: buildOrderWhere({ status: "en-transito" }),
+      where: buildOrderWhere({ activeDelivery: true }),
     }),
     prisma.order.count({ where: pickupActiveWhere }),
     getSystemAlertsCount(),

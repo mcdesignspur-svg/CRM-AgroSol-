@@ -26,6 +26,7 @@ import type {
 } from "@/lib/types";
 
 const FALLBACK_POLL_MS = 30_000;
+const SLA_CHECK_POLL_MS = 60_000;
 
 interface DashboardLiveContextValue {
   pings: Ping[];
@@ -194,6 +195,14 @@ export function DashboardLiveProvider({
 
     return () => window.clearInterval(timer);
   }, [connected, silentRefresh]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      void silentRefresh();
+    }, SLA_CHECK_POLL_MS);
+
+    return () => window.clearInterval(timer);
+  }, [silentRefresh]);
 
   useEffect(() => {
     function enableSounds() {

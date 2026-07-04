@@ -9,7 +9,7 @@ export async function emitDashboardRefresh() {
     return;
   }
 
-  const data = await buildDashboardUpdates();
+  const data = await buildDashboardUpdates({ skipSlaCheck: true });
   hub.broadcast(dashboardChannel(), { type: "dashboard:update", data });
 }
 
