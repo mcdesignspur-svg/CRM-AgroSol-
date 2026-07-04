@@ -19,6 +19,7 @@ import {
 } from "@/lib/order-status";
 import type { OrderDetail, OrderStatus } from "@/lib/types";
 import { PickupTelegramPanel } from "@/components/ordenes/PickupTelegramPanel";
+import { DeleteOrderConfirmModal } from "@/components/ordenes/DeleteOrderConfirmModal";
 
 interface OrderDetailClientProps {
   initialOrder: OrderDetail;
@@ -29,6 +30,8 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
   const { showToast } = useToast();
   const [order, setOrder] = useState(initialOrder);
   const [updating, setUpdating] = useState<OrderStatus | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function handleStatusChange(nextStatus: OrderStatus) {
     setUpdating(nextStatus);
@@ -62,6 +65,28 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
       showToast("Error al actualizar la orden", "error");
     } finally {
       setUpdating(null);
+    }
+  }
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/orders/${encodeURIComponent(order.id)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error ?? "Error al eliminar la orden", "error");
+        return;
+      }
+      showToast(`Orden ${order.id} eliminada`, "success");
+      router.push("/ordenes");
+      router.refresh();
+    } catch {
+      showToast("Error al eliminar la orden", "error");
+    } finally {
+      setDeleting(false);
+      setDeleteModalOpen(false);
     }
   }
 
@@ -131,6 +156,16 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                 Ver en Entregas
               </Link>
             )}
+
+            <button
+              type="button"
+              disabled={updating !== null || deleting}
+              onClick={() => setDeleteModalOpen(true)}
+              className="inline-flex items-center gap-2 btn-secondary px-4 py-3 text-xs font-medium min-h-[44px] justify-center text-red-600 hover:text-red-700 hover:border-red-200 disabled:opacity-60"
+            >
+              <span className="material-symbols-outlined text-base">delete</span>
+              Eliminar orden
+            </button>
           </div>
         </div>
 
@@ -317,6 +352,15 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
           </div>
         </div>
       </div>
+
+      <DeleteOrderConfirmModal
+        open={deleteModalOpen}
+        orderId={order.id}
+        customerName={order.customerName}
+        deleting={deleting}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+      />
     </AppShell>
   );
 }

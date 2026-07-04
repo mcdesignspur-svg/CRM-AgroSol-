@@ -5,6 +5,7 @@ export { clearNotificationLogs, getNotificationLogs } from "./notifications";
 export {
   buildOrderWhere,
   createOrder,
+  deleteOrder,
   getActiveDeliveryOrders,
   getOrderByDisplayId,
   getOrdersCount,

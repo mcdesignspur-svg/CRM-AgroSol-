@@ -541,3 +541,32 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
 
   return mapOrderDetail(updated);
 }
+
+export async function deleteOrder(displayId: string) {
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.order.findUnique({
+      where: { displayId },
+      include: { delivery: true },
+    });
+
+    if (!existing) {
+      throw new OrderValidationError("Orden no encontrada");
+    }
+
+    if (existing.delivery) {
+      await tx.delivery.delete({ where: { id: existing.delivery.id } });
+    }
+
+    await tx.order.delete({ where: { displayId } });
+
+    await tx.notificationLog.create({
+      data: {
+        source: "SISTEMA",
+        message: `Orden ${displayId} eliminada.`,
+        accent: "default",
+      },
+    });
+
+    return { displayId, pickupToken: existing.pickupToken };
+  });
+}
