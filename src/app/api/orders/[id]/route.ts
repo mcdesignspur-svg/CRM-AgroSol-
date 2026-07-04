@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  deleteOrder,
   getOrderByDisplayId,
   updateOrderStatus,
   OrderValidationError,
@@ -90,6 +91,28 @@ export async function PATCH(
     console.error("PATCH /api/orders/[id]", error);
     return NextResponse.json(
       { error: "Error al actualizar la orden" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    const deleted = await deleteOrder(decodeURIComponent(id));
+
+    void emitOrderRealtimeUpdates(deleted.pickupToken);
+    return NextResponse.json({ ok: true, id: deleted.displayId });
+  } catch (error) {
+    if (error instanceof OrderValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+    console.error("DELETE /api/orders/[id]", error);
+    return NextResponse.json(
+      { error: "Error al eliminar la orden" },
       { status: 500 },
     );
   }
