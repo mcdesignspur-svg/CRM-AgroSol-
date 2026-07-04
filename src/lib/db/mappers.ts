@@ -27,6 +27,7 @@ import {
   getAllowedStatusTransitions,
   resolveDisplayStatus,
 } from "@/lib/order-status";
+import { formatElapsedTime } from "@/lib/time/format-elapsed";
 
 const ORDER_STATUS_MAP: Record<PrismaOrderStatus, OrderStatus> = {
   pendiente: "pendiente",
@@ -36,16 +37,7 @@ const ORDER_STATUS_MAP: Record<PrismaOrderStatus, OrderStatus> = {
   completado: "completado",
 };
 
-export function formatElapsedTime(createdAt: Date): string {
-  const diffMs = Date.now() - createdAt.getTime();
-  const totalSeconds = Math.floor(diffMs / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return [hours, minutes, seconds]
-    .map((n) => String(n).padStart(2, "0"))
-    .join(":");
-}
+export { formatElapsedTime } from "@/lib/time/format-elapsed";
 
 export function formatTimeAgo(createdAt: Date): string {
   const diffMs = Date.now() - createdAt.getTime();
@@ -136,6 +128,7 @@ export function mapDriverOrder(order: PrismaOrder): DriverOrder {
     status,
     elapsedTime: formatElapsedTime(order.createdAt),
     createdAt: order.createdAt.toISOString(),
+    fulfillment,
     allowedTransitions: getAllowedStatusTransitions({
       type: order.type,
       status,

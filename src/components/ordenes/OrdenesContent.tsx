@@ -6,11 +6,14 @@ import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
 import { useToast } from "@/components/providers/ToastProvider";
 import {
-  BranchLabel,
-  StatusBadge,
-  TypeBadge,
   ArrivedBadge,
+  BranchLabel,
+  TypeBadge,
 } from "@/components/ui/badges";
+import {
+  OrderElapsedTimer,
+  OrderLiveStatusBadge,
+} from "@/components/ordenes/OrderElapsedTimer";
 import { ORDER_STATUS_LABELS } from "@/lib/order-status";
 import type { Order, OrderStatus, OrderType } from "@/lib/types";
 
@@ -264,20 +267,22 @@ export function OrdenesContent({
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1.5">
-                          <StatusBadge status={order.status} />
+                          <OrderLiveStatusBadge
+                            createdAt={order.createdAt}
+                            status={order.status}
+                            fulfillment={order.fulfillment}
+                          />
                           {order.arrivedAt && order.type === "retiro" && (
                             <ArrivedBadge />
                           )}
                         </div>
                       </td>
-                      <td
-                        className={`px-4 py-3 text-sm font-mono ${
-                          order.status === "atrasado" || order.status === "listo"
-                            ? "text-red-600 font-medium"
-                            : "text-on-surface-variant"
-                        }`}
-                      >
-                        {order.elapsedTime}
+                      <td className="px-4 py-3 text-sm">
+                        <OrderElapsedTimer
+                          createdAt={order.createdAt}
+                          status={order.status}
+                          fulfillment={order.fulfillment}
+                        />
                       </td>
                       <td className="px-4 py-3">
                         <Link
@@ -310,7 +315,11 @@ export function OrdenesContent({
                       <p className="font-mono text-xs text-primary">{order.id}</p>
                       <p className="font-medium text-sm">{order.customerName}</p>
                     </div>
-                    <StatusBadge status={order.status} />
+                    <OrderLiveStatusBadge
+                      createdAt={order.createdAt}
+                      status={order.status}
+                      fulfillment={order.fulfillment}
+                    />
                     {order.arrivedAt && order.type === "retiro" && (
                       <ArrivedBadge />
                     )}
@@ -318,7 +327,12 @@ export function OrdenesContent({
                   <div className="flex flex-wrap gap-2 items-center text-xs">
                     <TypeBadge type={order.type} />
                     <BranchLabel branchId={order.branchId} />
-                    <span className="font-mono text-on-surface-variant">{order.elapsedTime}</span>
+                    <OrderElapsedTimer
+                      createdAt={order.createdAt}
+                      status={order.status}
+                      fulfillment={order.fulfillment}
+                      className="text-xs"
+                    />
                   </div>
                   <Link
                     href={`/ordenes/${encodeURIComponent(order.id)}`}

@@ -3,8 +3,11 @@
 import { useCallback, useState } from "react";
 import { DriverShell } from "@/components/layout/DriverShell";
 import { useToast } from "@/components/providers/ToastProvider";
-import { BranchLabel, StatusBadge } from "@/components/ui/badges";
-import { ORDER_STATUS_LABELS } from "@/lib/order-status";
+import { BranchLabel } from "@/components/ui/badges";
+import {
+  OrderElapsedTimer,
+  OrderLiveStatusBadge,
+} from "@/components/ordenes/OrderElapsedTimer";
 import type { DriverOrder } from "@/lib/types";
 
 interface ConductorContentProps {
@@ -128,7 +131,11 @@ export function ConductorContent({
                         {order.customerName}
                       </p>
                     </div>
-                    <StatusBadge status={order.status} />
+                    <OrderLiveStatusBadge
+                      createdAt={order.createdAt}
+                      status={order.status}
+                      fulfillment={order.fulfillment}
+                    />
                   </div>
                 </div>
 
@@ -170,16 +177,12 @@ export function ConductorContent({
 
                   <div className="flex flex-wrap items-center gap-3 text-xs">
                     <BranchLabel branchId={order.branchId} />
-                    <span
-                      className={`font-mono font-bold ${
-                        order.status === "atrasado" ? "text-red-600" : "opacity-70"
-                      }`}
-                    >
-                      {order.elapsedTime}
-                    </span>
-                    <span className="text-xs font-medium opacity-50">
-                      {ORDER_STATUS_LABELS[order.status]}
-                    </span>
+                    <OrderElapsedTimer
+                      createdAt={order.createdAt}
+                      status={order.status}
+                      fulfillment={order.fulfillment}
+                      className="text-xs font-bold"
+                    />
                   </div>
 
                   {order.allowedTransitions.includes("completado") && (

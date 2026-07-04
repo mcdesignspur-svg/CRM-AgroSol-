@@ -24,12 +24,14 @@ export function isOrderOverdue(input: {
   status: OrderStatus;
   fulfillment: string;
   createdAt: Date;
+  now?: number;
 }): boolean {
   if (input.status === "completado" || input.status === "listo") {
     return false;
   }
 
-  const hours = (Date.now() - input.createdAt.getTime()) / 3_600_000;
+  const now = input.now ?? Date.now();
+  const hours = (now - input.createdAt.getTime()) / 3_600_000;
 
   if (input.fulfillment === "pickup" && input.status === "pendiente") {
     return hours > PICKUP_SLA_HOURS;
@@ -46,6 +48,7 @@ export function resolveDisplayStatus(input: {
   status: OrderStatus;
   fulfillment: string;
   createdAt: Date;
+  now?: number;
 }): OrderStatus {
   if (input.status === "completado" || input.status === "listo") {
     return input.status;
@@ -63,6 +66,7 @@ export function getAllowedStatusTransitions(input: {
   status: OrderStatus;
   fulfillment: string;
   createdAt: Date;
+  now?: number;
 }): OrderStatus[] {
   const displayStatus = resolveDisplayStatus(input);
   const transitions =

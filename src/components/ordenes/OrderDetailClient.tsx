@@ -8,10 +8,13 @@ import { TopBar } from "@/components/layout/TopBar";
 import { useToast } from "@/components/providers/ToastProvider";
 import {
   BranchLabel,
-  StatusBadge,
   TypeBadge,
   ArrivedBadge,
 } from "@/components/ui/badges";
+import {
+  OrderElapsedTimer,
+  OrderLiveStatusBadge,
+} from "@/components/ordenes/OrderElapsedTimer";
 import { BRANCH_LABELS } from "@/lib/constants";
 import {
   ORDER_STATUS_LABELS,
@@ -115,14 +118,25 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
               <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight font-mono">
                 {order.id}
               </h2>
-              <StatusBadge status={order.status} />
+              <OrderLiveStatusBadge
+                createdAt={order.createdAt}
+                status={order.status}
+                fulfillment={order.fulfillment}
+              />
               <TypeBadge type={order.type} />
               {order.arrivedAt && order.fulfillment === "pickup" && (
                 <ArrivedBadge />
               )}
             </div>
             <p className="text-sm text-on-surface-variant mt-2">
-              Creada hace {order.elapsedTime} · {BRANCH_LABELS[order.branchId]}
+              Tiempo transcurrido:{" "}
+              <OrderElapsedTimer
+                createdAt={order.createdAt}
+                status={order.status}
+                fulfillment={order.fulfillment}
+                className="text-sm"
+              />{" "}
+              · {BRANCH_LABELS[order.branchId]}
             </p>
           </div>
 
