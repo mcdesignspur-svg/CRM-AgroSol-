@@ -6,10 +6,6 @@ if (loaded > 0) {
   console.log(`Loaded ${loaded} env var(s) from ${path}`);
 }
 
-const isProduction = process.env.VERCEL_ENV === "production";
-const gitRef = process.env.VERCEL_GIT_COMMIT_REF;
-const isMainBranch = !gitRef || gitRef === "main";
-
 /** Neon pooled URLs include `-pooler` in the host; Prisma Migrate needs a direct connection (P1002 otherwise). */
 function resolveDirectDatabaseUrl() {
   const explicit =
@@ -39,20 +35,10 @@ function resolveDirectDatabaseUrl() {
 }
 
 const migrationUrl = resolveDirectDatabaseUrl();
-const shouldRunMigrations = isProduction && isMainBranch;
+const isVercel = Boolean(process.env.VERCEL);
+const shouldRunMigrations = isVercel && Boolean(migrationUrl);
 
 if (shouldRunMigrations) {
-  if (!migrationUrl) {
-    console.error(
-      "FATAL: DATABASE_URL (or DIRECT_DATABASE_URL) is required for production builds.\n" +
-        "Set DATABASE_URL (pooled) and DIRECT_DATABASE_URL (direct, no '-pooler') in:\n" +
-        "  1) Vercel → Project → Settings → Environment Variables → Production, or\n" +
-        "  2) GitHub → Repository → Settings → Secrets\n" +
-        "Then re-run the Production Deploy workflow.",
-    );
-    process.exit(1);
-  }
-
   if (
     process.env.DATABASE_URL?.includes("-pooler") &&
     !process.env.DIRECT_DATABASE_URL
@@ -62,7 +48,11 @@ if (shouldRunMigrations) {
     );
   }
 
-  console.log("Running prisma migrate deploy...");
+  const envLabel = process.env.VERCEL_ENV ?? "unknown";
+  const branch = process.env.VERCEL_GIT_COMMIT_REF ?? "unknown";
+  console.log(
+    `Running prisma migrate deploy (env=${envLabel}, branch=${branch})...`,
+  );
   const migrateEnv = { ...process.env, DATABASE_URL: migrationUrl };
   try {
     execSync("npx prisma migrate deploy", {
@@ -78,16 +68,13 @@ if (shouldRunMigrations) {
   }
 } else {
   const reasons = [];
-  if (!isProduction) {
-    reasons.push(`VERCEL_ENV=${process.env.VERCEL_ENV ?? "unset"}`);
+  if (!isVercel) {
+    reasons.push("not on Vercel");
   }
-  if (!isMainBranch) {
-    reasons.push(`branch=${gitRef}`);
+  if (!migrationUrl) {
+    reasons.push("no database URL");
   }
-  console.log(
-    `Skipping prisma migrate deploy (${reasons.join(", ")}). ` +
-      "Only main production builds mutate the shared database schema.",
-  );
+  console.log(`Skipping prisma migrate deploy (${reasons.join(", ")}).`);
 }
 
 execSync("npm run build", { stdio: "inherit" });

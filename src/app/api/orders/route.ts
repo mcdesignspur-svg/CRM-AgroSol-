@@ -230,6 +230,18 @@ export async function POST(request: Request) {
     }
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2022"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "La base de datos no está actualizada. Redespliega la app o ejecuta prisma migrate deploy.",
+        },
+        { status: 503 },
+      );
+    }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2003"
     ) {
       return NextResponse.json(
