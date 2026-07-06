@@ -11,6 +11,7 @@ function categoryParam(categoryId: string | null): string {
 export function useProductSearch(
   branchId: BranchId,
   selectedCategoryId?: string | null,
+  refreshKey = 0,
 ) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Product[]>([]);
@@ -74,7 +75,7 @@ export function useProductSearch(
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [branchId, hasCategory, isActive, selectedCategoryId, trimmedQuery]);
+  }, [branchId, hasCategory, isActive, refreshKey, selectedCategoryId, trimmedQuery]);
 
   return useMemo(
     () => ({
@@ -118,7 +119,7 @@ export function useProductCategories(
   };
 }
 
-export function useGroupedCatalog(branchId: BranchId) {
+export function useGroupedCatalog(branchId: BranchId, refreshKey = 0) {
   const [groups, setGroups] = useState<ProductCategoryGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,7 +153,7 @@ export function useGroupedCatalog(branchId: BranchId) {
       });
 
     return () => controller.abort();
-  }, [branchId]);
+  }, [branchId, refreshKey]);
 
   return { groups, loading, error };
 }

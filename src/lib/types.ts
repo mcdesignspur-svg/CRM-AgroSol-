@@ -105,6 +105,7 @@ export interface Product {
   name: string;
   sku: string;
   unitPrice: number;
+  stockQuantity?: number | null;
   categoryId?: string;
   categoryName?: string;
 }

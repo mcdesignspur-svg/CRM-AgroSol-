@@ -81,6 +81,7 @@ model Product {
   name              String
   sku               String
   unitPrice         Decimal   @map("unit_price") @db.Decimal(10, 2)
+  stockQuantity     Int?      @map("stock_quantity")
   loyverseItemId    String?   @map("loyverse_item_id")
   loyverseVariantId String?   @map("loyverse_variant_id")
   active            Boolean   @default(true)
@@ -104,6 +105,7 @@ model LoyverseIntegration {
   productCount          Int       @default(0) @map("product_count")
   lastFullSyncAt        DateTime? @map("last_full_sync_at")
   lastIncrementalSyncAt DateTime? @map("last_incremental_sync_at")
+  lastInventorySyncAt   DateTime? @map("last_inventory_sync_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 
   branch Branch @relation(fields: [branchId], references: [id])

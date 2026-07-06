@@ -22,6 +22,13 @@ export interface LoyverseVariant {
   deleted_at?: string | null;
 }
 
+export interface LoyverseInventoryLevel {
+  variant_id: string;
+  store_id?: string | null;
+  in_stock?: number | null;
+  updated_at?: string | null;
+}
+
 export interface LoyverseItem {
   id: string;
   item_name?: string;
@@ -59,4 +66,6 @@ export interface LoyverseSyncResult {
   hasMore?: boolean;
   nextCursor?: string | null;
   pageItems?: number;
+  inventoryUpdated?: number;
+  inventoryVariantsTracked?: number;
 }
