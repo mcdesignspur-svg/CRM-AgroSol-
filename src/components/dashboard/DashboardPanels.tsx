@@ -11,8 +11,8 @@ export function LivePingsPanel({ branches }: { branches: Branch[] }) {
   const { pings, dismissPing, callDriver } = useDashboardLive();
 
   return (
-    <aside className="hidden lg:flex flex-col w-72 border-l border-outline bg-white h-full shrink-0">
-      <div className="px-5 py-4 border-b border-outline flex items-center gap-2.5">
+    <aside className="hidden lg:flex flex-col w-72 border-l border-outline bg-white max-h-[min(70vh,28rem)] self-start shrink-0 overflow-hidden">
+      <div className="px-5 py-3 border-b border-outline flex items-center gap-2.5 shrink-0">
         <div className="relative flex h-2.5 w-2.5">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
@@ -22,7 +22,7 @@ export function LivePingsPanel({ branches }: { branches: Branch[] }) {
         </h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2.5 custom-scrollbar">
         {pings.length === 0 ? (
           <p className="text-xs text-on-surface-variant text-center py-8">
             Sin pings activos
@@ -39,8 +39,8 @@ export function LivePingsPanel({ branches }: { branches: Branch[] }) {
         )}
 
         {pings.length > 0 && (
-          <div className="pt-6 opacity-30 text-center">
-            <span className="material-symbols-outlined text-4xl">history</span>
+          <div className="pt-3 opacity-30 text-center">
+            <span className="material-symbols-outlined text-2xl">history</span>
             <p className="text-xs text-on-surface-variant mt-1">
               Fin del historial reciente
             </p>
@@ -48,7 +48,7 @@ export function LivePingsPanel({ branches }: { branches: Branch[] }) {
         )}
       </div>
 
-      <div className="p-4 border-t border-outline bg-surface">
+      <div className="p-3 border-t border-outline bg-surface shrink-0">
         <div className="rounded-lg border border-outline p-3 bg-white text-center">
           <p className="text-xs font-medium text-on-surface-variant mb-2">
             Estado de la red
