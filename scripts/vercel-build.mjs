@@ -9,6 +9,7 @@ if (loaded > 0) {
 const isProduction = process.env.VERCEL_ENV === "production";
 const gitRef = process.env.VERCEL_GIT_COMMIT_REF;
 const isMainBranch = !gitRef || gitRef === "main";
+const isInventoryReleaseBranch = gitRef?.includes("inventario") ?? false;
 
 /** Neon pooled URLs include `-pooler` in the host; Prisma Migrate needs a direct connection (P1002 otherwise). */
 function resolveDirectDatabaseUrl() {
@@ -39,7 +40,8 @@ function resolveDirectDatabaseUrl() {
 }
 
 const migrationUrl = resolveDirectDatabaseUrl();
-const shouldRunMigrations = isProduction && isMainBranch;
+const shouldRunMigrations =
+  isProduction && (isMainBranch || isInventoryReleaseBranch);
 
 if (shouldRunMigrations) {
   if (!migrationUrl) {
@@ -81,7 +83,7 @@ if (shouldRunMigrations) {
   if (!isProduction) {
     reasons.push(`VERCEL_ENV=${process.env.VERCEL_ENV ?? "unset"}`);
   }
-  if (!isMainBranch) {
+  if (!isMainBranch && !isInventoryReleaseBranch) {
     reasons.push(`branch=${gitRef}`);
   }
   console.log(
