@@ -7,7 +7,7 @@ const RECONNECT_BASE_MS = 1_500;
 const RECONNECT_MAX_MS = 15_000;
 
 interface UseRealtimeOptions {
-  channel: "dashboard" | "pickup";
+  channel: "dashboard" | "pickup" | "delivery";
   token?: string;
   enabled?: boolean;
   onMessage: (message: RealtimeServerMessage) => void;
@@ -38,7 +38,7 @@ export function useRealtime({
       return;
     }
 
-    if (channel === "pickup" && !token) {
+    if ((channel === "pickup" || channel === "delivery") && !token) {
       return;
     }
 
@@ -82,7 +82,7 @@ export function useRealtime({
           JSON.stringify(
             channel === "dashboard"
               ? { action: "subscribe", channel: "dashboard" }
-              : { action: "subscribe", channel: "pickup", token },
+              : { action: "subscribe", channel, token },
           ),
         );
       };

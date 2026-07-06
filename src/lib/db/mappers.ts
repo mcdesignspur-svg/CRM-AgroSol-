@@ -11,6 +11,7 @@ import type {
   Product,
 } from "@/lib/types";
 import { buildPickupUrl } from "@/lib/pickup-url";
+import { buildDeliveryUrl } from "@/lib/delivery-url";
 import { buildTelegramStartLink } from "@/lib/telegram/client";
 import type {
   Branch as PrismaBranch,
@@ -87,6 +88,7 @@ function resolveOrderStatus(order: PrismaOrder): OrderStatus {
     status: toAppOrderStatus(order.status),
     fulfillment: order.fulfillment,
     createdAt: order.createdAt,
+    dispatchedAt: order.dispatchedAt,
   });
 }
 
@@ -109,6 +111,7 @@ export function mapOrder(order: PrismaOrder): Order {
     elapsedTime: formatElapsedTime(order.createdAt),
     createdAt: order.createdAt.toISOString(),
     arrivedAt: order.arrivedAt?.toISOString(),
+    dispatchedAt: order.dispatchedAt?.toISOString(),
     confirmationNotifiedAt: order.confirmationNotifiedAt?.toISOString(),
     readyNotifiedAt: order.readyNotifiedAt?.toISOString(),
   };
@@ -131,15 +134,19 @@ export function mapDriverOrder(order: PrismaOrder): DriverOrder {
     fulfillment,
     allowedTransitions: getAllowedStatusTransitions({
       type: order.type,
-      status,
+      status: toAppOrderStatus(order.status),
       fulfillment,
       createdAt: order.createdAt,
+      dispatchedAt: order.dispatchedAt,
     }),
   };
 }
 
 export function mapOrderDetail(
-  order: PrismaOrder & { lineItems: PrismaOrderLineItem[] },
+  order: PrismaOrder & {
+    lineItems: PrismaOrderLineItem[];
+    delivery?: PrismaDelivery | null;
+  },
 ): OrderDetail {
   const status = resolveOrderStatus(order);
   const fulfillment = order.fulfillment as "pickup" | "delivery";
@@ -155,11 +162,18 @@ export function mapOrderDetail(
     fulfillment,
     smsNotify: order.smsNotify,
     pickupToken: order.pickupToken ?? undefined,
+    deliveryToken: order.deliveryToken ?? undefined,
     telegramChatId: order.telegramChatId ?? undefined,
     telegramStartLink: order.pickupToken
       ? buildTelegramStartLink(order.pickupToken) ?? undefined
       : undefined,
     pickupUrl: order.pickupToken ? buildPickupUrl(order.pickupToken) : undefined,
+    deliveryUrl: order.deliveryToken
+      ? buildDeliveryUrl(order.deliveryToken)
+      : undefined,
+    dispatchedAt: order.dispatchedAt?.toISOString(),
+    deliveryDriverName: order.delivery?.driverName,
+    deliveryEta: order.delivery?.eta ?? undefined,
     confirmationNotifiedAt: order.confirmationNotifiedAt?.toISOString(),
     readyNotifiedAt: order.readyNotifiedAt?.toISOString(),
     arrivedAt: order.arrivedAt?.toISOString(),
@@ -181,9 +195,10 @@ export function mapOrderDetail(
     })),
     allowedTransitions: getAllowedStatusTransitions({
       type: order.type,
-      status,
+      status: toAppOrderStatus(order.status),
       fulfillment,
       createdAt: order.createdAt,
+      dispatchedAt: order.dispatchedAt,
     }),
   };
 }

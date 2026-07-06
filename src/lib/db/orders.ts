@@ -4,6 +4,7 @@ import {
   createDeliveryForOrder,
 } from "@/lib/db/deliveries";
 import { generatePickupToken } from "@/lib/db/pickup";
+import { generateDeliveryToken } from "@/lib/db/delivery";
 import { isBranchId } from "@/lib/branch-definitions";
 import {
   DELIVERY_FEE,
@@ -89,29 +90,47 @@ export function buildOrderWhere(filters: OrderFilters = {}): Prisma.OrderWhereIn
             createdAt: { lt: pickupCutoff },
           },
           {
+            status: "pendiente",
+            fulfillment: "delivery",
+            createdAt: { lt: pickupCutoff },
+          },
+          {
             status: "en_transito",
             fulfillment: "delivery",
-            createdAt: { lt: deliveryCutoff },
+            OR: [
+              { dispatchedAt: { lt: deliveryCutoff } },
+              { dispatchedAt: null, createdAt: { lt: deliveryCutoff } },
+            ],
           },
         ],
       });
     } else if (filters.status === "pendiente") {
-      const pickupCutoff = new Date(
+      const prepCutoff = new Date(
         Date.now() - PICKUP_SLA_HOURS * 3_600_000,
       );
       and.push({
         status: "pendiente",
-        fulfillment: "pickup",
-        createdAt: { gte: pickupCutoff },
+        createdAt: { gte: prepCutoff },
       });
     } else if (filters.status === "en-transito") {
       const deliveryCutoff = new Date(
         Date.now() - DELIVERY_SLA_HOURS * 3_600_000,
       );
       and.push({
-        status: "en_transito",
-        fulfillment: "delivery",
-        createdAt: { gte: deliveryCutoff },
+        OR: [
+          {
+            status: "en_transito",
+            fulfillment: { not: "delivery" },
+          },
+          {
+            status: "en_transito",
+            fulfillment: "delivery",
+            OR: [
+              { dispatchedAt: { gte: deliveryCutoff } },
+              { dispatchedAt: null, createdAt: { gte: deliveryCutoff } },
+            ],
+          },
+        ],
       });
     } else {
       and.push({ status: toPrismaOrderStatus(filters.status) });
@@ -156,7 +175,10 @@ export async function getOrdersCount(filters: OrderFilters = {}) {
 export async function getOrderByDisplayId(displayId: string) {
   const row = await prisma.order.findUnique({
     where: { displayId },
-    include: { lineItems: { orderBy: { name: "asc" } } },
+    include: {
+      lineItems: { orderBy: { name: "asc" } },
+      delivery: true,
+    },
   });
   return row ? mapOrderDetail(row) : null;
 }
@@ -291,6 +313,7 @@ async function createOrderTransaction(input: {
   fulfillment: "pickup" | "delivery";
   smsNotify: boolean;
   pickupToken?: string;
+  deliveryToken?: string;
   type: OrderType;
   status: OrderStatus;
   subtotal: number;
@@ -321,6 +344,7 @@ async function createOrderTransaction(input: {
         fulfillment: input.fulfillment,
         smsNotify: input.smsNotify,
         pickupToken: input.pickupToken ?? null,
+        deliveryToken: input.deliveryToken ?? null,
         subtotal: input.subtotal,
         taxes: input.taxes,
         deliveryFee: input.deliveryFee,
@@ -354,23 +378,6 @@ async function createOrderTransaction(input: {
       },
     });
 
-    if (input.fulfillment === "delivery" && input.deliveryAddress?.trim()) {
-      await createDeliveryForOrder(tx, {
-        orderId: created.id,
-        branchId: input.branchId,
-        destination: input.deliveryAddress.trim(),
-        createdAt: created.createdAt,
-      });
-
-      await tx.notificationLog.create({
-        data: {
-          source: "SISTEMA",
-          message: `Entrega asignada para orden ${displayId}.`,
-          accent: "primary",
-        },
-      });
-    }
-
     return created;
   });
 }
@@ -402,8 +409,7 @@ export async function createOrder(input: CreateOrderInput) {
 
   const type: OrderType =
     input.fulfillment === "delivery" ? "entrega" : "retiro";
-  const status: OrderStatus =
-    input.fulfillment === "delivery" ? "en-transito" : "pendiente";
+  const status: OrderStatus = "pendiente";
 
   await ensureBranches();
 
@@ -417,6 +423,8 @@ export async function createOrder(input: CreateOrderInput) {
     smsNotify: input.smsNotify,
     pickupToken:
       input.fulfillment === "pickup" ? generatePickupToken() : undefined,
+    deliveryToken:
+      input.fulfillment === "delivery" ? generateDeliveryToken() : undefined,
     type,
     status,
     subtotal,
@@ -459,17 +467,20 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
       throw new OrderValidationError("Orden no encontrada");
     }
 
+    const storedStatus = toAppOrderStatus(existing.status);
     const currentStatus = resolveDisplayStatus({
-      status: toAppOrderStatus(existing.status),
+      status: storedStatus,
       fulfillment: existing.fulfillment,
       createdAt: existing.createdAt,
+      dispatchedAt: existing.dispatchedAt,
     });
 
     const allowed = getAllowedStatusTransitions({
       type: existing.type,
-      status: currentStatus,
+      status: storedStatus,
       fulfillment: existing.fulfillment,
       createdAt: existing.createdAt,
+      dispatchedAt: existing.dispatchedAt,
     });
 
     if (!allowed.includes(nextStatus)) {
@@ -478,12 +489,24 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
       );
     }
 
+    const updateData: Prisma.OrderUpdateInput = {
+      status: toPrismaOrderStatus(nextStatus),
+    };
+
+    if (
+      existing.fulfillment === "delivery" &&
+      nextStatus === "en-transito" &&
+      !existing.dispatchedAt
+    ) {
+      updateData.dispatchedAt = new Date();
+    }
+
     const updateResult = await tx.order.updateMany({
       where: {
         displayId,
         status: existing.status,
       },
-      data: { status: toPrismaOrderStatus(nextStatus) },
+      data: updateData,
     });
 
     if (updateResult.count === 0) {
@@ -494,15 +517,22 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
 
     const order = await tx.order.findUniqueOrThrow({
       where: { displayId },
-      include: { lineItems: { orderBy: { name: "asc" } } },
+      include: {
+        lineItems: { orderBy: { name: "asc" } },
+        delivery: true,
+      },
     });
 
     const statusLabel =
       nextStatus === "listo"
         ? "lista para pickup"
-        : nextStatus === "completado"
-          ? "completada"
-          : nextStatus;
+        : nextStatus === "en-transito"
+          ? "despachada"
+          : nextStatus === "completado"
+            ? existing.fulfillment === "delivery"
+              ? "entregada"
+              : "completada"
+            : nextStatus;
 
     await tx.notificationLog.create({
       data: {
@@ -518,6 +548,36 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
           priority: "sistema",
           title: `Orden Lista: ${displayId}`,
           description: `${existing.customerName} puede retirar en sucursal ${existing.branchId}.`,
+        },
+      });
+    }
+
+    if (
+      existing.fulfillment === "delivery" &&
+      nextStatus === "en-transito" &&
+      existing.deliveryAddress?.trim()
+    ) {
+      const dispatchedAt = order.dispatchedAt ?? new Date();
+      await createDeliveryForOrder(tx, {
+        orderId: existing.id,
+        branchId: existing.branchId as BranchId,
+        destination: existing.deliveryAddress.trim(),
+        createdAt: dispatchedAt,
+      });
+
+      await tx.ping.create({
+        data: {
+          priority: "sistema",
+          title: `Entrega Despachada: ${displayId}`,
+          description: `Orden de ${existing.customerName} salió hacia ${existing.deliveryAddress.trim()}.`,
+        },
+      });
+
+      await tx.notificationLog.create({
+        data: {
+          source: "SISTEMA",
+          message: `Entrega despachada para orden ${displayId}.`,
+          accent: "primary",
         },
       });
     }
@@ -567,6 +627,6 @@ export async function deleteOrder(displayId: string) {
       },
     });
 
-    return { displayId, pickupToken: existing.pickupToken };
+    return { displayId, pickupToken: existing.pickupToken, deliveryToken: existing.deliveryToken };
   });
 }

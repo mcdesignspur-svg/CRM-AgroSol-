@@ -11,12 +11,14 @@ export interface UseOrderTimerInput {
   createdAt: string;
   status: OrderStatus;
   fulfillment?: string;
+  dispatchedAt?: string;
 }
 
 export function useOrderTimer({
   createdAt,
   status,
   fulfillment = "pickup",
+  dispatchedAt,
 }: UseOrderTimerInput) {
   const isFrozen = status === "completado";
   const frozenAtRef = useRef<number | null>(null);
@@ -33,6 +35,7 @@ export function useOrderTimer({
       status,
       fulfillment,
       createdAt: created,
+      dispatchedAt: dispatchedAt ? new Date(dispatchedAt) : undefined,
       now: effectiveNow,
     });
 
@@ -41,5 +44,5 @@ export function useOrderTimer({
       displayStatus,
       timerClass: getOrderTimerClass(displayStatus),
     };
-  }, [createdAt, status, fulfillment, effectiveNow]);
+  }, [createdAt, status, fulfillment, dispatchedAt, effectiveNow]);
 }

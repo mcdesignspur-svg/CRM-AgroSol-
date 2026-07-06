@@ -71,7 +71,10 @@ export async function PATCH(
         await sendPickupOrderReadyByDisplayId(order.id);
         const refreshed = await getOrderByDisplayId(order.id);
         if (refreshed) {
-          void emitOrderRealtimeUpdates(refreshed.pickupToken);
+          void emitOrderRealtimeUpdates({
+            pickupToken: refreshed.pickupToken,
+            deliveryToken: refreshed.deliveryToken,
+          });
           return NextResponse.json(refreshed);
         }
       } catch (error) {
@@ -79,7 +82,10 @@ export async function PATCH(
       }
     }
 
-    void emitOrderRealtimeUpdates(order.pickupToken);
+    void emitOrderRealtimeUpdates({
+      pickupToken: order.pickupToken,
+      deliveryToken: order.deliveryToken,
+    });
     return NextResponse.json(order);
   } catch (error) {
     if (error instanceof OrderValidationError) {
@@ -104,7 +110,10 @@ export async function DELETE(
     const { id } = await params;
     const deleted = await deleteOrder(decodeURIComponent(id));
 
-    void emitOrderRealtimeUpdates(deleted.pickupToken);
+    void emitOrderRealtimeUpdates({
+      pickupToken: deleted.pickupToken,
+      deliveryToken: deleted.deliveryToken,
+    });
     return NextResponse.json({ ok: true, id: deleted.displayId });
   } catch (error) {
     if (error instanceof OrderValidationError) {

@@ -16,14 +16,31 @@ const PICKUP_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
 };
 
 const DELIVERY_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
+  pendiente: ["en-transito", "completado"],
   "en-transito": ["completado"],
-  atrasado: ["completado"],
 };
+
+function getDeliveryTransitions(input: {
+  status: OrderStatus;
+  displayStatus: OrderStatus;
+}): OrderStatus[] {
+  if (input.displayStatus === "atrasado") {
+    if (input.status === "pendiente") {
+      return ["en-transito", "completado"];
+    }
+    if (input.status === "en-transito") {
+      return ["completado"];
+    }
+  }
+
+  return DELIVERY_TRANSITIONS[input.displayStatus] ?? [];
+}
 
 export function isOrderOverdue(input: {
   status: OrderStatus;
   fulfillment: string;
   createdAt: Date;
+  dispatchedAt?: Date | null;
   now?: number;
 }): boolean {
   if (input.status === "completado" || input.status === "listo") {
@@ -37,8 +54,14 @@ export function isOrderOverdue(input: {
     return hours > PICKUP_SLA_HOURS;
   }
 
+  if (input.fulfillment === "delivery" && input.status === "pendiente") {
+    return hours > PICKUP_SLA_HOURS;
+  }
+
   if (input.fulfillment === "delivery" && input.status === "en-transito") {
-    return hours > DELIVERY_SLA_HOURS;
+    const reference = input.dispatchedAt ?? input.createdAt;
+    const transitHours = (now - reference.getTime()) / 3_600_000;
+    return transitHours > DELIVERY_SLA_HOURS;
   }
 
   return input.status === "atrasado";
@@ -48,6 +71,7 @@ export function resolveDisplayStatus(input: {
   status: OrderStatus;
   fulfillment: string;
   createdAt: Date;
+  dispatchedAt?: Date | null;
   now?: number;
 }): OrderStatus {
   if (input.status === "completado" || input.status === "listo") {
@@ -66,18 +90,35 @@ export function getAllowedStatusTransitions(input: {
   status: OrderStatus;
   fulfillment: string;
   createdAt: Date;
+  dispatchedAt?: Date | null;
   now?: number;
 }): OrderStatus[] {
   const displayStatus = resolveDisplayStatus(input);
-  const transitions =
-    input.type === "retiro" || input.fulfillment === "pickup"
-      ? PICKUP_TRANSITIONS
-      : DELIVERY_TRANSITIONS;
+  if (input.type === "entrega" || input.fulfillment === "delivery") {
+    return getDeliveryTransitions({
+      status: input.status,
+      displayStatus,
+    });
+  }
+
+  const transitions = PICKUP_TRANSITIONS;
 
   return transitions[displayStatus] ?? [];
 }
 
 export const STATUS_ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
   listo: "Marcar Lista para Pickup",
+  "en-transito": "Marcar Despachada",
   completado: "Marcar Completada",
 };
+
+export function getStatusActionLabel(
+  status: OrderStatus,
+  fulfillment?: string,
+): string {
+  if (status === "completado" && fulfillment === "delivery") {
+    return "Marcar Entregada";
+  }
+
+  return STATUS_ACTION_LABELS[status] ?? ORDER_STATUS_LABELS[status];
+}

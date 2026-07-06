@@ -25,6 +25,14 @@ describe("realtime messages", () => {
     ).toEqual({ action: "subscribe", channel: "pickup", token: "tok" });
   });
 
+  it("parses delivery subscribe", () => {
+    expect(
+      parseClientMessage(
+        JSON.stringify({ action: "subscribe", channel: "delivery", token: "abc" }),
+      ),
+    ).toEqual({ action: "subscribe", channel: "delivery", token: "abc" });
+  });
+
   it("rejects invalid subscribe payloads", () => {
     expect(parseClientMessage("{")).toBeNull();
     expect(

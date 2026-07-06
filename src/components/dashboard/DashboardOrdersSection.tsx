@@ -14,7 +14,9 @@ import {
   OrderLiveStatusBadge,
 } from "@/components/ordenes/OrderElapsedTimer";
 import { PickupFlowProgress } from "@/components/pickup/PickupFlowProgress";
+import { DeliveryFlowProgress } from "@/components/delivery/DeliveryFlowProgress";
 import { isPickupOrder } from "@/lib/pickup/flow";
+import { isDeliveryOrder } from "@/lib/delivery/flow";
 import type { Order, OrderStatus, OrderType } from "@/lib/types";
 
 type FilterMode = "all" | OrderType | OrderStatus;
@@ -142,6 +144,11 @@ export function DashboardOrdersSection({
       fulfillment: order.fulfillment,
       status: order.status,
     });
+    const delivery = isDeliveryOrder({
+      type: order.type,
+      fulfillment: order.fulfillment,
+      status: order.status,
+    });
 
     return (
       <div className="space-y-1.5">
@@ -150,6 +157,7 @@ export function DashboardOrdersSection({
             createdAt={order.createdAt}
             status={order.status}
             fulfillment={order.fulfillment}
+            dispatchedAt={order.dispatchedAt}
           />
           {pickup && order.arrivedAt && <ArrivedBadge />}
         </div>
@@ -162,6 +170,15 @@ export function DashboardOrdersSection({
             confirmationNotifiedAt={order.confirmationNotifiedAt}
             readyNotifiedAt={order.readyNotifiedAt}
             arrivedAt={order.arrivedAt}
+          />
+        )}
+        {delivery && (
+          <DeliveryFlowProgress
+            compact
+            type={order.type}
+            fulfillment={order.fulfillment}
+            status={order.status}
+            dispatchedAt={order.dispatchedAt}
           />
         )}
       </div>
@@ -284,6 +301,7 @@ export function DashboardOrdersSection({
                     createdAt={order.createdAt}
                     status={order.status}
                     fulfillment={order.fulfillment}
+                    dispatchedAt={order.dispatchedAt}
                   />
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
@@ -294,6 +312,7 @@ export function DashboardOrdersSection({
                     createdAt={order.createdAt}
                     status={order.status}
                     fulfillment={order.fulfillment}
+                    dispatchedAt={order.dispatchedAt}
                     className="text-xs"
                   />
                 </div>
@@ -310,6 +329,19 @@ export function DashboardOrdersSection({
                     confirmationNotifiedAt={order.confirmationNotifiedAt}
                     readyNotifiedAt={order.readyNotifiedAt}
                     arrivedAt={order.arrivedAt}
+                  />
+                )}
+                {isDeliveryOrder({
+                  type: order.type,
+                  fulfillment: order.fulfillment,
+                  status: order.status,
+                }) && (
+                  <DeliveryFlowProgress
+                    compact
+                    type={order.type}
+                    fulfillment={order.fulfillment}
+                    status={order.status}
+                    dispatchedAt={order.dispatchedAt}
                   />
                 )}
                 <Link

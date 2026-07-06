@@ -205,7 +205,10 @@ export async function POST(request: Request) {
         await sendPickupOrderConfirmationByDisplayId(order.id);
         const refreshed = await getOrderByDisplayId(order.id);
         if (refreshed) {
-          void emitOrderRealtimeUpdates(refreshed.pickupToken);
+          void emitOrderRealtimeUpdates({
+            pickupToken: refreshed.pickupToken,
+            deliveryToken: refreshed.deliveryToken,
+          });
           return NextResponse.json(refreshed, { status: 201 });
         }
       } catch (error) {
@@ -213,7 +216,10 @@ export async function POST(request: Request) {
       }
     }
 
-    void emitOrderRealtimeUpdates(order.pickupToken);
+    void emitOrderRealtimeUpdates({
+      pickupToken: order.pickupToken,
+      deliveryToken: order.deliveryToken,
+    });
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
     if (error instanceof OrderValidationError) {

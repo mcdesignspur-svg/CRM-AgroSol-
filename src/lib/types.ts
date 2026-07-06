@@ -32,6 +32,7 @@ export interface Order {
   createdAt: string;
   fulfillment?: "pickup" | "delivery";
   arrivedAt?: string;
+  dispatchedAt?: string;
   confirmationNotifiedAt?: string;
   readyNotifiedAt?: string;
 }
@@ -58,9 +59,14 @@ export interface OrderDetail extends Order {
   fulfillment: "pickup" | "delivery";
   smsNotify: boolean;
   pickupToken?: string;
+  deliveryToken?: string;
   telegramChatId?: string;
   telegramStartLink?: string;
   pickupUrl?: string;
+  deliveryUrl?: string;
+  dispatchedAt?: string;
+  deliveryDriverName?: string;
+  deliveryEta?: string;
   confirmationNotifiedAt?: string;
   readyNotifiedAt?: string;
   subtotal: number;

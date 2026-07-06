@@ -18,10 +18,11 @@ import {
 import { BRANCH_LABELS } from "@/lib/constants";
 import {
   ORDER_STATUS_LABELS,
-  STATUS_ACTION_LABELS,
+  getStatusActionLabel,
 } from "@/lib/order-status";
 import type { OrderDetail, OrderStatus } from "@/lib/types";
 import { PickupTelegramPanel } from "@/components/ordenes/PickupTelegramPanel";
+import { DeliveryTrackingPanel } from "@/components/ordenes/DeliveryTrackingPanel";
 import { DeleteOrderConfirmModal } from "@/components/ordenes/DeleteOrderConfirmModal";
 
 interface OrderDetailClientProps {
@@ -55,8 +56,10 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
           data.readyNotifiedAt
             ? "Orden lista — aviso enviado por Telegram"
             : `Orden actualizada: ${ORDER_STATUS_LABELS[nextStatus]}`,
-          data.readyNotifiedAt ? "success" : "success",
+          "success",
         );
+      } else if (order.fulfillment === "delivery" && nextStatus === "en-transito") {
+        showToast("Orden despachada — entrega asignada", "success");
       } else {
         showToast(
           `Orden actualizada: ${ORDER_STATUS_LABELS[nextStatus]}`,
@@ -155,13 +158,14 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                   >
                     {updating === status
                       ? "Actualizando..."
-                      : STATUS_ACTION_LABELS[status] ?? ORDER_STATUS_LABELS[status]}
+                      : getStatusActionLabel(status, order.fulfillment)}
                   </button>
                 ))}
               </div>
             )}
 
-            {order.fulfillment === "delivery" && order.status === "en-transito" && (
+            {order.fulfillment === "delivery" &&
+              (order.status === "en-transito" || order.status === "atrasado") && (
               <Link
                 href={`/entregas?orden=${encodeURIComponent(order.id)}`}
                 className="inline-flex items-center gap-2 btn-secondary px-4 py-3 text-xs font-medium min-h-[44px] justify-center"
@@ -275,6 +279,9 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
             {order.fulfillment === "pickup" && (
               <PickupTelegramPanel order={order} />
             )}
+            {order.fulfillment === "delivery" && (
+              <DeliveryTrackingPanel order={order} />
+            )}
             <section className="bg-white rounded-xl border border-outline shadow-sm">
               <div className="px-4 py-3 border-b border-outline bg-surface">
                 <h3 className="text-sm font-semibold text-on-surface">Resumen</h3>
@@ -326,22 +333,36 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                   {order.fulfillment === "delivery" ? "Entrega" : "Pickup"}
                 </span>
               </div>
-              <div className="flex justify-between gap-4">
-                <span className="text-xs font-medium text-on-surface-variant text-gray-500">
-                  Confirmación Telegram
-                </span>
-                <span className="font-bold uppercase text-xs">
-                  {order.confirmationNotifiedAt ? "Enviada" : "Pendiente"}
-                </span>
-              </div>
-              <div className="flex justify-between gap-4">
-                <span className="text-xs font-medium text-on-surface-variant text-gray-500">
-                  Aviso orden lista
-                </span>
-                <span className="font-bold uppercase text-xs">
-                  {order.readyNotifiedAt ? "Enviada" : "Pendiente"}
-                </span>
-              </div>
+              {order.fulfillment === "pickup" && (
+                <>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-xs font-medium text-on-surface-variant text-gray-500">
+                      Confirmación Telegram
+                    </span>
+                    <span className="font-bold uppercase text-xs">
+                      {order.confirmationNotifiedAt ? "Enviada" : "Pendiente"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-xs font-medium text-on-surface-variant text-gray-500">
+                      Aviso orden lista
+                    </span>
+                    <span className="font-bold uppercase text-xs">
+                      {order.readyNotifiedAt ? "Enviada" : "Pendiente"}
+                    </span>
+                  </div>
+                </>
+              )}
+              {order.fulfillment === "delivery" && (
+                <div className="flex justify-between gap-4">
+                  <span className="text-xs font-medium text-on-surface-variant text-gray-500">
+                    Despachada
+                  </span>
+                  <span className="font-bold uppercase text-xs">
+                    {order.dispatchedAt ? "Sí" : "Pendiente"}
+                  </span>
+                </div>
+              )}
               {order.arrivedAt && (
                 <div className="flex justify-between gap-4">
                   <span className="text-xs font-medium text-on-surface-variant text-gray-500">
