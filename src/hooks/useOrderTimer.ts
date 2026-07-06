@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useState } from "react";
 import { getOrderTimerClass } from "@/lib/order-timer-styles";
 import { resolveDisplayStatus } from "@/lib/order-status";
 import { formatElapsedTime } from "@/lib/time/format-elapsed";
@@ -20,14 +20,19 @@ export function useOrderTimer({
   fulfillment = "pickup",
   dispatchedAt,
 }: UseOrderTimerInput) {
+  const now = useNow();
   const isFrozen = status === "completado";
-  const frozenAtRef = useRef<number | null>(null);
-  if (isFrozen && frozenAtRef.current === null) {
-    frozenAtRef.current = Date.now();
+  const [frozenAt, setFrozenAt] = useState<number | null>(null);
+
+  if (isFrozen) {
+    if (frozenAt === null) {
+      setFrozenAt(now);
+    }
+  } else if (frozenAt !== null) {
+    setFrozenAt(null);
   }
 
-  const now = useNow();
-  const effectiveNow = isFrozen ? (frozenAtRef.current ?? now) : now;
+  const effectiveNow = isFrozen ? (frozenAt ?? now) : now;
 
   return useMemo(() => {
     const created = new Date(createdAt);
