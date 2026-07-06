@@ -33,6 +33,27 @@ describe("isOrderOverdue", () => {
     ).toBe(false);
   });
 
+  it("marca delivery pendiente como atrasado pasado el SLA de preparación", () => {
+    expect(
+      isOrderOverdue({
+        status: "pendiente",
+        fulfillment: "delivery",
+        createdAt: hoursAgo(PICKUP_SLA_HOURS + 1),
+      }),
+    ).toBe(true);
+  });
+
+  it("marca delivery en tránsito como atrasado pasado el SLA desde despacho", () => {
+    expect(
+      isOrderOverdue({
+        status: "en-transito",
+        fulfillment: "delivery",
+        createdAt: hoursAgo(0),
+        dispatchedAt: hoursAgo(DELIVERY_SLA_HOURS + 1),
+      }),
+    ).toBe(true);
+  });
+
   it("marca delivery en tránsito como atrasado pasado el SLA", () => {
     expect(
       isOrderOverdue({
@@ -111,6 +132,17 @@ describe("getAllowedStatusTransitions", () => {
     ).toEqual(["completado"]);
   });
 
+  it("delivery pendiente permite despacho y completado", () => {
+    expect(
+      getAllowedStatusTransitions({
+        type: "entrega",
+        status: "pendiente",
+        fulfillment: "delivery",
+        createdAt: hoursAgo(0),
+      }),
+    ).toEqual(["en-transito", "completado"]);
+  });
+
   it("delivery en tránsito solo permite completado", () => {
     expect(
       getAllowedStatusTransitions({
@@ -122,13 +154,14 @@ describe("getAllowedStatusTransitions", () => {
     ).toEqual(["completado"]);
   });
 
-  it("delivery atrasado (por SLA) permite completado", () => {
+  it("delivery atrasado en tránsito solo permite completado", () => {
     expect(
       getAllowedStatusTransitions({
         type: "entrega",
         status: "en-transito",
         fulfillment: "delivery",
-        createdAt: hoursAgo(DELIVERY_SLA_HOURS + 1),
+        createdAt: hoursAgo(0),
+        dispatchedAt: hoursAgo(DELIVERY_SLA_HOURS + 1),
       }),
     ).toEqual(["completado"]);
   });

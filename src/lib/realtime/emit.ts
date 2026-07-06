@@ -1,6 +1,11 @@
 import { getPickupByToken } from "@/lib/db/pickup";
+import { getDeliveryByToken } from "@/lib/db/delivery";
 import { buildDashboardUpdates } from "@/lib/realtime/build-dashboard-updates";
-import { dashboardChannel, pickupChannel } from "@/lib/realtime/messages";
+import {
+  dashboardChannel,
+  deliveryChannel,
+  pickupChannel,
+} from "@/lib/realtime/messages";
 import { getRealtimeHub } from "@/lib/realtime/hub";
 
 export async function emitDashboardRefresh() {
@@ -30,9 +35,32 @@ export async function emitPickupRefresh(token: string) {
   });
 }
 
-export async function emitOrderRealtimeUpdates(pickupToken?: string | null) {
+export async function emitDeliveryRefresh(token: string) {
+  const hub = getRealtimeHub();
+  if (!hub || !token.trim()) {
+    return;
+  }
+
+  const delivery = await getDeliveryByToken(token.trim());
+  if (!delivery) {
+    return;
+  }
+
+  hub.broadcast(deliveryChannel(token.trim()), {
+    type: "delivery:update",
+    data: delivery,
+  });
+}
+
+export async function emitOrderRealtimeUpdates(input?: {
+  pickupToken?: string | null;
+  deliveryToken?: string | null;
+}) {
   await emitDashboardRefresh();
-  if (pickupToken) {
-    await emitPickupRefresh(pickupToken);
+  if (input?.pickupToken) {
+    await emitPickupRefresh(input.pickupToken);
+  }
+  if (input?.deliveryToken) {
+    await emitDeliveryRefresh(input.deliveryToken);
   }
 }

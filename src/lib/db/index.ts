@@ -16,6 +16,10 @@ export {
 } from "./orders";
 export type { OrderFilters } from "./orders";
 export {
+  generateDeliveryToken,
+  getDeliveryByToken,
+} from "./delivery";
+export {
   getPickupByToken,
   linkTelegramChatToPickup,
   markCustomerArrived,

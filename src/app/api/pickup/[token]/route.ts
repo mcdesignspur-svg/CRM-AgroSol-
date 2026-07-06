@@ -33,7 +33,7 @@ export async function POST(_request: Request, context: RouteContext) {
   try {
     const { token } = await context.params;
     const pickup = await markCustomerArrived(token);
-    void emitOrderRealtimeUpdates(token);
+    void emitOrderRealtimeUpdates({ pickupToken: token });
     return NextResponse.json(pickup);
   } catch (error) {
     if (error instanceof PickupArrivalError) {

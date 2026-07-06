@@ -3,6 +3,7 @@ import { parse } from "node:url";
 import { WebSocket, WebSocketServer } from "ws";
 import {
   dashboardChannel,
+  deliveryChannel,
   parseClientMessage,
   pickupChannel,
   type RealtimeServerMessage,
@@ -33,6 +34,10 @@ export class RealtimeHub {
 
       if (message.action === "subscribe" && message.channel === "pickup") {
         client.channels.add(pickupChannel(message.token));
+      }
+
+      if (message.action === "subscribe" && message.channel === "delivery") {
+        client.channels.add(deliveryChannel(message.token));
       }
     });
 

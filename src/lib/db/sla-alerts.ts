@@ -11,7 +11,7 @@ function slaPingTitle(displayId: string) {
 
 export async function notifyOverdueOrders(): Promise<boolean> {
   const now = Date.now();
-  const pickupCutoff = new Date(now - PICKUP_SLA_HOURS * 3_600_000);
+  const prepCutoff = new Date(now - PICKUP_SLA_HOURS * 3_600_000);
   const deliveryCutoff = new Date(now - DELIVERY_SLA_HOURS * 3_600_000);
 
   const candidates = await prisma.order.findMany({
@@ -21,13 +21,15 @@ export async function notifyOverdueOrders(): Promise<boolean> {
         { status: "atrasado" },
         {
           status: "pendiente",
-          fulfillment: "pickup",
-          createdAt: { lt: pickupCutoff },
+          createdAt: { lt: prepCutoff },
         },
         {
           status: "en_transito",
           fulfillment: "delivery",
-          createdAt: { lt: deliveryCutoff },
+          OR: [
+            { dispatchedAt: { lt: deliveryCutoff } },
+            { dispatchedAt: null, createdAt: { lt: deliveryCutoff } },
+          ],
         },
       ],
     },
@@ -38,6 +40,7 @@ export async function notifyOverdueOrders(): Promise<boolean> {
       fulfillment: true,
       status: true,
       createdAt: true,
+      dispatchedAt: true,
     },
   });
 
@@ -48,6 +51,7 @@ export async function notifyOverdueOrders(): Promise<boolean> {
       status: toAppOrderStatus(order.status),
       fulfillment: order.fulfillment,
       createdAt: order.createdAt,
+      dispatchedAt: order.dispatchedAt,
       now,
     });
 
