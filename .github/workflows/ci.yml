@@ -29,10 +29,16 @@ jobs:
         run: npx prisma generate
 
       - name: Apply database migrations
-        if: ${{ secrets.DATABASE_URL != '' || secrets.DIRECT_DATABASE_URL != '' }}
         env:
-          DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL || secrets.DATABASE_URL }}
-        run: npx prisma migrate deploy
+          DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          MIGRATE_URL="${DIRECT_DATABASE_URL:-$DATABASE_URL}"
+          if [ -z "$MIGRATE_URL" ]; then
+            echo "No database URL configured; skipping migrations."
+            exit 0
+          fi
+          DATABASE_URL="$MIGRATE_URL" npx prisma migrate deploy
 
       - name: Lint
         run: npm run lint
