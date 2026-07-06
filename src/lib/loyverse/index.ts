@@ -7,4 +7,5 @@ export {
 export { getLoyverseStatus } from "./status";
 export { syncLoyverseCategories } from "./categories";
 export { safeSyncLoyverseProducts, syncLoyverseProducts } from "./products";
+export { safeSyncLoyverseInventory, syncLoyverseInventory } from "./inventory";
 export type { LoyverseCategory, LoyverseStatus, LoyverseSyncResult } from "./types";

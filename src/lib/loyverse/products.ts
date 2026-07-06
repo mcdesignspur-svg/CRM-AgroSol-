@@ -5,6 +5,7 @@ import {
   isLoyverseConfigured,
 } from "./config";
 import { syncLoyverseCategories } from "./categories";
+import { syncLoyverseInventory } from "./inventory";
 import {
   LoyverseApiError,
   loyverseGetAllPages,
@@ -273,6 +274,21 @@ export async function syncLoyverseProducts(input: {
       merchantName;
   }
 
+  let inventoryUpdated = 0;
+  let inventoryVariantsTracked = 0;
+
+  if (!hasMore) {
+    try {
+      const inventoryResult = await syncLoyverseInventory(branchId);
+      inventoryUpdated = inventoryResult.updated;
+      inventoryVariantsTracked = inventoryResult.variantsTracked;
+    } catch (error) {
+      if (!(error instanceof LoyverseApiError)) {
+        throw error;
+      }
+    }
+  }
+
   await prisma.loyverseIntegration.upsert({
     where: { branchId },
     update: {
@@ -307,6 +323,8 @@ export async function syncLoyverseProducts(input: {
     hasMore,
     nextCursor: hasMore ? nextCursor : null,
     pageItems: items.length,
+    inventoryUpdated,
+    inventoryVariantsTracked,
   };
 }
 

@@ -12,6 +12,10 @@ const TOKEN_ENV_KEYS: Partial<Record<BranchId, string>> = {
   // navarro: "LOYVERSE_ACCESS_TOKEN_NAVARRO",
 };
 
+const STORE_ENV_KEYS: Partial<Record<BranchId, string>> = {
+  gurabo: "LOYVERSE_STORE_ID",
+};
+
 export function getLoyverseAccessToken(
   branchId: BranchId = "gurabo",
 ): string | null {
@@ -28,6 +32,15 @@ export function isLoyverseConfigured(branchId: BranchId = "gurabo"): boolean {
 
 export function isLoyverseBranchEnabled(branchId: BranchId): boolean {
   return LOYVERSE_ENABLED_BRANCHES.includes(branchId);
+}
+
+/** Si está definido, el inventario se toma solo de esa tienda Loyverse. */
+export function getLoyverseStoreId(branchId: BranchId = "gurabo"): string | null {
+  const envKey = STORE_ENV_KEYS[branchId];
+  if (!envKey) return null;
+
+  const storeId = process.env[envKey]?.trim();
+  return storeId || null;
 }
 
 export function getLoyverseBranchLabel(branchId: BranchId): string {

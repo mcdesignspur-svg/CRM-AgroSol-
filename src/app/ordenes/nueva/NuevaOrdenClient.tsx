@@ -411,10 +411,10 @@ export default function NuevaOrdenClient({
                   </div>
                   <div className="flex items-center gap-2">
                     <Link
-                      href="/productos"
+                      href="/inventario"
                       className="text-xs font-medium px-3 py-2 border border-outline hover:bg-surface-container transition-all hidden sm:inline-flex"
                     >
-                      Productos
+                      Inventario
                     </Link>
                     <button
                       type="button"

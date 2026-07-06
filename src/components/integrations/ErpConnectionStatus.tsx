@@ -71,6 +71,9 @@ export function ErpConnectionStatus({
       setSyncMessage(
         [
           `${data.total.toLocaleString("es-PR")} productos importados (${data.created} nuevos, ${data.updated} actualizados)`,
+          data.inventoryUpdated
+            ? `${data.inventoryUpdated.toLocaleString("es-PR")} con stock actualizado`
+            : null,
           data.categoriesSynced
             ? `${data.categoriesSynced.toLocaleString("es-PR")} categorías sincronizadas`
             : null,
@@ -98,20 +101,20 @@ export function ErpConnectionStatus({
   const branchLabel = BRANCH_LABELS[branchId] ?? getLoyverseBranchLabel(branchId);
 
   return (
-    <div className="bg-white border-2 border-black p-4 flex flex-col gap-3">
+    <div className="rounded-xl border border-outline bg-white p-4 shadow-sm flex flex-col gap-3">
       <div className="flex items-center gap-4">
         <div
-          className={`w-4 h-4 border-2 border-black shrink-0 ${
-            connected ? "bg-green-500" : "bg-surface-container"
+          className={`w-3 h-3 rounded-full shrink-0 ${
+            connected ? "bg-emerald-500" : "bg-gray-300"
           }`}
         />
-        <div className="text-[10px] flex-1">
-          <div className="font-bold uppercase">
+        <div className="text-sm flex-1">
+          <div className="font-medium text-on-surface">
             Loyverse · {branchLabel}
           </div>
-          <div className="font-mono opacity-60">{message}</div>
+          <div className="text-on-surface-variant text-xs mt-0.5">{message}</div>
           {status?.cachedProductCount !== undefined && (
-            <div className="font-mono opacity-60 mt-1">
+            <div className="text-on-surface-variant text-xs mt-1">
               Última importación: {formatLastSync(status.lastSyncAt)}
             </div>
           )}
@@ -124,7 +127,7 @@ export function ErpConnectionStatus({
             type="button"
             onClick={() => handleSync("full")}
             disabled={syncing}
-            className="flex-1 py-2 border-2 border-black bg-white font-bold uppercase text-xs hover:bg-gray-100 transition-all disabled:opacity-60"
+            className="btn-primary flex-1 py-2 text-sm min-h-[40px] disabled:opacity-60"
           >
             {syncing ? "Importando..." : "Importar catálogo completo"}
           </button>
@@ -133,7 +136,7 @@ export function ErpConnectionStatus({
               type="button"
               onClick={() => handleSync("incremental")}
               disabled={syncing}
-              className="flex-1 py-2 border-2 border-black bg-gray-50 font-bold uppercase text-xs hover:bg-gray-100 transition-all disabled:opacity-60"
+              className="btn-secondary flex-1 py-2 text-sm min-h-[40px] disabled:opacity-60"
             >
               Actualizar cambios
             </button>
@@ -142,7 +145,7 @@ export function ErpConnectionStatus({
       )}
 
       {syncMessage && (
-        <p className="text-[10px] font-bold uppercase opacity-70">{syncMessage}</p>
+        <p className="text-xs text-on-surface-variant">{syncMessage}</p>
       )}
     </div>
   );

@@ -237,6 +237,7 @@ export function mapProduct(
     name: product.name,
     sku: product.sku,
     unitPrice: Number(product.unitPrice),
+    stockQuantity: product.stockQuantity,
     categoryId: product.categoryId ?? undefined,
     categoryName: product.category?.name,
   };

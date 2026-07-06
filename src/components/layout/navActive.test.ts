@@ -18,7 +18,7 @@ describe("isNavActive", () => {
   });
 
   it("rutas hermanas no se activan entre sí", () => {
-    expect(isNavActive("/productos", "/entregas")).toBe(false);
+    expect(isNavActive("/inventario", "/entregas")).toBe(false);
     expect(isNavActive("/sucursales", "/sucursales")).toBe(true);
   });
 });

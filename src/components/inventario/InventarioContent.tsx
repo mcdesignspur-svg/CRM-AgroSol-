@@ -7,8 +7,8 @@ import { TopBar } from "@/components/layout/TopBar";
 import { ErpConnectionStatus } from "@/components/integrations/ErpConnectionStatus";
 import { AddProductModal } from "@/components/productos/AddProductModal";
 import { ProductCategoryFilter } from "@/components/productos/ProductCategoryFilter";
-import { ProductCategorySections } from "@/components/productos/ProductCategorySections";
 import { ProductSearchBar } from "@/components/productos/ProductSearchBar";
+import { InventarioCategorySections } from "@/components/inventario/InventarioCategorySections";
 import {
   useGroupedCatalog,
   useProductCategories,
@@ -18,29 +18,31 @@ import { groupProductsByCategory } from "@/lib/products/group-by-category";
 import type { LoyverseStatus } from "@/lib/loyverse/types";
 import type { Product, ProductCategorySummary } from "@/lib/types";
 
-interface ProductosContentProps {
+interface InventarioContentProps {
   loyverseStatus: LoyverseStatus;
   categories: ProductCategorySummary[];
 }
 
-export function ProductosContent({
+export function InventarioContent({
   loyverseStatus,
   categories: initialCategories,
-}: ProductosContentProps) {
+}: InventarioContentProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<
     string | null | undefined
   >(undefined);
+  const [catalogKey, setCatalogKey] = useState(0);
 
   const { categories } = useProductCategories("gurabo", initialCategories);
   const {
     groups: groupedCatalog,
     loading: catalogLoading,
     error: catalogError,
-  } = useGroupedCatalog("gurabo");
+  } = useGroupedCatalog("gurabo", catalogKey);
   const { query, setQuery, results, loading, error } = useProductSearch(
     "gurabo",
     selectedCategoryId,
+    catalogKey,
   );
 
   const selectedCategory = categories.find(
@@ -79,12 +81,33 @@ export function ProductosContent({
     [displayGroups],
   );
 
+  const lowStockCount = useMemo(
+    () =>
+      displayGroups.reduce(
+        (sum, group) =>
+          sum +
+          group.products.filter(
+            (product) =>
+              product.stockQuantity !== null &&
+              product.stockQuantity !== undefined &&
+              product.stockQuantity <= 5,
+          ).length,
+        0,
+      ),
+    [displayGroups],
+  );
+
   const showLoading = isFiltering ? loading : catalogLoading;
   const showError = isFiltering ? error : catalogError;
 
   function handleCreated(product: Product) {
     setQuery(product.name);
     setSelectedCategoryId(undefined);
+    setCatalogKey((current) => current + 1);
+  }
+
+  function handleSynced() {
+    setCatalogKey((current) => current + 1);
   }
 
   function handleCategorySelect(categoryId: string | null | undefined) {
@@ -95,16 +118,16 @@ export function ProductosContent({
   }
 
   return (
-    <AppShell topBar={<TopBar title="Productos" showSearch={false} />}>
+    <AppShell topBar={<TopBar title="Inventario" showSearch={false} />}>
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-10">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div>
             <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface">
-              Productos
+              Inventario
             </h2>
             <p className="text-sm text-on-surface-variant mt-1">
-              Catálogo de Gurabo (Central) agrupado por categoría. Filtra con
-              los chips o busca por nombre, SKU o categoría.
+              Referencia visual del stock en Gurabo (Central). Consulta nombre,
+              precio y unidades disponibles por producto.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -124,6 +147,27 @@ export function ProductosContent({
           </div>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="rounded-xl border border-outline bg-white p-4 shadow-sm">
+            <p className="text-xs text-on-surface-variant">Productos en cache</p>
+            <p className="text-2xl font-semibold mt-1 tabular-nums">
+              {(loyverseStatus.cachedProductCount ?? 0).toLocaleString("es-PR")}
+            </p>
+          </div>
+          <div className="rounded-xl border border-outline bg-white p-4 shadow-sm">
+            <p className="text-xs text-on-surface-variant">Categorías</p>
+            <p className="text-2xl font-semibold mt-1 tabular-nums">
+              {categories.length.toLocaleString("es-PR")}
+            </p>
+          </div>
+          <div className="rounded-xl border border-outline bg-white p-4 shadow-sm">
+            <p className="text-xs text-on-surface-variant">Bajo stock (≤ 5)</p>
+            <p className="text-2xl font-semibold mt-1 tabular-nums text-amber-700">
+              {showLoading ? "—" : lowStockCount.toLocaleString("es-PR")}
+            </p>
+          </div>
+        </div>
+
         <ProductSearchBar
           value={query}
           onChange={setQuery}
@@ -140,6 +184,7 @@ export function ProductosContent({
           branchId="gurabo"
           initialStatus={loyverseStatus}
           showSyncAction
+          onSynced={handleSynced}
         />
 
         <section className="rounded-xl border border-outline bg-white shadow-sm overflow-hidden">
@@ -149,7 +194,7 @@ export function ProductosContent({
                 <span className="material-symbols-outlined animate-spin text-primary">
                   sync
                 </span>
-                Cargando productos...
+                Cargando inventario...
               </span>
             </div>
           ) : showError ? (
@@ -168,7 +213,7 @@ export function ProductosContent({
               completo&quot; para sincronizar desde Loyverse.
             </div>
           ) : (
-            <ProductCategorySections
+            <InventarioCategorySections
               products={results}
               groups={displayGroups}
               showCategoryHeaders
