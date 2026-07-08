@@ -158,6 +158,7 @@ export function DashboardOrdersSection({
             status={order.status}
             fulfillment={order.fulfillment}
             dispatchedAt={order.dispatchedAt}
+            completedAt={order.updatedAt}
           />
           {pickup && order.arrivedAt && <ArrivedBadge />}
         </div>
@@ -267,6 +268,7 @@ export function DashboardOrdersSection({
                         createdAt={order.createdAt}
                         status={order.status}
                         fulfillment={order.fulfillment}
+                        completedAt={order.updatedAt}
                       />
                     </td>
                     <td className="px-4 py-3">
@@ -302,6 +304,7 @@ export function DashboardOrdersSection({
                     status={order.status}
                     fulfillment={order.fulfillment}
                     dispatchedAt={order.dispatchedAt}
+                    completedAt={order.updatedAt}
                   />
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
@@ -313,6 +316,7 @@ export function DashboardOrdersSection({
                     status={order.status}
                     fulfillment={order.fulfillment}
                     dispatchedAt={order.dispatchedAt}
+                    completedAt={order.updatedAt}
                     className="text-xs"
                   />
                 </div>

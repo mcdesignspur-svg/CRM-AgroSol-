@@ -9,6 +9,7 @@ interface OrderElapsedTimerProps {
   status: OrderStatus;
   fulfillment?: string;
   dispatchedAt?: string;
+  completedAt?: string;
   className?: string;
 }
 
@@ -17,6 +18,7 @@ export function OrderElapsedTimer({
   status,
   fulfillment,
   dispatchedAt,
+  completedAt,
   className = "",
 }: OrderElapsedTimerProps) {
   const { elapsedTime, timerClass } = useOrderTimer({
@@ -24,6 +26,7 @@ export function OrderElapsedTimer({
     status,
     fulfillment,
     dispatchedAt,
+    completedAt,
   });
 
   return (
@@ -38,6 +41,7 @@ interface OrderLiveStatusBadgeProps {
   status: OrderStatus;
   fulfillment?: string;
   dispatchedAt?: string;
+  completedAt?: string;
 }
 
 export function OrderLiveStatusBadge({
@@ -45,12 +49,14 @@ export function OrderLiveStatusBadge({
   status,
   fulfillment,
   dispatchedAt,
+  completedAt,
 }: OrderLiveStatusBadgeProps) {
   const { displayStatus } = useOrderTimer({
     createdAt,
     status,
     fulfillment,
     dispatchedAt,
+    completedAt,
   });
   return <StatusBadge status={displayStatus} />;
 }

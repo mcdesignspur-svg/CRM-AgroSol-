@@ -110,6 +110,7 @@ export function mapOrder(order: PrismaOrder): Order {
     fulfillment,
     elapsedTime: formatElapsedTime(order.createdAt),
     createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt.toISOString(),
     arrivedAt: order.arrivedAt?.toISOString(),
     dispatchedAt: order.dispatchedAt?.toISOString(),
     confirmationNotifiedAt: order.confirmationNotifiedAt?.toISOString(),
@@ -131,6 +132,7 @@ export function mapDriverOrder(order: PrismaOrder): DriverOrder {
     status,
     elapsedTime: formatElapsedTime(order.createdAt),
     createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt.toISOString(),
     fulfillment,
     allowedTransitions: getAllowedStatusTransitions({
       type: order.type,

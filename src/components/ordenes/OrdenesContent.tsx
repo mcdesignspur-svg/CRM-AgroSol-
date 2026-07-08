@@ -271,6 +271,7 @@ export function OrdenesContent({
                             createdAt={order.createdAt}
                             status={order.status}
                             fulfillment={order.fulfillment}
+                            completedAt={order.updatedAt}
                           />
                           {order.arrivedAt && order.type === "retiro" && (
                             <ArrivedBadge />
@@ -282,6 +283,7 @@ export function OrdenesContent({
                           createdAt={order.createdAt}
                           status={order.status}
                           fulfillment={order.fulfillment}
+                          completedAt={order.updatedAt}
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -319,6 +321,7 @@ export function OrdenesContent({
                       createdAt={order.createdAt}
                       status={order.status}
                       fulfillment={order.fulfillment}
+                      completedAt={order.updatedAt}
                     />
                     {order.arrivedAt && order.type === "retiro" && (
                       <ArrivedBadge />
@@ -331,6 +334,7 @@ export function OrdenesContent({
                       createdAt={order.createdAt}
                       status={order.status}
                       fulfillment={order.fulfillment}
+                      completedAt={order.updatedAt}
                       className="text-xs"
                     />
                   </div>

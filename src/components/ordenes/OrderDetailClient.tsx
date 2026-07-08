@@ -125,6 +125,7 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                 createdAt={order.createdAt}
                 status={order.status}
                 fulfillment={order.fulfillment}
+                completedAt={order.updatedAt}
               />
               <TypeBadge type={order.type} />
               {order.arrivedAt && order.fulfillment === "pickup" && (
@@ -137,6 +138,7 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                 createdAt={order.createdAt}
                 status={order.status}
                 fulfillment={order.fulfillment}
+                completedAt={order.updatedAt}
                 className="text-sm"
               />{" "}
               · {BRANCH_LABELS[order.branchId]}
