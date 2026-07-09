@@ -1,5 +1,5 @@
 export { ensureBranches, getBranches, getBranchById, sendBranchPing } from "./branches";
-export { getActiveDeliveries, getCompletedDeliveriesCount, getDeliveriesCount } from "./deliveries";
+export { getActiveDeliveries, getCompletedDeliveriesCount, getDeliveriesCount, getEntregasLiveSnapshot } from "./deliveries";
 export { getDashboardMetrics } from "./metrics";
 export { clearNotificationLogs, getNotificationLogs } from "./notifications";
 export {

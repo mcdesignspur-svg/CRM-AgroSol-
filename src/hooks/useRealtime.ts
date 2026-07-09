@@ -7,7 +7,7 @@ const RECONNECT_BASE_MS = 1_500;
 const RECONNECT_MAX_MS = 15_000;
 
 interface UseRealtimeOptions {
-  channel: "dashboard" | "pickup" | "delivery";
+  channel: "dashboard" | "entregas" | "pickup" | "delivery";
   token?: string;
   enabled?: boolean;
   onMessage: (message: RealtimeServerMessage) => void;
@@ -80,8 +80,8 @@ export function useRealtime({
         setConnected(true);
         ws?.send(
           JSON.stringify(
-            channel === "dashboard"
-              ? { action: "subscribe", channel: "dashboard" }
+            channel === "dashboard" || channel === "entregas"
+              ? { action: "subscribe", channel }
               : { action: "subscribe", channel, token },
           ),
         );

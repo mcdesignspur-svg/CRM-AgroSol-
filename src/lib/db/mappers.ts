@@ -218,6 +218,8 @@ export function mapDelivery(
     status: delivery.status,
     branchId: (delivery.branchId as BranchId | null) ?? undefined,
     orderId: orderDisplayId,
+    lat: delivery.lat ?? undefined,
+    lng: delivery.lng ?? undefined,
   };
 }
 

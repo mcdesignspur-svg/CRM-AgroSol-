@@ -26,6 +26,8 @@ interface EntregasMapProps {
   deliveries: Delivery[];
   activeBranchId: BranchId | null;
   ordenId: string | null;
+  selectedDeliveryId: string | null;
+  onSelectDelivery?: (deliveryId: string | null) => void;
   onLocateError?: (message: string) => void;
 }
 
@@ -34,9 +36,10 @@ function createBranchIcon(highlighted: boolean) {
     className: "",
     html: `<div style="
       width:28px;height:28px;
-      background:${highlighted ? "#fcd400" : "#ffffff"};
-      border:2px solid #000;
-      box-shadow:3px 3px 0 #000;
+      background:${highlighted ? "#fef2f2" : "#ffffff"};
+      border:1px solid #e5e7eb;
+      border-radius:8px;
+      box-shadow:0 1px 3px rgba(0,0,0,0.12);
       display:flex;align-items:center;justify-content:center;
       font-size:14px;line-height:1;
     ">🏪</div>`,
@@ -47,20 +50,22 @@ function createBranchIcon(highlighted: boolean) {
 }
 
 function createDeliveryIcon(highlighted: boolean) {
+  const size = highlighted ? 32 : 26;
   return L.divIcon({
     className: "",
     html: `<div style="
-      width:${highlighted ? 30 : 24}px;
-      height:${highlighted ? 30 : 24}px;
+      width:${size}px;
+      height:${size}px;
       background:#e31e24;
-      border:2px solid #000;
-      box-shadow:${highlighted ? "4px 4px 0 #000" : "2px 2px 0 #000"};
+      border:2px solid #ffffff;
+      border-radius:9999px;
+      box-shadow:0 2px 6px rgba(227,30,36,0.35);
       display:flex;align-items:center;justify-content:center;
-      color:#fff;font-size:11px;font-weight:700;
-      ${highlighted ? "animation:pulse 1.5s infinite;" : ""}
+      color:#fff;font-size:12px;font-weight:700;
+      ${highlighted ? "animation:pulse 1.5s infinite; outline:2px solid #e31e24; outline-offset:2px;" : ""}
     ">🚚</div>`,
-    iconSize: [highlighted ? 30 : 24, highlighted ? 30 : 24],
-    iconAnchor: [highlighted ? 15 : 12, highlighted ? 15 : 12],
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
     popupAnchor: [0, -16],
   });
 }
@@ -106,13 +111,42 @@ function MapRefBridge({ mapRef }: { mapRef: React.RefObject<L.Map | null> }) {
   return null;
 }
 
+function OpenSelectedPopup({
+  selectedDeliveryId,
+  markerRefs,
+  deliveryCount,
+}: {
+  selectedDeliveryId: string | null;
+  markerRefs: React.MutableRefObject<Map<string, L.Marker>>;
+  deliveryCount: number;
+}) {
+  useEffect(() => {
+    if (!selectedDeliveryId) {
+      return;
+    }
+
+    // Wait a tick so Marker refs are registered after tab/map remounts.
+    const timer = window.setTimeout(() => {
+      markerRefs.current.get(selectedDeliveryId)?.openPopup();
+    }, 50);
+
+    return () => window.clearTimeout(timer);
+  }, [deliveryCount, markerRefs, selectedDeliveryId]);
+
+  return null;
+}
+
 function MapLayers({
   branches,
   deliveries,
   activeBranchId,
   ordenId,
+  selectedDeliveryId,
+  onSelectDelivery,
   mapRef,
 }: EntregasMapProps & { mapRef: React.RefObject<L.Map | null> }) {
+  const markerRefs = useRef(new Map<string, L.Marker>());
+
   const visibleBranches = activeBranchId
     ? branches.filter((branch) => branch.id === activeBranchId)
     : branches;
@@ -122,9 +156,11 @@ function MapLayers({
       deliveries.map((delivery) => ({
         delivery,
         position: getDeliveryCoordinates(delivery),
-        highlighted: isDeliveryHighlighted(delivery, ordenId),
+        highlighted:
+          isDeliveryHighlighted(delivery, ordenId) ||
+          delivery.id === selectedDeliveryId,
       })),
-    [deliveries, ordenId],
+    [deliveries, ordenId, selectedDeliveryId],
   );
 
   const branchMarkers = useMemo(
@@ -146,7 +182,18 @@ function MapLayers({
   );
 
   const focusPosition = useMemo(() => {
-    const highlightedDelivery = deliveryMarkers.find((marker) => marker.highlighted);
+    if (selectedDeliveryId) {
+      const selected = deliveryMarkers.find(
+        (marker) => marker.delivery.id === selectedDeliveryId,
+      );
+      if (selected) {
+        return selected.position;
+      }
+    }
+
+    const highlightedDelivery = deliveryMarkers.find((marker) =>
+      isDeliveryHighlighted(marker.delivery, ordenId),
+    );
     if (highlightedDelivery) {
       return highlightedDelivery.position;
     }
@@ -156,7 +203,7 @@ function MapLayers({
     }
 
     return null;
-  }, [activeBranchId, deliveryMarkers]);
+  }, [activeBranchId, deliveryMarkers, ordenId, selectedDeliveryId]);
 
   return (
     <>
@@ -166,6 +213,11 @@ function MapLayers({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <MapViewport positions={allPositions} focusPosition={focusPosition} />
+      <OpenSelectedPopup
+        selectedDeliveryId={selectedDeliveryId}
+        markerRefs={markerRefs}
+        deliveryCount={deliveryMarkers.length}
+      />
 
       {branchMarkers.map(({ branch, position, highlighted }) => (
         <Marker
@@ -175,7 +227,7 @@ function MapLayers({
         >
           <Popup>
             <div className="text-sm space-y-1 min-w-[180px]">
-              <p className="font-bold uppercase">{branch.name}</p>
+              <p className="font-semibold">{branch.name}</p>
               <p className="text-xs text-gray-600">{branch.address}</p>
               <p className="text-xs font-medium">
                 Capacidad: {branch.capacityPercent}%
@@ -190,6 +242,16 @@ function MapLayers({
           key={`delivery-${delivery.id}`}
           position={position}
           icon={createDeliveryIcon(highlighted)}
+          eventHandlers={{
+            click: () => onSelectDelivery?.(delivery.id),
+          }}
+          ref={(marker) => {
+            if (marker) {
+              markerRefs.current.set(delivery.id, marker);
+            } else {
+              markerRefs.current.delete(delivery.id);
+            }
+          }}
         >
           <Popup>
             <div className="text-sm space-y-1 min-w-[200px]">
@@ -200,6 +262,11 @@ function MapLayers({
               {delivery.branchId ? (
                 <p className="text-xs font-medium">
                   {BRANCH_LABELS[delivery.branchId]}
+                </p>
+              ) : null}
+              {delivery.orderId ? (
+                <p className="text-xs font-medium text-primary">
+                  {delivery.orderId}
                 </p>
               ) : null}
             </div>
@@ -215,6 +282,8 @@ export function EntregasMap({
   deliveries,
   activeBranchId,
   ordenId,
+  selectedDeliveryId,
+  onSelectDelivery,
   onLocateError,
 }: EntregasMapProps) {
   const mapRef = useRef<L.Map | null>(null);
@@ -233,6 +302,8 @@ export function EntregasMap({
           deliveries={deliveries}
           activeBranchId={activeBranchId}
           ordenId={ordenId}
+          selectedDeliveryId={selectedDeliveryId}
+          onSelectDelivery={onSelectDelivery}
           mapRef={mapRef}
         />
       </MapContainer>
@@ -241,7 +312,7 @@ export function EntregasMap({
         <button
           type="button"
           onClick={() => mapRef.current?.zoomIn()}
-          className="bg-white p-2 border border-outline hover:bg-surface-container active:scale-95 shadow-sm"
+          className="bg-white p-2 border border-outline rounded-lg hover:bg-surface-container active:scale-95 shadow-sm"
           aria-label="Acercar mapa"
         >
           <span className="material-symbols-outlined">add</span>
@@ -249,7 +320,7 @@ export function EntregasMap({
         <button
           type="button"
           onClick={() => mapRef.current?.zoomOut()}
-          className="bg-white p-2 border border-outline hover:bg-surface-container active:scale-95 shadow-sm"
+          className="bg-white p-2 border border-outline rounded-lg hover:bg-surface-container active:scale-95 shadow-sm"
           aria-label="Alejar mapa"
         >
           <span className="material-symbols-outlined">remove</span>
@@ -279,10 +350,10 @@ export function EntregasMap({
               { enableHighAccuracy: true, timeout: 10_000 },
             );
           }}
-          className="bg-white p-2 border border-outline hover:bg-surface-container active:scale-95 shadow-sm"
+          className="bg-white p-2 border border-outline rounded-lg hover:bg-surface-container active:scale-95 shadow-sm"
           aria-label="Centrar en mi ubicación"
         >
-          <span className="material-symbols-outlined text-primary-container">
+          <span className="material-symbols-outlined text-primary">
             my_location
           </span>
         </button>

@@ -1,16 +1,26 @@
 import { PrismaClient } from "@prisma/client";
 import { BRANCH_DEFINITIONS } from "../src/lib/branch-definitions";
 import { formatDeliveryEta } from "../src/lib/db/deliveries";
+import { getSyntheticDeliveryCoordinates } from "../src/lib/geo";
+import type { BranchId } from "../src/lib/types";
 
 const prisma = new PrismaClient();
 
-const SAMPLE_DELIVERIES = [
+const SAMPLE_DELIVERIES: Array<{
+  displayId: string;
+  driverName: string;
+  driverInitials: string;
+  destination: string;
+  status: "recogida" | "entrega";
+  branchId: BranchId;
+  hoursAgo: number;
+}> = [
   {
     displayId: "TRK-8921",
     driverName: "Juan Rodriguez",
     driverInitials: "JR",
     destination: "Finca Santa Maria, SE",
-    status: "recogida" as const,
+    status: "recogida",
     branchId: "gurabo",
     hoursAgo: 1,
   },
@@ -19,7 +29,7 @@ const SAMPLE_DELIVERIES = [
     driverName: "Miguel Angel",
     driverInitials: "MA",
     destination: "Centro Logístico Sur",
-    status: "recogida" as const,
+    status: "recogida",
     branchId: "san-lorenzo",
     hoursAgo: 0.5,
   },
@@ -28,7 +38,7 @@ const SAMPLE_DELIVERIES = [
     driverName: "Carlos Mendez",
     driverInitials: "CM",
     destination: "Rancho Las Palmas",
-    status: "recogida" as const,
+    status: "recogida",
     branchId: "navarro",
     hoursAgo: 2,
   },
@@ -37,7 +47,7 @@ const SAMPLE_DELIVERIES = [
     driverName: "Sofia Garcia",
     driverInitials: "SG",
     destination: "Bodega Central",
-    status: "entrega" as const,
+    status: "entrega",
     branchId: "gurabo",
     hoursAgo: 6,
   },
@@ -70,6 +80,11 @@ async function main() {
 
   for (const sample of SAMPLE_DELIVERIES) {
     const createdAt = new Date(Date.now() - sample.hoursAgo * 3_600_000);
+    const [lat, lng] = getSyntheticDeliveryCoordinates({
+      id: sample.displayId,
+      destination: sample.destination,
+      branchId: sample.branchId,
+    });
 
     await prisma.delivery.upsert({
       where: { displayId: sample.displayId },
@@ -79,6 +94,8 @@ async function main() {
         destination: sample.destination,
         status: sample.status,
         branchId: sample.branchId,
+        lat,
+        lng,
         eta:
           sample.status === "entrega"
             ? "Completada"
@@ -92,6 +109,8 @@ async function main() {
         destination: sample.destination,
         status: sample.status,
         branchId: sample.branchId,
+        lat,
+        lng,
         eta:
           sample.status === "entrega"
             ? "Completada"

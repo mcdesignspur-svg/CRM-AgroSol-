@@ -1,7 +1,9 @@
 import { DELIVERY_SLA_HOURS } from "@/lib/constants";
+import { getSyntheticDeliveryCoordinates } from "@/lib/geo";
+import { geocodeDestination } from "@/lib/geocode";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
-import type { BranchId } from "@/lib/types";
+import type { BranchId, EntregasLiveSnapshot } from "@/lib/types";
 import { mapDelivery } from "./mappers";
 
 const DRIVER_POOL = [
@@ -88,6 +90,15 @@ export async function getCompletedDeliveriesCount() {
   return prisma.delivery.count({ where: { status: "entrega" } });
 }
 
+export async function getEntregasLiveSnapshot(): Promise<EntregasLiveSnapshot> {
+  const [deliveries, completedCount] = await Promise.all([
+    getActiveDeliveries(),
+    getCompletedDeliveriesCount(),
+  ]);
+
+  return { deliveries, completedCount };
+}
+
 export async function createDeliveryForOrder(
   tx: Prisma.TransactionClient,
   input: {
@@ -95,6 +106,8 @@ export async function createDeliveryForOrder(
     branchId: BranchId;
     destination: string;
     createdAt?: Date;
+    lat?: number | null;
+    lng?: number | null;
   },
 ) {
   const driver = pickDriver(input.orderId);
@@ -110,8 +123,44 @@ export async function createDeliveryForOrder(
       status: "recogida",
       branchId: input.branchId,
       orderId: input.orderId,
+      lat: input.lat ?? null,
+      lng: input.lng ?? null,
       createdAt,
     },
+  });
+}
+
+/** Geocode destination and persist lat/lng (best-effort; falls back to synthetic). */
+export async function ensureDeliveryCoordinates(orderId: string) {
+  const delivery = await prisma.delivery.findUnique({ where: { orderId } });
+  if (!delivery) {
+    return null;
+  }
+
+  if (
+    typeof delivery.lat === "number" &&
+    typeof delivery.lng === "number" &&
+    Number.isFinite(delivery.lat) &&
+    Number.isFinite(delivery.lng)
+  ) {
+    return delivery;
+  }
+
+  const geocoded = await geocodeDestination(
+    delivery.destination,
+    delivery.branchId as BranchId | null,
+  );
+
+  const [lat, lng] = geocoded ??
+    getSyntheticDeliveryCoordinates({
+      id: delivery.displayId,
+      destination: delivery.destination,
+      branchId: delivery.branchId as BranchId | null,
+    });
+
+  return prisma.delivery.update({
+    where: { id: delivery.id },
+    data: { lat, lng },
   });
 }
 

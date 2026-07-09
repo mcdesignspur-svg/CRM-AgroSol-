@@ -88,6 +88,13 @@ export interface Delivery {
   status: "recogida" | "entrega";
   branchId?: BranchId;
   orderId?: string;
+  lat?: number;
+  lng?: number;
+}
+
+export interface EntregasLiveSnapshot {
+  deliveries: Delivery[];
+  completedCount: number;
 }
 
 export interface Ping {

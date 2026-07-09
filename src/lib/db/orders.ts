@@ -2,6 +2,7 @@ import { ensureBranches } from "@/lib/db/branches";
 import {
   completeDeliveryForOrder,
   createDeliveryForOrder,
+  ensureDeliveryCoordinates,
 } from "@/lib/db/deliveries";
 import { generatePickupToken } from "@/lib/db/pickup";
 import { generateDeliveryToken } from "@/lib/db/delivery";
@@ -598,6 +599,18 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
 
     return order;
   });
+
+  if (updated.fulfillment === "delivery" && nextStatus === "en-transito") {
+    await ensureDeliveryCoordinates(updated.id);
+    const withCoords = await prisma.order.findUniqueOrThrow({
+      where: { displayId },
+      include: {
+        lineItems: { orderBy: { name: "asc" } },
+        delivery: true,
+      },
+    });
+    return mapOrderDetail(withCoords);
+  }
 
   return mapOrderDetail(updated);
 }
