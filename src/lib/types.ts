@@ -30,6 +30,7 @@ export interface Order {
   status: OrderStatus;
   elapsedTime: string;
   createdAt: string;
+  updatedAt?: string;
   fulfillment?: "pickup" | "delivery";
   arrivedAt?: string;
   dispatchedAt?: string;

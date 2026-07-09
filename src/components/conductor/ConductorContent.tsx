@@ -135,6 +135,7 @@ export function ConductorContent({
                       createdAt={order.createdAt}
                       status={order.status}
                       fulfillment={order.fulfillment}
+                      completedAt={order.updatedAt}
                     />
                   </div>
                 </div>
@@ -181,6 +182,7 @@ export function ConductorContent({
                       createdAt={order.createdAt}
                       status={order.status}
                       fulfillment={order.fulfillment}
+                      completedAt={order.updatedAt}
                       className="text-xs font-bold"
                     />
                   </div>

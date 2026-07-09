@@ -27,6 +27,10 @@ function getSnapshot() {
   return Date.now();
 }
 
-export function useNow(): number {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+export function useNow(enabled = true): number {
+  return useSyncExternalStore(
+    enabled ? subscribe : () => () => {},
+    enabled ? getSnapshot : () => 0,
+    enabled ? getSnapshot : () => 0,
+  );
 }
