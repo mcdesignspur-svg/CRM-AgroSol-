@@ -1,9 +1,10 @@
-import type { DashboardUpdates } from "@/lib/types";
+import type { DashboardUpdates, EntregasLiveSnapshot } from "@/lib/types";
 import type { PublicPickupOrder } from "@/lib/db/pickup";
 import type { PublicDeliveryOrder } from "@/lib/db/delivery";
 
 export type RealtimeClientMessage =
   | { action: "subscribe"; channel: "dashboard" }
+  | { action: "subscribe"; channel: "entregas" }
   | { action: "subscribe"; channel: "pickup"; token: string }
   | { action: "subscribe"; channel: "delivery"; token: string }
   | { action: "ping" };
@@ -11,11 +12,16 @@ export type RealtimeClientMessage =
 export type RealtimeServerMessage =
   | { type: "connected" }
   | { type: "dashboard:update"; data: DashboardUpdates }
+  | { type: "entregas:update"; data: EntregasLiveSnapshot }
   | { type: "pickup:update"; data: PublicPickupOrder }
   | { type: "delivery:update"; data: PublicDeliveryOrder };
 
 export function dashboardChannel(): string {
   return "dashboard";
+}
+
+export function entregasChannel(): string {
+  return "entregas";
 }
 
 export function pickupChannel(token: string): string {
@@ -33,6 +39,9 @@ export function parseClientMessage(raw: string): RealtimeClientMessage | null {
       return data;
     }
     if (data.action === "subscribe" && data.channel === "dashboard") {
+      return data;
+    }
+    if (data.action === "subscribe" && data.channel === "entregas") {
       return data;
     }
     if (

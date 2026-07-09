@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   dashboardChannel,
+  entregasChannel,
   parseClientMessage,
   pickupChannel,
 } from "./messages";
@@ -8,6 +9,7 @@ import {
 describe("realtime messages", () => {
   it("builds channel keys", () => {
     expect(dashboardChannel()).toBe("dashboard");
+    expect(entregasChannel()).toBe("entregas");
     expect(pickupChannel("abc123")).toBe("pickup:abc123");
   });
 
@@ -15,6 +17,12 @@ describe("realtime messages", () => {
     expect(
       parseClientMessage(JSON.stringify({ action: "subscribe", channel: "dashboard" })),
     ).toEqual({ action: "subscribe", channel: "dashboard" });
+  });
+
+  it("parses entregas subscribe", () => {
+    expect(
+      parseClientMessage(JSON.stringify({ action: "subscribe", channel: "entregas" })),
+    ).toEqual({ action: "subscribe", channel: "entregas" });
   });
 
   it("parses pickup subscribe", () => {

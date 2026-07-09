@@ -7,10 +7,20 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { AppShell } from "@/components/layout/AppShell";
 import { useToast } from "@/components/providers/ToastProvider";
 import { NotificationsButton } from "@/components/ui/NotificationsButton";
+import { useRealtime } from "@/hooks/useRealtime";
 import { BRANCH_LABELS } from "@/lib/constants";
 import { isBranchId } from "@/lib/branch-definitions";
 import { isDeliveryHighlighted } from "@/lib/geo";
-import type { Branch, BranchId, Delivery, NotificationLog } from "@/lib/types";
+import type { RealtimeServerMessage } from "@/lib/realtime/messages";
+import type {
+  Branch,
+  BranchId,
+  Delivery,
+  EntregasLiveSnapshot,
+  NotificationLog,
+} from "@/lib/types";
+
+const ENTREGAS_FALLBACK_POLL_MS = 12_000;
 
 const EntregasMap = dynamic(
   () => import("./EntregasMap").then((mod) => mod.EntregasMap),
@@ -167,7 +177,8 @@ function EntregasContent({
   const { showToast } = useToast();
 
   const [branches, setBranches] = useState(initialBranches);
-  const [activeDeliveries] = useState(initialDeliveries);
+  const [activeDeliveries, setActiveDeliveries] = useState(initialDeliveries);
+  const [liveCompletedCount, setLiveCompletedCount] = useState(completedCount);
   const [logs, setLogs] = useState<NotificationLog[]>(initialLogs);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [mobileTab, setMobileTab] = useState<MobileTab>(() => {
@@ -179,7 +190,11 @@ function EntregasContent({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [branchOpen, setBranchOpen] = useState(false);
+  const [selectedDeliveryId, setSelectedDeliveryId] = useState<string | null>(
+    null,
+  );
   const branchRef = useRef<HTMLDivElement>(null);
+  const deliveryRowRefs = useRef(new Map<string, HTMLElement>());
 
   const activeBranchId =
     branchFilter && isBranchId(branchFilter) ? branchFilter : null;
@@ -192,6 +207,67 @@ function EntregasContent({
       return matchesDeliverySearch(delivery, searchQuery);
     });
   }, [activeBranchId, activeDeliveries, searchQuery]);
+
+  const applyLiveSnapshot = useCallback((snapshot: EntregasLiveSnapshot) => {
+    setActiveDeliveries(snapshot.deliveries);
+    setLiveCompletedCount(snapshot.completedCount);
+    setSelectedDeliveryId((current) => {
+      if (!current) return current;
+      return snapshot.deliveries.some((delivery) => delivery.id === current)
+        ? current
+        : null;
+    });
+  }, []);
+
+  const silentRefresh = useCallback(async () => {
+    try {
+      const res = await fetch("/api/entregas/live");
+      if (!res.ok) return;
+      const data = (await res.json()) as EntregasLiveSnapshot;
+      applyLiveSnapshot(data);
+    } catch {
+      // Keep last known snapshot on transient network errors.
+    }
+  }, [applyLiveSnapshot]);
+
+  const handleRealtimeMessage = useCallback(
+    (message: RealtimeServerMessage) => {
+      if (message.type !== "entregas:update") {
+        return;
+      }
+      applyLiveSnapshot(message.data);
+    },
+    [applyLiveSnapshot],
+  );
+
+  const { connected } = useRealtime({
+    channel: "entregas",
+    onMessage: handleRealtimeMessage,
+  });
+
+  useEffect(() => {
+    if (connected) {
+      return;
+    }
+
+    const initial = window.setTimeout(() => {
+      void silentRefresh();
+    }, 0);
+    const timer = window.setInterval(() => {
+      void silentRefresh();
+    }, ENTREGAS_FALLBACK_POLL_MS);
+
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(timer);
+    };
+  }, [connected, silentRefresh]);
+
+  useEffect(() => {
+    if (!selectedDeliveryId) return;
+    const row = deliveryRowRefs.current.get(selectedDeliveryId);
+    row?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [selectedDeliveryId]);
 
   useEffect(() => {
     if (!branchOpen) return;
@@ -208,6 +284,18 @@ function EntregasContent({
     e.preventDefault();
   }, []);
 
+  function selectDelivery(deliveryId: string | null) {
+    setSelectedDeliveryId((current) =>
+      deliveryId && current === deliveryId ? null : deliveryId,
+    );
+    if (deliveryId && mobileTab === "entregas") {
+      // Keep list visible on desktop; on mobile jump to map for context.
+      if (typeof window !== "undefined" && window.innerWidth < 1280) {
+        setMobileTab("mapa");
+      }
+    }
+  }
+
   function selectBranchFilter(branchId: BranchId | null) {
     setBranchOpen(false);
     const params = new URLSearchParams(searchParams.toString());
@@ -218,6 +306,13 @@ function EntregasContent({
     }
     const query = params.toString();
     router.push(query ? `/entregas?${query}` : "/entregas");
+  }
+
+  function isRowHighlighted(delivery: Delivery) {
+    return (
+      isDeliveryHighlighted(delivery, ordenId) ||
+      delivery.id === selectedDeliveryId
+    );
   }
 
   async function handleBranchPing(branchId: string) {
@@ -255,6 +350,7 @@ function EntregasContent({
 
   const inTransitCount = filteredDeliveries.length;
   const hasActiveFilters = Boolean(activeBranchId || searchQuery.trim());
+  const displayCompletedCount = liveCompletedCount;
 
   return (
     <AppShell
@@ -473,6 +569,8 @@ function EntregasContent({
               deliveries={filteredDeliveries}
               activeBranchId={activeBranchId}
               ordenId={ordenId}
+              selectedDeliveryId={selectedDeliveryId}
+              onSelectDelivery={selectDelivery}
               onLocateError={(message) => showToast(message, "info")}
             />
             <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 bg-white p-3 sm:p-4 border border-outline industrial-shadow flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 z-[400] pointer-events-none max-w-[calc(100%-1.5rem)]">
@@ -485,7 +583,7 @@ function EntregasContent({
               <div className="flex items-center gap-2 sm:gap-3 sm:border-l-2 sm:border-black sm:pl-6">
                 <div className="w-3 h-3 border border-black bg-secondary-container shrink-0" />
                 <span className="font-mono font-bold text-black uppercase text-[10px] sm:text-xs">
-                  {completedCount} ENTREGAS REALIZADAS
+                  {displayCompletedCount} ENTREGAS REALIZADAS
                 </span>
               </div>
             </div>
@@ -546,10 +644,26 @@ function EntregasContent({
                     filteredDeliveries.map((delivery) => (
                     <div
                       key={delivery.id}
-                      className={`border border-outline p-4 industrial-shadow ${
-                        isDeliveryHighlighted(delivery, ordenId)
-                          ? "bg-secondary-container/30"
-                          : ""
+                      role="button"
+                      tabIndex={0}
+                      ref={(node) => {
+                        if (node) {
+                          deliveryRowRefs.current.set(delivery.id, node);
+                        } else {
+                          deliveryRowRefs.current.delete(delivery.id);
+                        }
+                      }}
+                      onClick={() => selectDelivery(delivery.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          selectDelivery(delivery.id);
+                        }
+                      }}
+                      className={`border border-outline p-4 industrial-shadow cursor-pointer transition-colors ${
+                        isRowHighlighted(delivery)
+                          ? "bg-secondary-container/30 ring-2 ring-primary/20"
+                          : "hover:bg-surface-container-low"
                       }`}
                     >
                       <div className="flex justify-between items-start mb-2">
@@ -583,6 +697,7 @@ function EntregasContent({
                         {delivery.orderId && (
                           <Link
                             href={`/entregas?orden=${encodeURIComponent(delivery.orderId)}`}
+                            onClick={(event) => event.stopPropagation()}
                             className="text-[9px] font-bold uppercase text-primary hover:underline"
                           >
                             {delivery.orderId}
@@ -631,8 +746,16 @@ function EntregasContent({
                       filteredDeliveries.map((delivery) => (
                       <tr
                         key={delivery.id}
-                        className={`hover:bg-surface-container-low transition-colors border-b border-black/10 ${
-                          isDeliveryHighlighted(delivery, ordenId)
+                        ref={(node) => {
+                          if (node) {
+                            deliveryRowRefs.current.set(delivery.id, node);
+                          } else {
+                            deliveryRowRefs.current.delete(delivery.id);
+                          }
+                        }}
+                        onClick={() => selectDelivery(delivery.id)}
+                        className={`hover:bg-surface-container-low transition-colors border-b border-black/10 cursor-pointer ${
+                          isRowHighlighted(delivery)
                             ? "bg-secondary-container/30"
                             : ""
                         }`}
@@ -643,6 +766,7 @@ function EntregasContent({
                             {delivery.orderId && (
                               <Link
                                 href={`/entregas?orden=${encodeURIComponent(delivery.orderId)}`}
+                                onClick={(event) => event.stopPropagation()}
                                 className="text-[10px] text-black hover:underline"
                               >
                                 {delivery.orderId}
@@ -703,9 +827,25 @@ function EntregasContent({
                   filteredDeliveries.map((delivery) => (
                   <div
                     key={delivery.id}
-                    className={`border border-outline p-4 industrial-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all ${
-                      isDeliveryHighlighted(delivery, ordenId)
-                        ? "bg-secondary-container/30"
+                    role="button"
+                    tabIndex={0}
+                    ref={(node) => {
+                      if (node) {
+                        deliveryRowRefs.current.set(delivery.id, node);
+                      } else {
+                        deliveryRowRefs.current.delete(delivery.id);
+                      }
+                    }}
+                    onClick={() => selectDelivery(delivery.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        selectDelivery(delivery.id);
+                      }
+                    }}
+                    className={`border border-outline p-4 industrial-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer ${
+                      isRowHighlighted(delivery)
+                        ? "bg-secondary-container/30 ring-2 ring-primary/20"
                         : ""
                     }`}
                   >
@@ -739,6 +879,7 @@ function EntregasContent({
                       {delivery.orderId && (
                         <Link
                           href={`/entregas?orden=${encodeURIComponent(delivery.orderId)}`}
+                          onClick={(event) => event.stopPropagation()}
                           className="text-[9px] font-bold uppercase text-primary hover:underline"
                         >
                           {delivery.orderId}

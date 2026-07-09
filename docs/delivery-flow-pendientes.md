@@ -27,8 +27,11 @@ Implementado en este sprint:
 
 ### Mapa y geolocalización
 
-- [ ] Geocodificar direcciones reales (hoy: coordenadas sintéticas en `src/lib/geo.ts`).
-- [ ] Refresco en tiempo real en `/entregas` al despachar o completar.
+- [x] Geocodificar direcciones reales al despachar (Nominatim) y persistir `lat`/`lng` en `Delivery`; fallback sintético si falla.
+- [x] Refresco en tiempo real en `/entregas` (canal WebSocket `entregas` + polling de respaldo `/api/entregas/live`).
+- [x] Sincronía lista ↔ mapa (selección bidireccional con `flyTo` y highlight).
+- [ ] GPS en vivo del conductor / polilíneas de ruta.
+- [ ] Clustering y capas por conductor.
 
 ### Otros
 

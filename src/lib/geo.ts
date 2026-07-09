@@ -22,10 +22,15 @@ export function getBranchCoordinates(branchId: BranchId): LatLng {
   return [branch.lat, branch.lng];
 }
 
-export function getDeliveryCoordinates(delivery: Delivery): LatLng {
-  const branchId = delivery.branchId ?? "gurabo";
+/** Deterministic offset near the branch when geocoding is unavailable. */
+export function getSyntheticDeliveryCoordinates(input: {
+  id: string;
+  destination: string;
+  branchId?: BranchId | null;
+}): LatLng {
+  const branchId = input.branchId ?? "gurabo";
   const [baseLat, baseLng] = getBranchCoordinates(branchId);
-  const hash = hashString(`${delivery.id}:${delivery.destination}`);
+  const hash = hashString(`${input.id}:${input.destination}`);
   const angle = ((hash % 360) * Math.PI) / 180;
   const distance = 0.012 + (hash % 80) / 4000;
 
@@ -33,6 +38,23 @@ export function getDeliveryCoordinates(delivery: Delivery): LatLng {
     baseLat + distance * Math.cos(angle),
     baseLng + distance * Math.sin(angle),
   ];
+}
+
+export function getDeliveryCoordinates(delivery: Delivery): LatLng {
+  if (
+    typeof delivery.lat === "number" &&
+    typeof delivery.lng === "number" &&
+    Number.isFinite(delivery.lat) &&
+    Number.isFinite(delivery.lng)
+  ) {
+    return [delivery.lat, delivery.lng];
+  }
+
+  return getSyntheticDeliveryCoordinates({
+    id: delivery.id,
+    destination: delivery.destination,
+    branchId: delivery.branchId,
+  });
 }
 
 export function isDeliveryHighlighted(

@@ -4,6 +4,7 @@ import { WebSocket, WebSocketServer } from "ws";
 import {
   dashboardChannel,
   deliveryChannel,
+  entregasChannel,
   parseClientMessage,
   pickupChannel,
   type RealtimeServerMessage,
@@ -29,6 +30,11 @@ export class RealtimeHub {
 
       if (message.action === "subscribe" && message.channel === "dashboard") {
         client.channels.add(dashboardChannel());
+        return;
+      }
+
+      if (message.action === "subscribe" && message.channel === "entregas") {
+        client.channels.add(entregasChannel());
         return;
       }
 

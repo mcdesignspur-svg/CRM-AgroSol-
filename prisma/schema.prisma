@@ -173,6 +173,8 @@ model Delivery {
   status         DeliveryStatus
   branchId       String?        @map("branch_id")
   orderId        String?        @unique @map("order_id")
+  lat            Float?
+  lng            Float?
   createdAt      DateTime       @default(now()) @map("created_at")
 
   branch Branch? @relation(fields: [branchId], references: [id])
