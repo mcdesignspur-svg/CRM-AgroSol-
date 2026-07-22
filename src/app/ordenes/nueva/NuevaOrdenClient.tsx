@@ -6,6 +6,10 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
 import { ErpConnectionStatus } from "@/components/integrations/ErpConnectionStatus";
+import {
+  ManualLineItemModal,
+  type ManualLineItemValues,
+} from "@/components/ordenes/ManualLineItemModal";
 import { useToast } from "@/components/providers/ToastProvider";
 import { AddProductModal } from "@/components/productos/AddProductModal";
 import { ProductPickerModal } from "@/components/productos/ProductPickerModal";
@@ -32,7 +36,8 @@ interface OrderDraft {
   method: FulfillmentMethod;
   branchId: BranchId;
   lineItems: {
-    productId: string;
+    id?: string;
+    productId?: string;
     name: string;
     sku: string;
     unitPrice: number;
@@ -50,6 +55,7 @@ export default function NuevaOrdenClient({
 }: NuevaOrdenClientProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [addProductOpen, setAddProductOpen] = useState(false);
+  const [manualItemOpen, setManualItemOpen] = useState(false);
   const [method, setMethod] = useState<FulfillmentMethod>("pickup");
   const [branchId, setBranchId] = useState<BranchId>(DEFAULT_BRANCH);
   const [customerName, setCustomerName] = useState("");
@@ -83,15 +89,16 @@ export default function NuevaOrdenClient({
       setMethod(draft.method ?? "pickup");
       setBranchId(draft.branchId ?? DEFAULT_BRANCH);
       setSmsNotify(draft.smsNotify ?? false);
-      const restored = (draft.lineItems ?? [])
-        .map((item) => ({
-          id: item.productId,
+      const restored: OrderLineItem[] = (draft.lineItems ?? [])
+        .map((item, index) => ({
+          id: item.id ?? item.productId ?? `manual-draft-${index}`,
+          productId: item.productId,
           name: item.name,
           sku: item.sku,
           unitPrice: item.unitPrice,
           quantity: item.quantity,
         }))
-        .filter((item): item is OrderLineItem => Boolean(item.name && item.sku));
+        .filter((item) => Boolean(item.name && item.sku));
       if (restored.length > 0) {
         setLineItems(restored);
         showToast("Borrador restaurado", "info");
@@ -108,13 +115,33 @@ export default function NuevaOrdenClient({
   }
 
   function selectProduct(product: Product) {
-    setLineItems((items) => [...items, { ...product, quantity: 1 }]);
+    setLineItems((items) => [
+      ...items,
+      { ...product, productId: product.id, quantity: 1 },
+    ]);
     showToast(`${product.name} agregado`, "success");
   }
 
   function handleProductCreated(product: Product) {
-    setLineItems((items) => [...items, { ...product, quantity: 1 }]);
+    setLineItems((items) => [
+      ...items,
+      { ...product, productId: product.id, quantity: 1 },
+    ]);
     showToast(`${product.name} creado y agregado a la orden`, "success");
+  }
+
+  function addManualLineItem(item: ManualLineItemValues) {
+    setLineItems((items) => [
+      ...items,
+      {
+        id: `manual-${crypto.randomUUID()}`,
+        name: item.name,
+        sku: "MANUAL",
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
+      },
+    ]);
+    showToast(`${item.name} agregado como artículo manual`, "success");
   }
 
   function removeLineItem(id: string) {
@@ -131,7 +158,8 @@ export default function NuevaOrdenClient({
       branchId,
       smsNotify,
       lineItems: lineItems.map((item) => ({
-        productId: item.id,
+        id: item.id,
+        productId: item.productId,
         name: item.name,
         sku: item.sku,
         unitPrice: item.unitPrice,
@@ -201,10 +229,15 @@ export default function NuevaOrdenClient({
           branchId,
           fulfillment: method,
           smsNotify,
-          lineItems: lineItems.map((item) => ({
-            productId: item.id,
-            quantity: item.quantity,
-          })),
+          lineItems: lineItems.map((item) =>
+            item.productId
+              ? { productId: item.productId, quantity: item.quantity }
+              : {
+                  name: item.name,
+                  unitPrice: item.unitPrice,
+                  quantity: item.quantity,
+                },
+          ),
         }),
       });
       const data = await res.json();
@@ -470,8 +503,8 @@ export default function NuevaOrdenClient({
               </section>
 
               <section className="bg-white rounded-xl border border-outline p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6 border-b border-outline pb-3">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-3 mb-6 border-b border-outline pb-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="material-symbols-outlined text-primary font-bold">
                       shopping_bag
                     </span>
@@ -489,23 +522,24 @@ export default function NuevaOrdenClient({
                     <button
                       type="button"
                       onClick={addLineItem}
-                      className="text-xs font-medium px-4 py-2 border border-outline hover:bg-surface-container transition-all"
+                      className="btn-secondary min-h-[44px] px-4 py-2 text-xs font-medium"
                     >
-                      + AGREGAR ARTÍCULO
+                      + Del inventario
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setManualItemOpen(true)}
+                      className="btn-secondary min-h-[44px] px-4 py-2 text-xs font-medium"
+                    >
+                      + Fuera de inventario
                     </button>
                   </div>
                 </div>
                 <div className="overflow-x-auto hidden sm:block">
                   {lineItems.length === 0 ? (
                     <p className="py-12 text-center text-sm font-medium opacity-50">
-                      Sin productos — usa &quot;Agregar artículo&quot; o{" "}
-                      <button
-                        type="button"
-                        onClick={() => setAddProductOpen(true)}
-                        className="underline hover:text-primary"
-                      >
-                        crea uno nuevo
-                      </button>
+                      Sin productos. Agrega uno del inventario o una partida
+                      manual.
                     </p>
                   ) : (
                   <table className="w-full text-left border-collapse">
@@ -536,9 +570,15 @@ export default function NuevaOrdenClient({
                             <div className="font-bold text-black uppercase">
                               {item.name}
                             </div>
-                            <div className="text-[10px] text-gray-500 font-mono">
-                              SKU: {item.sku}
-                            </div>
+                            {item.productId ? (
+                              <div className="text-[10px] text-gray-500 font-mono">
+                                SKU: {item.sku}
+                              </div>
+                            ) : (
+                              <span className="mt-1 inline-flex rounded-full border border-outline bg-surface-container-low px-2 py-0.5 text-[10px] font-medium text-on-surface-variant">
+                                Fuera de inventario
+                              </span>
+                            )}
                           </td>
                           <td className="py-4 px-4">
                             <input
@@ -596,9 +636,15 @@ export default function NuevaOrdenClient({
                           <div className="font-bold text-black uppercase text-sm">
                             {item.name}
                           </div>
-                          <div className="text-[10px] text-gray-500 font-mono mt-1">
-                            SKU: {item.sku}
-                          </div>
+                          {item.productId ? (
+                            <div className="text-[10px] text-gray-500 font-mono mt-1">
+                              SKU: {item.sku}
+                            </div>
+                          ) : (
+                            <span className="mt-1 inline-flex rounded-full border border-outline bg-white px-2 py-0.5 text-[10px] font-medium text-on-surface-variant">
+                              Fuera de inventario
+                            </span>
+                          )}
                         </div>
                         <button
                           type="button"
@@ -809,7 +855,9 @@ export default function NuevaOrdenClient({
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         branchId={branchId}
-        selectedIds={lineItems.map((item) => item.id)}
+        selectedIds={lineItems.flatMap((item) =>
+          item.productId ? [item.productId] : [],
+        )}
         onSelect={selectProduct}
         onCreateNew={() => {
           setPickerOpen(false);
@@ -821,6 +869,12 @@ export default function NuevaOrdenClient({
         open={addProductOpen}
         onClose={() => setAddProductOpen(false)}
         onCreated={handleProductCreated}
+      />
+
+      <ManualLineItemModal
+        open={manualItemOpen}
+        onClose={() => setManualItemOpen(false)}
+        onAdd={addManualLineItem}
       />
     </AppShell>
   );

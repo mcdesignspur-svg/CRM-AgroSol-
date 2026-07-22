@@ -16,6 +16,13 @@ import {
   getAllowedStatusTransitions,
   resolveDisplayStatus,
 } from "@/lib/order-status";
+import {
+  isCatalogOrderLineItem,
+  MAX_LINE_ITEM_QUANTITY,
+  MAX_MANUAL_ITEM_NAME_LENGTH,
+  MAX_MANUAL_ITEM_UNIT_PRICE,
+  type CreateOrderLineItemInput,
+} from "@/lib/order-line-items";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import type { BranchId, OrderStatus, OrderType } from "@/lib/types";
@@ -27,7 +34,6 @@ import {
   toPrismaOrderStatus,
 } from "./mappers";
 
-const MAX_LINE_ITEM_QUANTITY = 10_000;
 const CREATE_ORDER_MAX_RETRIES = 3;
 
 export interface OrderFilters {
@@ -194,11 +200,6 @@ async function getNextDisplayId(tx: Prisma.TransactionClient) {
   return `ORD-${latestNumber + 1}`;
 }
 
-interface CreateOrderLineItemInput {
-  productId: string;
-  quantity: number;
-}
-
 interface CreateOrderInput {
   customerName: string;
   customerPhone?: string;
@@ -231,12 +232,6 @@ function validateLineItems(lineItems: CreateOrderLineItemInput[]) {
   }
 
   for (const item of lineItems) {
-    if (typeof item.productId !== "string" || !item.productId.trim()) {
-      throw new OrderValidationError(
-        "Cada producto debe tener un identificador válido",
-      );
-    }
-
     if (
       !Number.isInteger(item.quantity) ||
       item.quantity <= 0 ||
@@ -246,18 +241,49 @@ function validateLineItems(lineItems: CreateOrderLineItemInput[]) {
         `La cantidad debe ser un entero entre 1 y ${MAX_LINE_ITEM_QUANTITY}`,
       );
     }
+
+    if (isCatalogOrderLineItem(item)) {
+      if (!item.productId.trim()) {
+        throw new OrderValidationError(
+          "Cada producto debe tener un identificador válido",
+        );
+      }
+      continue;
+    }
+
+    const name = item.name.trim();
+    if (!name || name.length > MAX_MANUAL_ITEM_NAME_LENGTH) {
+      throw new OrderValidationError(
+        "El nombre del artículo manual no es válido",
+      );
+    }
+    if (
+      !Number.isFinite(item.unitPrice) ||
+      item.unitPrice <= 0 ||
+      item.unitPrice > MAX_MANUAL_ITEM_UNIT_PRICE
+    ) {
+      throw new OrderValidationError(
+        "El precio del artículo manual no es válido",
+      );
+    }
   }
 }
 
 async function resolveLineItems(lineItems: CreateOrderLineItemInput[]) {
-  const productIds = [...new Set(lineItems.map((item) => item.productId.trim()))];
-  const products = await prisma.product.findMany({
-    where: { id: { in: productIds } },
-  });
+  const productIds = [
+    ...new Set(
+      lineItems
+        .filter(isCatalogOrderLineItem)
+        .map((item) => item.productId.trim()),
+    ),
+  ];
+  const products = productIds.length
+    ? await prisma.product.findMany({ where: { id: { in: productIds } } })
+    : [];
   const productById = new Map(products.map((product) => [product.id, product]));
 
   const resolvedItems: {
-    productId: string;
+    productId?: string;
     name: string;
     sku: string;
     unitPrice: number;
@@ -265,6 +291,16 @@ async function resolveLineItems(lineItems: CreateOrderLineItemInput[]) {
   }[] = [];
 
   for (const item of lineItems) {
+    if (!isCatalogOrderLineItem(item)) {
+      resolvedItems.push({
+        name: item.name.trim(),
+        sku: "MANUAL",
+        unitPrice: roundMoney(item.unitPrice),
+        quantity: item.quantity,
+      });
+      continue;
+    }
+
     const productId = item.productId.trim();
     const product = productById.get(productId);
 
@@ -323,7 +359,7 @@ async function createOrderTransaction(input: {
   deliveryFee: number;
   total: number;
   lineItems: {
-    productId: string;
+    productId?: string;
     name: string;
     sku: string;
     unitPrice: number;
@@ -355,7 +391,7 @@ async function createOrderTransaction(input: {
         total: input.total,
         lineItems: {
           create: input.lineItems.map((item) => ({
-            productId: item.productId,
+            productId: item.productId ?? null,
             name: item.name,
             sku: item.sku,
             unitPrice: item.unitPrice,

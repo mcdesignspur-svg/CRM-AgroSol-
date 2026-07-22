@@ -131,7 +131,12 @@ export interface ProductCategoryGroup {
   products: Product[];
 }
 
-export interface OrderLineItem extends Product {
+export interface OrderLineItem {
+  id: string;
+  productId?: string;
+  name: string;
+  sku: string;
+  unitPrice: number;
   quantity: number;
 }
 

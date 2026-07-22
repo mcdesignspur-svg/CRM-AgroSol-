@@ -15,6 +15,7 @@ import {
   sendPickupOrderConfirmationByDisplayId,
 } from "@/lib/pickup/notify";
 import { emitOrderRealtimeUpdates } from "@/lib/realtime/emit";
+import { parseOrderLineItems } from "@/lib/order-line-items";
 import type { BranchId, OrderStatus, OrderType } from "@/lib/types";
 
 const ORDER_STATUS_FILTERS = new Set<OrderStatus | "all">([
@@ -82,42 +83,6 @@ function parseFilters(searchParams: URLSearchParams): OrderFilters {
   };
 }
 
-function parseLineItems(
-  raw: unknown,
-): { productId: string; quantity: number }[] | null {
-  if (!Array.isArray(raw) || raw.length === 0) {
-    return null;
-  }
-
-  const items: { productId: string; quantity: number }[] = [];
-
-  for (const item of raw) {
-    if (!item || typeof item !== "object") {
-      return null;
-    }
-
-    const productId = (item as { productId?: unknown }).productId;
-    const quantity = (item as { quantity?: unknown }).quantity;
-
-    if (typeof productId !== "string" || !productId.trim()) {
-      return null;
-    }
-
-    if (
-      typeof quantity !== "number" ||
-      !Number.isInteger(quantity) ||
-      quantity <= 0 ||
-      quantity > 10_000
-    ) {
-      return null;
-    }
-
-    items.push({ productId: productId.trim(), quantity });
-  }
-
-  return items;
-}
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -171,13 +136,13 @@ export async function POST(request: Request) {
 
     const fulfillment =
       body.fulfillment === "delivery" ? "delivery" : "pickup";
-    const lineItems = parseLineItems(body.lineItems);
+    const lineItems = parseOrderLineItems(body.lineItems);
 
     if (!lineItems) {
       return NextResponse.json(
         {
           error:
-            "lineItems debe ser un arreglo no vacío con productId (string) y quantity (entero 1–10000)",
+            "Cada partida necesita un producto del inventario o un nombre y precio manuales válidos",
         },
         { status: 400 },
       );

@@ -266,9 +266,15 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                       <tr key={item.id}>
                         <td className="py-4 px-4">
                           <div className="font-bold uppercase">{item.name}</div>
-                          <div className="text-[10px] text-gray-500 font-mono">
-                            SKU: {item.sku}
-                          </div>
+                          {item.productId ? (
+                            <div className="text-[10px] text-gray-500 font-mono">
+                              SKU: {item.sku}
+                            </div>
+                          ) : (
+                            <span className="mt-1 inline-flex rounded-full border border-outline bg-surface-container-low px-2 py-0.5 text-[10px] font-medium text-on-surface-variant">
+                              Fuera de inventario
+                            </span>
+                          )}
                         </td>
                         <td className="py-4 px-4 font-bold">{item.quantity}</td>
                         <td className="py-4 px-4 font-bold">
