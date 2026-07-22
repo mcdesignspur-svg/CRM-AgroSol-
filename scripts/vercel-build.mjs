@@ -71,10 +71,11 @@ if (shouldRunMigrations) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.warn(
-      "migrate deploy failed; continuing build (schema may already be up to date):",
+    console.error(
+      "FATAL: prisma migrate deploy failed; aborting the production build:",
       message,
     );
+    process.exit(1);
   }
 } else {
   const reasons = [];

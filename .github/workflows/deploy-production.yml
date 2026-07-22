@@ -43,7 +43,7 @@ jobs:
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Load production environment variables
+      - name: Migrate production database
         run: |
           if [ -f .vercel/.env.production.local ]; then
             set -a
@@ -67,6 +67,8 @@ jobs:
           if [ -n "${DIRECT_DATABASE_URL:-}" ]; then
             echo "DIRECT_DATABASE_URL is set."
           fi
+          echo "Running prisma migrate deploy..."
+          DATABASE_URL="${DIRECT_DATABASE_URL:-${DATABASE_URL}}" npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
