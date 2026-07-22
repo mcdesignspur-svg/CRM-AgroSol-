@@ -89,6 +89,7 @@ export async function createDeliveryForOrder(
     branchId: BranchId;
     destination: string;
     createdAt?: Date;
+    eta?: string;
   },
 ) {
   const driver = pickDriver(input.orderId);
@@ -100,7 +101,7 @@ export async function createDeliveryForOrder(
       driverName: driver.name,
       driverInitials: driver.initials,
       destination: input.destination,
-      eta: formatDeliveryEta(createdAt),
+      eta: input.eta ?? formatDeliveryEta(createdAt),
       status: "recogida",
       branchId: input.branchId,
       orderId: input.orderId,

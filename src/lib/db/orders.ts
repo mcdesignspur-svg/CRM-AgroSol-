@@ -16,6 +16,7 @@ import {
   getAllowedStatusTransitions,
   resolveDisplayStatus,
 } from "@/lib/order-status";
+import { formatDeliveryTime } from "@/lib/delivery-time";
 import {
   isCatalogOrderLineItem,
   MAX_LINE_ITEM_QUANTITY,
@@ -532,7 +533,11 @@ export async function validateOrderDeliveryAddress(displayId: string) {
   return mapOrderDetail(updated);
 }
 
-export async function updateOrderStatus(displayId: string, nextStatus: OrderStatus) {
+export async function updateOrderStatus(
+  displayId: string,
+  nextStatus: OrderStatus,
+  deliveryTime?: unknown,
+) {
   const updated = await prisma.$transaction(async (tx) => {
     const existing = await tx.order.findUnique({
       where: { displayId },
@@ -562,6 +567,21 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
     if (!allowed.includes(nextStatus)) {
       throw new OrderValidationError(
         `No se puede cambiar de "${currentStatus}" a "${nextStatus}"`,
+      );
+    }
+
+    const deliveryEta =
+      existing.fulfillment === "delivery" && nextStatus === "en-transito"
+        ? formatDeliveryTime(deliveryTime)
+        : null;
+
+    if (
+      existing.fulfillment === "delivery" &&
+      nextStatus === "en-transito" &&
+      !deliveryEta
+    ) {
+      throw new OrderValidationError(
+        "Selecciona una hora aproximada para la entrega",
       );
     }
 
@@ -639,6 +659,7 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
         branchId: existing.branchId as BranchId,
         destination: existing.deliveryAddress.trim(),
         createdAt: dispatchedAt,
+        eta: deliveryEta ?? undefined,
       });
 
       await tx.ping.create({
@@ -672,7 +693,13 @@ export async function updateOrderStatus(displayId: string, nextStatus: OrderStat
       }
     }
 
-    return order;
+    return tx.order.findUniqueOrThrow({
+      where: { displayId },
+      include: {
+        lineItems: { orderBy: { name: "asc" } },
+        delivery: true,
+      },
+    });
   });
 
   return mapOrderDetail(updated);

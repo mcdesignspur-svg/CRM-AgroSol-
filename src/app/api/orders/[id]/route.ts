@@ -64,7 +64,11 @@ export async function PATCH(
       );
     }
 
-    const order = await updateOrderStatus(decodeURIComponent(id), body.status);
+    const order = await updateOrderStatus(
+      decodeURIComponent(id),
+      body.status,
+      body.deliveryTime,
+    );
 
     if (order.fulfillment === "pickup" && body.status === "listo") {
       try {

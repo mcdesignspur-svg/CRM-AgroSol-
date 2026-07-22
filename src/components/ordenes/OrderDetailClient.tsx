@@ -25,6 +25,7 @@ import { PickupTelegramPanel } from "@/components/ordenes/PickupTelegramPanel";
 import { DeliveryTrackingPanel } from "@/components/ordenes/DeliveryTrackingPanel";
 import { DeleteOrderConfirmModal } from "@/components/ordenes/DeleteOrderConfirmModal";
 import { DeliveryAddressValidationPanel } from "@/components/ordenes/DeliveryAddressValidationPanel";
+import { DeliveryEtaModal } from "@/components/ordenes/DeliveryEtaModal";
 
 interface OrderDetailClientProps {
   initialOrder: OrderDetail;
@@ -36,15 +37,19 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
   const [order, setOrder] = useState(initialOrder);
   const [updating, setUpdating] = useState<OrderStatus | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deliveryEtaModalOpen, setDeliveryEtaModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  async function handleStatusChange(nextStatus: OrderStatus) {
+  async function handleStatusChange(
+    nextStatus: OrderStatus,
+    deliveryTime?: string,
+  ) {
     setUpdating(nextStatus);
     try {
       const res = await fetch(`/api/orders/${encodeURIComponent(order.id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nextStatus }),
+        body: JSON.stringify({ status: nextStatus, deliveryTime }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -52,6 +57,7 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
         return;
       }
       setOrder(data);
+      setDeliveryEtaModalOpen(false);
       if (order.fulfillment === "pickup" && nextStatus === "listo") {
         showToast(
           data.readyNotifiedAt
@@ -154,7 +160,16 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                     key={status}
                     type="button"
                     disabled={updating !== null}
-                    onClick={() => handleStatusChange(status)}
+                    onClick={() => {
+                      if (
+                        order.fulfillment === "delivery" &&
+                        status === "en-transito"
+                      ) {
+                        setDeliveryEtaModalOpen(true);
+                        return;
+                      }
+                      void handleStatusChange(status);
+                    }}
                     className={`btn-primary px-4 py-3 text-xs font-medium industrial-border min-h-[44px] disabled:opacity-60 ${
                       status === "completado" ? "bg-green-600 hover:bg-green-700" : ""
                     }`}
@@ -412,6 +427,18 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={handleDelete}
       />
+
+      {deliveryEtaModalOpen && (
+        <DeliveryEtaModal
+          submitting={updating === "en-transito"}
+          onClose={() => {
+            if (updating === null) setDeliveryEtaModalOpen(false);
+          }}
+          onConfirm={(deliveryTime) =>
+            void handleStatusChange("en-transito", deliveryTime)
+          }
+        />
+      )}
     </AppShell>
   );
 }
