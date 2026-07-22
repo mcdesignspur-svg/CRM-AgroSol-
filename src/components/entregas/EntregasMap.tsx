@@ -10,6 +10,7 @@ import {
   useMap,
 } from "react-leaflet";
 import { BRANCH_LABELS } from "@/lib/constants";
+import { buildGoogleMapsSearchUrl } from "@/lib/google-maps";
 import {
   getBranchCoordinates,
   getDeliveryCoordinates,
@@ -163,7 +164,7 @@ function MapLayers({
       <MapRefBridge mapRef={mapRef} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <MapViewport positions={allPositions} focusPosition={focusPosition} />
 
@@ -185,27 +186,52 @@ function MapLayers({
         </Marker>
       ))}
 
-      {deliveryMarkers.map(({ delivery, position, highlighted }) => (
-        <Marker
-          key={`delivery-${delivery.id}`}
-          position={position}
-          icon={createDeliveryIcon(highlighted)}
-        >
-          <Popup>
-            <div className="text-sm space-y-1 min-w-[200px]">
-              <p className="font-mono font-bold text-primary">#{delivery.id}</p>
-              <p className="font-semibold">{delivery.driverName}</p>
-              <p className="text-xs text-gray-600">{delivery.destination}</p>
-              <p className="text-xs font-mono">ETA: {delivery.eta}</p>
-              {delivery.branchId ? (
-                <p className="text-xs font-medium">
-                  {BRANCH_LABELS[delivery.branchId]}
+      {deliveryMarkers.map(({ delivery, position, highlighted }) => {
+        const mapsUrl = buildGoogleMapsSearchUrl(delivery.destination);
+
+        return (
+          <Marker
+            key={`delivery-${delivery.id}`}
+            position={position}
+            icon={createDeliveryIcon(highlighted)}
+          >
+            <Popup>
+              <div className="text-sm space-y-1 min-w-[200px]">
+                <p className="font-mono font-bold text-primary">#{delivery.id}</p>
+                <p className="font-semibold">{delivery.driverName}</p>
+                <p className="text-xs text-gray-600">{delivery.destination}</p>
+                <p className="text-xs font-mono">ETA: {delivery.eta}</p>
+                {delivery.branchId ? (
+                  <p className="text-xs font-medium">
+                    {BRANCH_LABELS[delivery.branchId]}
+                  </p>
+                ) : null}
+                <p
+                  className={`text-xs font-medium ${
+                    delivery.deliveryAddressValidatedAt
+                      ? "text-green-700"
+                      : "text-amber-700"
+                  }`}
+                >
+                  {delivery.deliveryAddressValidatedAt
+                    ? "Dirección validada"
+                    : "Dirección sin validar"}
                 </p>
-              ) : null}
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+                {mapsUrl ? (
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex pt-1 text-xs font-semibold text-primary hover:underline"
+                  >
+                    Abrir en Google Maps
+                  </a>
+                ) : null}
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
     </>
   );
 }

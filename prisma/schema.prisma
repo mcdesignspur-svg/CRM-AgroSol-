@@ -117,6 +117,7 @@ model Order {
   customerName    String      @map("customer_name")
   customerPhone   String?     @map("customer_phone")
   deliveryAddress String?     @map("delivery_address")
+  deliveryAddressValidatedAt DateTime? @map("delivery_address_validated_at")
   type            OrderType
   branchId        String      @map("branch_id")
   status          OrderStatus @default(pendiente)

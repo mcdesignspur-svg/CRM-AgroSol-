@@ -41,6 +41,7 @@ export interface Order {
 export interface DriverOrder extends Order {
   customerPhone?: string;
   deliveryAddress?: string;
+  deliveryAddressValidatedAt?: string;
   allowedTransitions: OrderStatus[];
 }
 
@@ -57,6 +58,7 @@ export interface OrderLineItemSnapshot {
 export interface OrderDetail extends Order {
   customerPhone?: string;
   deliveryAddress?: string;
+  deliveryAddressValidatedAt?: string;
   fulfillment: "pickup" | "delivery";
   smsNotify: boolean;
   pickupToken?: string;
@@ -88,6 +90,7 @@ export interface Delivery {
   status: "recogida" | "entrega";
   branchId?: BranchId;
   orderId?: string;
+  deliveryAddressValidatedAt?: string;
 }
 
 export interface Ping {

@@ -3,7 +3,8 @@ import { PickupRetiroClient } from "@/components/pickup/PickupRetiroClient";
 
 export const metadata: Metadata = {
   title: "Retiro de orden",
-  description: "Avisa tu llegada para retirar tu orden en Agrocentro Solá.",
+  description:
+    "Avisa tu llegada para retirar tu orden en Agrocentro y Ferretería Solá.",
 };
 
 interface PageProps {

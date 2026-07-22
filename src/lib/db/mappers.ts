@@ -127,6 +127,8 @@ export function mapDriverOrder(order: PrismaOrder): DriverOrder {
     customerName: order.customerName,
     customerPhone: order.customerPhone ?? undefined,
     deliveryAddress: order.deliveryAddress ?? undefined,
+    deliveryAddressValidatedAt:
+      order.deliveryAddressValidatedAt?.toISOString(),
     type: order.type,
     branchId: order.branchId as BranchId,
     status,
@@ -158,6 +160,8 @@ export function mapOrderDetail(
     customerName: order.customerName,
     customerPhone: order.customerPhone ?? undefined,
     deliveryAddress: order.deliveryAddress ?? undefined,
+    deliveryAddressValidatedAt:
+      order.deliveryAddressValidatedAt?.toISOString(),
     type: order.type,
     branchId: order.branchId as BranchId,
     status,
@@ -208,6 +212,7 @@ export function mapOrderDetail(
 export function mapDelivery(
   delivery: PrismaDelivery,
   orderDisplayId?: string,
+  deliveryAddressValidatedAt?: Date | null,
 ): Delivery {
   return {
     id: delivery.displayId,
@@ -218,6 +223,8 @@ export function mapDelivery(
     status: delivery.status,
     branchId: (delivery.branchId as BranchId | null) ?? undefined,
     orderId: orderDisplayId,
+    deliveryAddressValidatedAt:
+      deliveryAddressValidatedAt?.toISOString(),
   };
 }
 

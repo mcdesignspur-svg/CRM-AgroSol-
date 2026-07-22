@@ -11,7 +11,7 @@ export default function NotFound() {
           Página No Encontrada
         </h1>
         <p className="text-sm text-on-surface-variant">
-          La ruta solicitada no existe en el CRM Agrocentro Solá.
+          La ruta solicitada no existe en el CRM Agrocentro y Ferretería Solá.
         </p>
         <Link
           href="/"

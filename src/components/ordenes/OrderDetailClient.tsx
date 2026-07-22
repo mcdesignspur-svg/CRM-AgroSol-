@@ -24,6 +24,7 @@ import type { OrderDetail, OrderStatus } from "@/lib/types";
 import { PickupTelegramPanel } from "@/components/ordenes/PickupTelegramPanel";
 import { DeliveryTrackingPanel } from "@/components/ordenes/DeliveryTrackingPanel";
 import { DeleteOrderConfirmModal } from "@/components/ordenes/DeleteOrderConfirmModal";
+import { DeliveryAddressValidationPanel } from "@/components/ordenes/DeliveryAddressValidationPanel";
 
 interface OrderDetailClientProps {
   initialOrder: OrderDetail;
@@ -225,6 +226,13 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                 )}
               </dl>
             </section>
+
+            {order.fulfillment === "delivery" && order.deliveryAddress ? (
+              <DeliveryAddressValidationPanel
+                order={order}
+                onValidated={setOrder}
+              />
+            ) : null}
 
             <section className="bg-white rounded-xl border border-outline p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-6 border-b border-outline pb-3">

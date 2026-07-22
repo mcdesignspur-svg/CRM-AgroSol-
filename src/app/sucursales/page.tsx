@@ -26,7 +26,8 @@ export default async function SucursalesPage() {
             Red de sucursales
           </h2>
           <p className="text-sm text-on-surface-variant mt-1">
-            Estado operativo y capacidad de cada ubicación Agrocentro Solá.
+            Estado operativo y capacidad de cada ubicación Agrocentro y
+            Ferretería Solá.
           </p>
         </div>
 

@@ -204,6 +204,7 @@ interface CreateOrderInput {
   customerPhone?: string;
   telegramChatId?: string;
   deliveryAddress?: string;
+  deliveryAddressValidated?: boolean;
   branchId: BranchId;
   fulfillment: "pickup" | "delivery";
   smsNotify: boolean;
@@ -309,6 +310,7 @@ async function createOrderTransaction(input: {
   customerPhone?: string;
   telegramChatId?: string;
   deliveryAddress?: string;
+  deliveryAddressValidatedAt?: Date;
   branchId: BranchId;
   fulfillment: "pickup" | "delivery";
   smsNotify: boolean;
@@ -338,6 +340,8 @@ async function createOrderTransaction(input: {
         customerPhone: input.customerPhone?.trim() || null,
         telegramChatId: input.telegramChatId?.trim() || null,
         deliveryAddress: input.deliveryAddress?.trim() || null,
+        deliveryAddressValidatedAt:
+          input.deliveryAddressValidatedAt ?? null,
         type: input.type,
         branchId: input.branchId,
         status: toPrismaOrderStatus(input.status),
@@ -394,6 +398,11 @@ export async function createOrder(input: CreateOrderInput) {
       "La dirección de entrega es obligatoria para entregas",
     );
   }
+  if (input.fulfillment === "delivery" && !input.deliveryAddressValidated) {
+    throw new OrderValidationError(
+      "Corrobora la dirección en Google Maps antes de crear la orden",
+    );
+  }
   if (input.fulfillment === "pickup" && !input.customerPhone?.trim()) {
     throw new OrderValidationError(
       "El teléfono del cliente es obligatorio para pickups",
@@ -418,6 +427,8 @@ export async function createOrder(input: CreateOrderInput) {
     customerPhone: input.customerPhone,
     telegramChatId: input.telegramChatId,
     deliveryAddress: input.deliveryAddress,
+    deliveryAddressValidatedAt:
+      input.fulfillment === "delivery" ? new Date() : undefined,
     branchId: input.branchId,
     fulfillment: input.fulfillment,
     smsNotify: input.smsNotify,
@@ -454,6 +465,35 @@ export async function createOrder(input: CreateOrderInput) {
   throw new OrderConflictError(
     "Conflicto al generar el número de orden. Intenta de nuevo.",
   );
+}
+
+export async function validateOrderDeliveryAddress(displayId: string) {
+  const existing = await prisma.order.findUnique({
+    where: { displayId },
+  });
+
+  if (!existing) {
+    throw new OrderValidationError("Orden no encontrada");
+  }
+  if (
+    existing.fulfillment !== "delivery" ||
+    !existing.deliveryAddress?.trim()
+  ) {
+    throw new OrderValidationError(
+      "La orden no tiene una dirección de entrega para validar",
+    );
+  }
+
+  const updated = await prisma.order.update({
+    where: { displayId },
+    data: { deliveryAddressValidatedAt: new Date() },
+    include: {
+      lineItems: { orderBy: { name: "asc" } },
+      delivery: true,
+    },
+  });
+
+  return mapOrderDetail(updated);
 }
 
 export async function updateOrderStatus(displayId: string, nextStatus: OrderStatus) {

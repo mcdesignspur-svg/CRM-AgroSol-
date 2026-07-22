@@ -14,7 +14,7 @@ export interface PickupMessageContext {
 export function buildOrderConfirmationMessage(ctx: PickupMessageContext): string {
   const link = buildPickupUrl(ctx.pickupToken);
   return (
-    `Hola ${ctx.customerName}, tu orden ${ctx.displayId} en Agrocentro Solá fue registrada.\n\n` +
+    `Hola ${ctx.customerName}, tu orden ${ctx.displayId} en Agrocentro y Ferretería Solá fue registrada.\n\n` +
     `Total: $${ctx.total.toFixed(2)}\n` +
     `Retiro en ${ctx.branchName}\n${ctx.branchAddress}\n\n` +
     `Te avisaremos cuando esté lista.\n` +

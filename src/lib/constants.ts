@@ -1,7 +1,7 @@
 import { BRANCH_DEFINITIONS } from "./branch-definitions";
 import type { BranchId } from "./types";
 
-export const APP_NAME = "Agrocentro Solá";
+export const APP_NAME = "Agrocentro y Ferretería Solá";
 export const APP_TAGLINE = "Logistics CRM";
 
 export const BRANCH_LABELS = Object.fromEntries(

@@ -55,27 +55,21 @@ export async function getActiveDeliveries() {
   const rows = await prisma.delivery.findMany({
     where: { status: "recogida" },
     orderBy: { createdAt: "desc" },
+    include: {
+      order: {
+        select: {
+          displayId: true,
+          deliveryAddressValidatedAt: true,
+        },
+      },
+    },
   });
-
-  const linkedOrderIds = rows
-    .map((row) => row.orderId)
-    .filter((id): id is string => Boolean(id));
-
-  const orderDisplayById = new Map<string, string>();
-  if (linkedOrderIds.length > 0) {
-    const orders = await prisma.order.findMany({
-      where: { id: { in: linkedOrderIds } },
-      select: { id: true, displayId: true },
-    });
-    for (const order of orders) {
-      orderDisplayById.set(order.id, order.displayId);
-    }
-  }
 
   return rows.map((row) =>
     mapDelivery(
       row,
-      row.orderId ? orderDisplayById.get(row.orderId) : undefined,
+      row.order?.displayId,
+      row.order?.deliveryAddressValidatedAt,
     ),
   );
 }

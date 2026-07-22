@@ -1,6 +1,6 @@
-# CRM AgroSol — Agrocentro Solá
+# CRM AgroSol — Agrocentro y Ferretería Solá
 
-CRM de logística para **Agrocentro Solá**. Gestión de órdenes, entregas, sucursales y pings en tiempo real.
+CRM de logística para **Agrocentro y Ferretería Solá**. Gestión de órdenes, entregas, sucursales y pings en tiempo real.
 
 Repositorio oficial: [github.com/mcdesignspur-svg/CRM-AgroSol-](https://github.com/mcdesignspur-svg/CRM-AgroSol-)
 
@@ -170,4 +170,4 @@ design/               # Mockups originales de Stitch (referencia)
 
 ## Licencia
 
-Privado — MC Designs / Agrocentro Solá
+Privado — MC Designs / Agrocentro y Ferretería Solá

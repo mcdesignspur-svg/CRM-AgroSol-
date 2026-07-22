@@ -194,6 +194,7 @@ export async function POST(request: Request) {
       deliveryAddress: body.deliveryAddress
         ? String(body.deliveryAddress)
         : undefined,
+      deliveryAddressValidated: body.deliveryAddressValidated === true,
       branchId: branchId as BranchId,
       fulfillment,
       smsNotify: Boolean(body.smsNotify),

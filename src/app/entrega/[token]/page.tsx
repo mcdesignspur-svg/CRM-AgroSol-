@@ -3,7 +3,8 @@ import { DeliveryTrackingClient } from "@/components/delivery/DeliveryTrackingCl
 
 export const metadata: Metadata = {
   title: "Seguimiento de entrega",
-  description: "Monitorea el estado de tu entrega en Agrocentro Solá.",
+  description:
+    "Monitorea el estado de tu entrega en Agrocentro y Ferretería Solá.",
 };
 
 interface PageProps {

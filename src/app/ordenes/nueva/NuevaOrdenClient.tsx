@@ -11,6 +11,7 @@ import { AddProductModal } from "@/components/productos/AddProductModal";
 import { ProductPickerModal } from "@/components/productos/ProductPickerModal";
 import { isLoyverseBranchEnabled } from "@/lib/loyverse";
 import type { LoyverseStatus } from "@/lib/loyverse/types";
+import { buildGoogleMapsSearchUrl } from "@/lib/google-maps";
 import {
   BRANCH_LABELS,
   DEFAULT_BRANCH,
@@ -27,6 +28,7 @@ interface OrderDraft {
   customerName: string;
   customerPhone: string;
   deliveryAddress: string;
+  deliveryAddressValidated: boolean;
   method: FulfillmentMethod;
   branchId: BranchId;
   lineItems: {
@@ -53,6 +55,9 @@ export default function NuevaOrdenClient({
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryAddressValidated, setDeliveryAddressValidated] =
+    useState(false);
+  const [deliveryMapOpened, setDeliveryMapOpened] = useState(false);
   const [lineItems, setLineItems] = useState<OrderLineItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -74,6 +79,7 @@ export default function NuevaOrdenClient({
       setCustomerName(draft.customerName ?? "");
       setCustomerPhone(draft.customerPhone ?? "");
       setDeliveryAddress(draft.deliveryAddress ?? "");
+      setDeliveryAddressValidated(draft.deliveryAddressValidated ?? false);
       setMethod(draft.method ?? "pickup");
       setBranchId(draft.branchId ?? DEFAULT_BRANCH);
       setSmsNotify(draft.smsNotify ?? false);
@@ -120,6 +126,7 @@ export default function NuevaOrdenClient({
       customerName,
       customerPhone,
       deliveryAddress,
+      deliveryAddressValidated,
       method,
       branchId,
       smsNotify,
@@ -150,6 +157,7 @@ export default function NuevaOrdenClient({
   const deliveryCost = method === "delivery" ? DELIVERY_FEE : 0;
   const total = subtotal + taxes + deliveryCost;
   const itemCount = lineItems.reduce((sum, item) => sum + item.quantity, 0);
+  const deliveryMapsUrl = buildGoogleMapsSearchUrl(deliveryAddress);
 
   function updateQuantity(id: string, quantity: number) {
     setLineItems((items) =>
@@ -173,6 +181,10 @@ export default function NuevaOrdenClient({
       showToast("Ingresa la dirección de entrega", "warning");
       return;
     }
+    if (method === "delivery" && !deliveryAddressValidated) {
+      showToast("Corrobora la dirección en Google Maps", "warning");
+      return;
+    }
     setDeliveryAddressError(false);
     setSubmitting(true);
     try {
@@ -184,6 +196,8 @@ export default function NuevaOrdenClient({
           customerPhone: customerPhone.trim() || undefined,
           deliveryAddress:
             method === "delivery" ? deliveryAddress.trim() : undefined,
+          deliveryAddressValidated:
+            method === "delivery" ? deliveryAddressValidated : undefined,
           branchId,
           fulfillment: method,
           smsNotify,
@@ -371,21 +385,23 @@ export default function NuevaOrdenClient({
                 </div>
 
                 {method === "delivery" && (
-                  <div className="mt-6 p-4 bg-gray-50 border border-outline border-dashed">
-                    <div className="space-y-1">
-                      <label className="font-bold uppercase text-primary text-[10px]">
-                        Dirección Detallada de Entrega
+                  <div className="mt-6 rounded-lg border border-outline bg-surface-container-low p-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-on-surface-variant">
+                        Dirección detallada de entrega
                       </label>
                       <textarea
-                        className={`w-full bg-white border-2 px-4 py-2 font-medium ${
+                        className={`w-full rounded-lg bg-white border px-4 py-3 font-medium ${
                           deliveryAddressError
                             ? "border-primary"
-                            : "border-black"
+                            : "border-outline"
                         }`}
                         rows={3}
                         value={deliveryAddress}
                         onChange={(e) => {
                           setDeliveryAddress(e.target.value);
+                          setDeliveryAddressValidated(false);
+                          setDeliveryMapOpened(false);
                           if (deliveryAddressError) setDeliveryAddressError(false);
                         }}
                       />
@@ -394,6 +410,60 @@ export default function NuevaOrdenClient({
                           La dirección es obligatoria para entregas
                         </p>
                       )}
+                    </div>
+
+                    <div className="mt-4 flex flex-col gap-3 rounded-lg border border-outline bg-white p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-on-surface">
+                            Validar ubicación
+                          </p>
+                          <p className="mt-1 text-xs text-on-surface-variant">
+                            Comprueba que el pin coincida con la dirección escrita.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={!deliveryMapsUrl}
+                          onClick={() => {
+                            if (!deliveryMapsUrl) return;
+                            window.open(
+                              deliveryMapsUrl,
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
+                            setDeliveryMapOpened(true);
+                          }}
+                          className="btn-secondary inline-flex min-h-[44px] items-center justify-center gap-2 px-4 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <span className="material-symbols-outlined text-base">
+                            map
+                          </span>
+                          Abrir en Google Maps
+                        </button>
+                      </div>
+
+                      <label className="flex min-h-[44px] items-center gap-3 border-t border-outline pt-3 text-sm font-medium">
+                        <input
+                          type="checkbox"
+                          checked={deliveryAddressValidated}
+                          disabled={
+                            (!deliveryMapOpened || !deliveryMapsUrl) &&
+                            !deliveryAddressValidated
+                          }
+                          onChange={(event) =>
+                            setDeliveryAddressValidated(event.target.checked)
+                          }
+                          className="h-4 w-4 rounded border-outline text-primary"
+                        />
+                        <span>
+                          {deliveryAddressValidated
+                            ? "Dirección corroborada"
+                            : deliveryMapOpened
+                              ? "Confirmo que la ubicación coincide"
+                              : "Abre el mapa y confirma la ubicación"}
+                        </span>
+                      </label>
                     </div>
                   </div>
                 )}

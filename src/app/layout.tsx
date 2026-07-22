@@ -23,11 +23,11 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Agrocentro Solá | Logistics CRM",
-    template: "%s | Agrocentro Solá",
+    default: "Agrocentro y Ferretería Solá | Logistics CRM",
+    template: "%s | Agrocentro y Ferretería Solá",
   },
   description:
-    "CRM de logística para Agrocentro Solá — gestión de órdenes, entregas y sucursales.",
+    "CRM de logística para Agrocentro y Ferretería Solá — gestión de órdenes, entregas y sucursales.",
 };
 
 export const viewport: Viewport = {

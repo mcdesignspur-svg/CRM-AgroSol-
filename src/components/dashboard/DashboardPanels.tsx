@@ -142,7 +142,7 @@ export function DashboardHeader() {
           Panel de logística
         </h2>
         <p className="text-sm text-on-surface-variant mt-1">
-          Supervisión en tiempo real de la red Agrocentro Solá.
+          Supervisión en tiempo real de la red Agrocentro y Ferretería Solá.
           {lastUpdatedAt && (
             <span className="ml-2 inline-flex items-center gap-1 text-xs">
               <span

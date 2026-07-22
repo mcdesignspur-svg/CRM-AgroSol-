@@ -128,7 +128,9 @@ export function DeliveryTrackingClient({ token }: DeliveryTrackingClientProps) {
       <header className="bg-white border-b border-outline px-4 py-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-medium text-primary">Agrocentro Solá</p>
+            <p className="text-xs font-medium text-primary">
+              Agrocentro y Ferretería Solá
+            </p>
             <h1 className="font-display text-2xl font-semibold mt-1">
               Seguimiento de entrega
             </h1>

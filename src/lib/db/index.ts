@@ -12,6 +12,7 @@ export {
   getRecentOrders,
   OrderConflictError,
   OrderValidationError,
+  validateOrderDeliveryAddress,
   updateOrderStatus,
 } from "./orders";
 export type { OrderFilters } from "./orders";
