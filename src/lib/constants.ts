@@ -19,7 +19,7 @@ export const NAV_ITEMS = [
 
 export const DEFAULT_BRANCH: BranchId = "gurabo";
 
-export const TAX_RATE = 0.21;
+export const TAX_RATE = 0.115;
 export const DELIVERY_FEE = 25;
 
 export const PICKUP_SLA_HOURS = 2;

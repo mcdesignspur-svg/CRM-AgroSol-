@@ -706,7 +706,7 @@ export default function NuevaOrdenClient({
                     </div>
                     <div className="flex justify-between font-medium">
                       <span className="uppercase text-xs text-gray-600 font-bold">
-                        Impuestos (IVA 21%)
+                        Impuestos (IVU 11.5%)
                       </span>
                       <span className="font-bold">${taxes.toFixed(2)}</span>
                     </div>
